@@ -66,6 +66,12 @@ Em 15 de setembro de 2026, a execução local reproduzível percorreu sete URLs:
 O resultado oficial para integração é a execução do GitHub Actions no commit do
 Pull Request. Resultados locais são evidência adicional, não substituta.
 
+Uma [amostra histórica sanitizada](evidence/zap-baseline-2026-09-16/README.md)
+da execução bem-sucedida `35054736853` preserva os relatórios HTML, JSON e
+Markdown para consulta acadêmica mesmo após a expiração do artefato da CI. Ela
+documenta o commit e o escopo examinados e não deve ser tratada como resultado
+atual da `main`.
+
 ## Limites e evolução
 
 O Baseline Scan usa spider tradicional e análise passiva; ele não envia ataques

@@ -18,6 +18,10 @@ Dockerfile text eol=lf
 .dockerignore text eol=lf
 .editorconfig text eol=lf
 
+# Preserve generated security evidence byte-for-byte without treating the
+# generator's whitespace as a source-code formatting error.
+docs/security/evidence/zap-baseline-2026-09-16/zap-report.* -whitespace
+
 *.png binary
 *.jpg binary
 *.jpeg binary

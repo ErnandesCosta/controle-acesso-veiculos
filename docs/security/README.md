@@ -3,13 +3,15 @@
 Esta pasta contém a fonte versionada dos documentos de segurança do projeto.
 
 - [Autenticação e autorização](authentication.md)
-A Wiki apresenta cópias de leitura e contexto acadêmico, mas mudanças nestes
-documentos devem passar por Issue, branch, revisão e Pull Request.
-
 - [Modelagem de ameaças](threat-model.md)
 - [Modelo visual para OWASP Threat Dragon](controle-acesso-veiculos-threat-model.json)
 - [Guia de desenvolvimento seguro](secure-development-guide.md)
+- [Análise dinâmica com OWASP ZAP](dynamic-application-security-testing.md)
+- [Amostra histórica do baseline passivo do ZAP](evidence/zap-baseline-2026-09-16/README.md)
 - [ADR 0001 — ciclo de vida seguro de sessões](../architecture/decisions/0001-secure-session-lifecycle.md)
+
+A Wiki apresenta cópias de leitura e contexto acadêmico, mas mudanças nestes
+documentos devem passar por Issue, branch, revisão e Pull Request.
 
 Documentos relacionados:
 
