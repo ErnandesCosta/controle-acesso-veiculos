@@ -172,6 +172,7 @@ frontend melhora usabilidade, mas não é controle de segurança suficiente.
 | TM-21 | Spoofing / Tampering               | Site externo induz o navegador autenticado a renovar ou encerrar uma sessão por CSRF                           |   2 |   3 |     6 | `SameSite=Strict`, caminho mínimo, token antifalsificação vinculado ao cookie e arquitetura same-origin — #190 e #191                                                                                                                                                        | Mitigado e testado no fluxo integrado; validação em ambiente HTTPS pendente                                                                                                                                                            |
 | TM-22 | Tampering / Information disclosure | Conteúdo não autorizado é carregado ou a aplicação é incorporada por uma página externa                        |   2 |   3 |     6 | CSP same-origin, bloqueio de frames, MIME sniffing desabilitado, política de referência, permissões mínimas e baseline DAST passiva — #196 e #227                                                                                                                            | Mitigado no proxy local e verificado dinamicamente na superfície pública; HTTPS, HSTS, fluxos autenticados e validação no ambiente de destino pendentes                                                                                |
 | TM-23 | Tampering / Information disclosure | Consulta de recorrentes enumera pessoas ou cliente adultera os identificadores e textos do vínculo selecionado |   2 |   3 |     6 | Política operacional, termo entre 3 e 80 caracteres, limite fixo de 10 resultados, rate limiting global por usuário, resposta sem documento/e-mail/histórico e revalidação canônica do par no servidor — #213                                                                | Mitigado no backend; calibração com uso real e integração do frontend permanecem pendentes                                                                                                                                             |
+| TM-24 | Spoofing / Information disclosure   | Tablet compartilhado permanece autenticado sem operador e permite uso da sessão por outra pessoa               |   3 |   3 |     9 | Inatividade de 15 minutos, duração absoluta de 12 horas, referência e prazos emitidos pelo servidor, logout explícito, coordenação entre abas e renovação condicionada a atividade humana — #268                                                                               | Política e contrato do servidor implementados; integração do frontend e validação no tablet da portaria pendentes                                                                                                                     |
 
 ## Controles existentes verificados
 
@@ -184,7 +185,9 @@ frontend melhora usabilidade, mas não é controle de segurança suficiente.
 - rotação transacional de refresh token com bloqueio no PostgreSQL, detecção de
   reutilização e revogação de família no replay, logout e desativação da conta;
 - timeout de inatividade e duração absoluta impostos pelo servidor, com valores
-  configuráveis e proteção CSRF explícita nos endpoints baseados em cookie;
+  configuráveis, prazos explícitos na resposta e proteção CSRF nos endpoints
+  baseados em cookie; a detecção de inatividade humana no cliente pertence à
+  Issue #268;
 - frontend valida as respostas de login e renovação, mantém o JWT somente em
   memória, restaura e renova a sessão pelo cookie protegido, limita a uma
   repetição por requisição e coordena renovação e encerramento entre abas sem

@@ -190,7 +190,41 @@ e não pode ser lido pelo frontend. O fluxo implementado:
 - redireciona qualquer rota operacional digitada durante o primeiro acesso para
   a troca obrigatória, sem renderizar menus, painéis ou ações de negócio;
 - usa bloqueio exclusivo do navegador para coordenar renovações entre abas e
-  comunica somente o encerramento da sessão, sem transmitir tokens.
+  comunica somente eventos de encerramento e metadados temporais de atividade,
+  sem transmitir tokens, credenciais, e-mail ou identidade;
+- usa `X-Session-Server-Time` como referência comum para validar e converter em
+  durações relativas os prazos de inatividade e duração absoluta publicados nos
+  cabeçalhos de login e renovação; respostas ausentes, inválidas ou incoerentes
+  são rejeitadas sem depender de o relógio do tablet estar adiantado ou atrasado;
+- considera atividade somente uma interação humana real por teclado, ponteiro,
+  toque ou clique confiável de tecnologia assistiva; movimento do mouse, foco,
+  mudança de aba, timers, renderização, HTTP e renovação automática não reiniciam
+  o período local;
+- encerra a sessão após 15 minutos sem atividade ou ao atingir o limite absoluto,
+  limpa imediatamente token e identidade da memória, coordena o bloqueio entre
+  abas e tenta revogar a família no servidor sem manter a interface desbloqueada;
+- verifica novamente os prazos antes de qualquer renovação automática ou causada
+  por HTTP 401, no retorno do background e depois de suspensão do dispositivo;
+- quando uma renovação vence com a aba em segundo plano, mantém somente em
+  memória a indicação pendente; retornar à aba não renova a sessão sozinho, e a
+  primeira atividade humana confiável solicita no máximo uma renovação;
+- diferencia o vencimento do access token do encerramento da sessão: um token
+  vencido é removido da memória, mas o monitor e a continuidade permanecem
+  válidos até o limite de inatividade ou o limite absoluto;
+- ao retomar, reconcilia o prazo humano temporal salvo por outra aba sem ampliar
+  o limite absoluto conhecido, cobrindo mensagens entre abas perdidas durante a
+  suspensão;
+- trata alteração regressiva do relógio de forma conservadora e ignora uma
+  resposta de renovação que chegue depois do encerramento da sessão.
+
+Para impedir que o descarte e a restauração de uma aba recuperem uma sessão após
+o último prazo humano aceito, o frontend mantém no `localStorage` somente um
+registro versionado com prazos e observação temporal. Esse metadado não contém
+token, credencial, e-mail, perfil, identificador ou outro dado pessoal, é removido
+no encerramento da sessão — não no simples vencimento do access token — e nunca
+concede autorização. Sua ausência, expiração,
+corrupção ou indício de regressão do relógio bloqueia a renovação; sessão,
+revogação e limite absoluto continuam sendo impostos pelo servidor.
 
 Nenhum token é colocado em URL, estado de rota, log, `localStorage` ou
 `sessionStorage`. O backend usa resposta 401 genérica para credencial incorreta,
@@ -202,6 +236,11 @@ A coordenação entre abas depende da Web Locks API. O navegador-alvo Brave/Chro
 possui esse recurso; em um navegador sem suporte, a restauração e a renovação
 falham de modo seguro e a pessoa é orientada a entrar novamente, sem persistir ou
 compartilhar credenciais como alternativa.
+
+A política de 15 minutos e o limite absoluto de 12 horas pertencem à Issue #268.
+A validação no tablet compartilhado da Portaria continua necessária antes de
+considerar o comportamento homologado institucionalmente. O logout explícito
+permanece obrigatório na troca de operador.
 
 ## Tecnologias
 

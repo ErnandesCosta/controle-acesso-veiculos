@@ -20,4 +20,14 @@ public sealed record AuthenticationSessionPolicy(
 
         return this;
     }
+
+    public DateTime GetInactivityDeadline(
+        DateTime lastActivityUtc,
+        DateTime absoluteExpirationUtc)
+    {
+        var inactivityExpirationUtc = lastActivityUtc.Add(InactivityTimeout);
+        return inactivityExpirationUtc < absoluteExpirationUtc
+            ? inactivityExpirationUtc
+            : absoluteExpirationUtc;
+    }
 }

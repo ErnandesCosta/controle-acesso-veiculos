@@ -1,8 +1,8 @@
 # ADR 0001 — Ciclo de vida seguro de sessões
 
-- **Estado:** aceita tecnicamente; tempos sujeitos à homologação
-- **Data:** 13 de setembro de 2026
-- **Rastreabilidade:** Issues #190, #191 e #162
+- **Estado:** aceita; política temporal validada institucionalmente
+- **Data:** 24 de setembro de 2026
+- **Rastreabilidade:** Issues #190, #191 e #268
 
 ## Contexto
 
@@ -27,8 +27,9 @@ Adotar access token curto em memória e uma família de refresh tokens opacos:
 - reutilização de token consumido revoga a família conhecida e gera auditoria;
 - logout e desativação de conta revogam a família no servidor;
 - perfil ou conta inativo não renova;
-- 60 minutos de inatividade e 12 horas de duração absoluta como hipóteses
-  configuráveis; o JWT permanece com 15 minutos;
+- 15 minutos sem atividade humana e 12 horas de duração absoluta, conforme
+  decisão institucional; os valores permanecem configuráveis por ambiente e o
+  JWT continua com 15 minutos;
 - renovação e logout exigem token antifalsificação emitido pelo servidor;
 - nenhuma credencial de sessão é aceita em URL, armazenamento web, log ou
   auditoria.
@@ -57,10 +58,14 @@ local usa chaves efêmeras e, após reinício, o cliente obtém um novo par CSRF
    loop e sem revelar o motivo interno.
 7. No logout, tentar a revogação; independentemente da resposta, apagar o estado
    local. Indisponibilidade deve ser apresentada sem afirmar revogação concluída.
-
-A integração do cliente pertence à Issue #191. Até ela ser incorporada, o
-backend novo é compatível com o login antigo, mas o navegador ainda não aproveita
-a renovação.
+8. Ler os cabeçalhos `X-Session-Server-Time`,
+   `X-Session-Inactivity-Expires-At` e `X-Session-Absolute-Expires-At` emitidos no
+   login e na renovação. Eles permitem calcular durações usando uma única
+   referência do servidor e não expõem credenciais.
+9. Renovar somente quando houve atividade humana relevante dentro da janela. Um
+   temporizador em segundo plano, mudança de aba ou retomada do dispositivo não
+   contam como atividade. Ao atingir qualquer prazo, encerrar o estado local e
+   coordenar o encerramento entre abas.
 
 ## Alternativas consideradas
 
@@ -84,10 +89,10 @@ a renovação.
 - cada renovação grava uma nova linha e exige política posterior de retenção e
   limpeza alinhada à Issue #30;
 - HTTPS deixa de ser apenas recomendação: é requisito para cookies de produção;
-- múltiplas abas e respostas perdidas precisam do tratamento conservador descrito
-  na Issue #191;
-- os tempos iniciais não representam aprovação institucional e serão ajustados
-  após observação na Issue #162.
+- múltiplas abas e respostas perdidas recebem tratamento conservador; a política
+  de ociosidade compartilhada e retomada do dispositivo pertence à Issue #268;
+- a proteção completa do tablet depende da integração do cliente e de validação
+  humana no dispositivo usado pela portaria.
 
 ## Referências
 

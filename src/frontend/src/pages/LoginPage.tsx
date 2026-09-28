@@ -38,6 +38,8 @@ function sessionEndMessage(reason: SessionEndReason) {
   switch (reason) {
     case "expired":
       return "Sua sessão expirou. Entre novamente para continuar.";
+    case "inactive":
+      return "Sua sessão terminou por inatividade. Entre novamente para continuar.";
     case "logout-unconfirmed":
       return "A sessão foi encerrada neste dispositivo, mas não foi possível confirmar a saída no servidor.";
     case "password-changed":

@@ -103,6 +103,10 @@ public sealed class LoginService(
         return LoginResult.Success(
             token,
             refreshToken.Value,
+            now,
+            sessionPolicy.GetInactivityDeadline(
+                session.UltimaAtividadeEm,
+                session.ExpiraEm),
             session.ExpiraEm,
             new LoginUser(
                 authenticationUser.User.Id,

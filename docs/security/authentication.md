@@ -15,7 +15,8 @@ A fundação técnica da Issue #29 implementa login individual, provisionamento 
 - O login válido zera as tentativas anteriores.
 - A resposta de login válido expõe somente JWT, expiração, identificador, e-mail normalizado, perfil ativo e o indicador `requiresPasswordChange`; nome, hash, bloqueio e demais estados internos da conta não fazem parte do contrato.
 - O access token é assinado com HMAC-SHA256 e expira em 15 minutos.
-- O login também cria uma família de sessão com duração absoluta inicial de 12 horas e inatividade máxima inicial de 60 minutos; ambos os valores são configuráveis e ainda são hipóteses do MVP.
+- O login também cria uma família de sessão com duração absoluta de 12 horas e inatividade máxima de 15 minutos. Os valores são configuráveis, mas esses padrões refletem a decisão institucional registrada na Issue #268.
+- Login e renovação informam a referência temporal e os prazos calculados pelo servidor nos cabeçalhos `X-Session-Server-Time`, `X-Session-Inactivity-Expires-At` e `X-Session-Absolute-Expires-At`, sem colocar credenciais no corpo ou nos cabeçalhos. O cliente calcula durações a partir da mesma referência para não depender de o relógio do tablet estar perfeitamente sincronizado.
 - O token de renovação possui 256 bits gerados pelo gerador criptográfico do sistema, é opaco e é entregue somente em cookie `HttpOnly`, `SameSite=Strict` e de caminho restrito.
 - Somente o SHA-256 do token de renovação é persistido. O valor bruto não integra DTO, banco, auditoria nem log.
 - `POST /auth/refresh` rotaciona o token em uma transação, preserva a expiração absoluta e rejeita reutilização. A reutilização revoga toda a família conhecida.
@@ -51,14 +52,13 @@ visual anterior por nome de usuário não altera silenciosamente a API. A respos
 é validada antes de criar a sessão, e somente `id`, e-mail, perfil e expiração
 compõem a identidade local.
 
-Até a conclusão da Issue #191, o access token fica em uma variável de módulo e no contexto React apenas durante
+O access token fica em uma variável de módulo e no contexto React apenas durante
 a aba aberta. Ele é anexado pelo interceptor do Axios, nunca é colocado em URL,
-estado de rota, log, mensagem de erro, `localStorage` ou `sessionStorage`. Logout,
-expiração e resposta 401 limpam token, identidade e temporizador. Atualizar a
-página perde a memória e exige novo login; esse comportamento é uma limitação
-temporária do cliente. A Issue #191 deve integrar `GET /auth/csrf`,
-`POST /auth/refresh` e `POST /auth/logout`, manter o access token apenas em
-memória e coordenar múltiplas abas sem ler o cookie `HttpOnly`.
+estado de rota, log, mensagem de erro, `localStorage` ou `sessionStorage`.
+`GET /auth/csrf`, `POST /auth/refresh` e `POST /auth/logout` já estão integrados,
+e múltiplas abas coordenam a renovação sem ler o cookie `HttpOnly`. A Issue #268
+acrescenta o encerramento coordenado após 15 minutos sem atividade humana; uma
+renovação automática em segundo plano não pode reiniciar esse prazo.
 
 A interface filtra rotas e navegação usando exclusivamente `profileName`
 devolvido pela API. A filtragem reduz confusão, mas não é autorização. A matriz
@@ -176,7 +176,7 @@ fluxo operacional.
 - validar o resumo operacional diário durante a homologação e definir se haverá conferência formal ou exportação;
 - definir responsáveis e canal confiável para recuperação de acesso na Issue #220;
 - decidir se haverá integração com identidade institucional;
-- concluir a integração frontend da Issue #191 e homologar os tempos na Issue #162;
+- concluir no frontend a política de inatividade compartilhada da Issue #268 e validá-la no tablet da portaria;
 - definir retenção e limpeza operacional das sessões revogadas e expiradas;
 - registrar auditoria de troca de perfil quando esse fluxo existir;
 - proteger os endpoints de negócio com as políticas validadas.

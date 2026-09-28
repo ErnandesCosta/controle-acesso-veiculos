@@ -4,7 +4,7 @@
 
 Este documento relaciona o marco acadêmico da Unidade 1 às evidências
 versionadas do projeto. A fotografia foi verificada em **28 de setembro de 2026**
-sobre a `main` no commit `6877c39` e deve ser conferida novamente antes da
+sobre a `main` após o merge do PR #290 e deve ser conferida novamente antes da
 apresentação.
 
 As classificações usadas são:
@@ -66,14 +66,14 @@ executado.
 
 ## Evidência quantitativa da baseline
 
-| Item na `main`             |                                                          Evidência em 28/09/2026 |
-| -------------------------- | -------------------------------------------------------------------------------: |
-| Testes de backend          | 251 aprovados: 60 de domínio, 58 de aplicação e 133 de integração com PostgreSQL |
-| Testes de frontend         |                                                     378 aprovados em 41 arquivos |
-| Migrations EF Core         |                                                        16 migrations versionadas |
-| Alertas Dependabot abertos |                                                                                0 |
-| Alertas CodeQL abertos     |                                                                                0 |
-| Release técnica            |                                                                         `v0.2.0` |
+| Item na `main`             | Evidência em 28/09/2026                            |
+| -------------------------- | -------------------------------------------------- |
+| Testes de backend          | 254 aprovados, incluindo integração com PostgreSQL |
+| Testes de frontend         | 431 aprovados em 44 arquivos                       |
+| Migrations EF Core         | 16 migrations versionadas                          |
+| Alertas Dependabot abertos | 0                                                  |
+| Alertas CodeQL abertos     | 0                                                  |
+| Release técnica            | `v0.2.0`                                           |
 
 Os números são evidências datadas, não metas fixas. A fonte vigente para
 cada execução é o [GitHub Actions](https://github.com/ifpebj-ti/controle-acesso-veiculos/actions).
