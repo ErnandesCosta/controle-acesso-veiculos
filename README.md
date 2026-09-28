@@ -32,7 +32,7 @@ Wiki para preservar a rastreabilidade.
 | Área | Estado |
 |---|---|
 | Produto | MVP documentado para os Formulários nº 01 e nº 02; regras institucionais ainda precisam de validação |
-| Frontend | Aplicação responsiva integrada à API para autenticação, acessos, histórico, correção, frota, motoristas, eventos e resumo diário; renovação segura da sessão permanece na Issue #191 |
+| Frontend | Aplicação responsiva integrada à API para autenticação, renovação segura de sessão, acessos, histórico, correção, frota, motoristas, eventos e resumo diário; encerramento por inatividade compartilhada permanece na Issue #268 |
 | Backend | API .NET 10 com autenticação, ciclo administrativo de contas, consulta administrativa da auditoria, fluxo geral, histórico e correção descritiva rastreável, manutenção de frota, motoristas, saída/retorno, histórico institucional, autorizações de eventos e resumo operacional diário |
 | Dados | PostgreSQL 16, EF Core 10, treze entidades e treze migrations versionadas |
 | Infraestrutura | Dockerfiles e Compose endurecidos, containers não privilegiados, Nginx com política de conteúdo e cabeçalhos defensivos verificados pela CI, build e scan por arquitetura, smoke test integrado, publicação multi-plataforma `linux/amd64` e `linux/arm64` no GHCR, proveniência assinada e SBOM SPDX por arquitetura atestado no digest do manifesto após integração na `main`, além de ensaio local de backup/restauração e exportação OpenTelemetry configurável |

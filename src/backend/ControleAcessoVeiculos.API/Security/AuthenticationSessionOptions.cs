@@ -6,7 +6,7 @@ public sealed class AuthenticationSessionOptions
 {
     public const string SectionName = "Authentication:Session";
 
-    public int InactivityTimeoutMinutes { get; init; } = 60;
+    public int InactivityTimeoutMinutes { get; init; } = 15;
     public int AbsoluteLifetimeHours { get; init; } = 12;
     public string RefreshCookieName { get; init; } = "cav_refresh";
 

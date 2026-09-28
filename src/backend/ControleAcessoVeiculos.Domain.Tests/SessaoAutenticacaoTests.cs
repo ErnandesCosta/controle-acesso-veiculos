@@ -14,8 +14,8 @@ public sealed class SessaoAutenticacaoTests
         var session = CreateSession();
 
         Assert.True(session.PodeSerRenovada(
-            Now.AddMinutes(59),
-            TimeSpan.FromHours(1)));
+            Now.AddMinutes(14).AddSeconds(59),
+            TimeSpan.FromMinutes(15)));
         Assert.False(session.FoiConsumida);
         Assert.False(session.FoiRevogada);
     }
@@ -26,8 +26,8 @@ public sealed class SessaoAutenticacaoTests
         var session = CreateSession();
 
         Assert.False(session.PodeSerRenovada(
-            Now.AddHours(1),
-            TimeSpan.FromHours(1)));
+            Now.AddMinutes(15),
+            TimeSpan.FromMinutes(15)));
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public sealed class SessaoAutenticacaoTests
         var successor = session.Rotacionar(
             "successor-token-hash",
             rotatedAt,
-            TimeSpan.FromHours(1));
+            TimeSpan.FromMinutes(15));
 
         Assert.True(session.FoiConsumida);
         Assert.True(session.FoiRevogada);
@@ -61,8 +61,8 @@ public sealed class SessaoAutenticacaoTests
         Assert.Equal(session.ExpiraEm, successor.ExpiraEm);
         Assert.Equal(rotatedAt, successor.UltimaAtividadeEm);
         Assert.True(successor.PodeSerRenovada(
-            rotatedAt.AddMinutes(59),
-            TimeSpan.FromHours(1)));
+            rotatedAt.AddMinutes(14).AddSeconds(59),
+            TimeSpan.FromMinutes(15)));
     }
 
     [Fact]

@@ -15,6 +15,48 @@ namespace ControleAcessoVeiculos.IntegrationTests;
 public sealed class AuthenticationSessionTests(ApiFactory factory)
 {
     [Fact]
+    public async Task LoginPublishesConfirmedSessionDeadlinesWithoutChangingBodyContract()
+    {
+        const string password = "Test-only-password-123!";
+        var email = await CreateUserAsync(password);
+        using var client = factory.CreateClient();
+        var requestedAtUtc = DateTime.UtcNow;
+
+        var login = await client.PostAsJsonAsync("/auth/login", new { email, password });
+
+        login.EnsureSuccessStatusCode();
+        var completedAtUtc = DateTime.UtcNow;
+        var body = await login.Content.ReadFromJsonAsync<LoginResponse>();
+        Assert.NotNull(body);
+        Assert.False(string.IsNullOrWhiteSpace(body.AccessToken));
+
+        var inactivityDeadline = ReadUtcHeader(
+            login,
+            "X-Session-Inactivity-Expires-At");
+        var serverTime = ReadUtcHeader(login, "X-Session-Server-Time");
+        var absoluteDeadline = ReadUtcHeader(
+            login,
+            "X-Session-Absolute-Expires-At");
+
+        Assert.InRange(
+            serverTime,
+            requestedAtUtc,
+            completedAtUtc);
+        Assert.Equal(
+            TimeSpan.FromMinutes(15),
+            inactivityDeadline - serverTime);
+        Assert.InRange(
+            inactivityDeadline,
+            requestedAtUtc.AddMinutes(15),
+            completedAtUtc.AddMinutes(15));
+        Assert.InRange(
+            absoluteDeadline,
+            requestedAtUtc.AddHours(12),
+            completedAtUtc.AddHours(12));
+        Assert.True(inactivityDeadline < absoluteDeadline);
+    }
+
+    [Fact]
     public async Task RefreshRequiresValidAntiforgeryToken()
     {
         const string password = "Test-only-password-123!";
@@ -49,6 +91,10 @@ public sealed class AuthenticationSessionTests(ApiFactory factory)
         var login = await client.PostAsJsonAsync("/auth/login", new { email, password });
         login.EnsureSuccessStatusCode();
         var firstRefreshToken = GetCookie(login, "cav_refresh");
+        var absoluteDeadline = ReadUtcHeader(
+            login,
+            "X-Session-Absolute-Expires-At");
+        var refreshRequestedAtUtc = DateTime.UtcNow;
 
         var firstRefresh = await SendSessionRequestAsync(
             client,
@@ -57,9 +103,22 @@ public sealed class AuthenticationSessionTests(ApiFactory factory)
             csrfCookie,
             firstRefreshToken);
         firstRefresh.EnsureSuccessStatusCode();
+        var refreshCompletedAtUtc = DateTime.UtcNow;
         var refreshedLogin = await firstRefresh.Content.ReadFromJsonAsync<LoginResponse>();
         Assert.NotNull(refreshedLogin);
         Assert.False(string.IsNullOrWhiteSpace(refreshedLogin.AccessToken));
+        Assert.Equal(
+            absoluteDeadline,
+            ReadUtcHeader(firstRefresh, "X-Session-Absolute-Expires-At"),
+            TimeSpan.FromMicroseconds(1));
+        Assert.InRange(
+            ReadUtcHeader(firstRefresh, "X-Session-Inactivity-Expires-At"),
+            refreshRequestedAtUtc.AddMinutes(15),
+            refreshCompletedAtUtc.AddMinutes(15));
+        Assert.InRange(
+            ReadUtcHeader(firstRefresh, "X-Session-Server-Time"),
+            refreshRequestedAtUtc,
+            refreshCompletedAtUtc);
         var secondRefreshToken = GetCookie(firstRefresh, "cav_refresh");
         Assert.NotEqual(firstRefreshToken, secondRefreshToken);
 
@@ -257,6 +316,17 @@ public sealed class AuthenticationSessionTests(ApiFactory factory)
             response.Headers.GetValues("Set-Cookie"),
             value => value.StartsWith($"{name}=", StringComparison.Ordinal));
         return cookie.Split(';', 2)[0].Split('=', 2)[1];
+    }
+
+    private static DateTime ReadUtcHeader(
+        HttpResponseMessage response,
+        string name)
+    {
+        var value = Assert.Single(response.Headers.GetValues(name));
+        return DateTime.Parse(
+            value,
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.RoundtripKind);
     }
 
     private async Task<string> CreateUserAsync(string password)

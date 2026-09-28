@@ -22,6 +22,7 @@ using ControleAcessoVeiculos.Infrastructure.InstitutionalVehicles;
 using ControleAcessoVeiculos.Infrastructure.InstitutionalDrivers;
 using ControleAcessoVeiculos.Infrastructure.EventAuthorizations;
 using ControleAcessoVeiculos.Infrastructure.OperationalSummaries;
+using System.Globalization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -388,6 +389,11 @@ app.MapPost("/auth/login", async (
         httpContext.Response,
         result.RefreshToken!,
         result.SessionExpiresAtUtc!.Value);
+    SetSessionDeadlineResponseHeaders(
+        httpContext.Response,
+        result.SessionObservedAtUtc!.Value,
+        result.SessionInactivityExpiresAtUtc!.Value,
+        result.SessionExpiresAtUtc.Value);
 
     return Results.Ok(new LoginResponse(
         result.AccessToken!,
@@ -451,6 +457,11 @@ app.MapPost("/auth/refresh", async (
         httpContext.Response,
         result.RefreshToken!,
         result.SessionExpiresAtUtc!.Value);
+    SetSessionDeadlineResponseHeaders(
+        httpContext.Response,
+        result.SessionObservedAtUtc!.Value,
+        result.SessionInactivityExpiresAtUtc!.Value,
+        result.SessionExpiresAtUtc.Value);
 
     return Results.Ok(new LoginResponse(
         result.AccessToken!,
@@ -578,6 +589,20 @@ static void SetAuthenticationResponseHeaders(HttpResponse response)
 {
     response.Headers.CacheControl = "no-store";
     response.Headers.Pragma = "no-cache";
+}
+
+static void SetSessionDeadlineResponseHeaders(
+    HttpResponse response,
+    DateTime observedAtUtc,
+    DateTime inactivityExpiresAtUtc,
+    DateTime absoluteExpiresAtUtc)
+{
+    response.Headers["X-Session-Server-Time"] =
+        observedAtUtc.ToString("O", CultureInfo.InvariantCulture);
+    response.Headers["X-Session-Inactivity-Expires-At"] =
+        inactivityExpiresAtUtc.ToString("O", CultureInfo.InvariantCulture);
+    response.Headers["X-Session-Absolute-Expires-At"] =
+        absoluteExpiresAtUtc.ToString("O", CultureInfo.InvariantCulture);
 }
 
 static async Task<bool> IsAntiforgeryRequestValidAsync(

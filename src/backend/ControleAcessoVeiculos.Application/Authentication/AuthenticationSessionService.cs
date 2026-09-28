@@ -109,6 +109,10 @@ public sealed class AuthenticationSessionService(
                 return RenewSessionResult.Success(
                     accessToken,
                     successor.Value,
+                    now,
+                    sessionPolicy.GetInactivityDeadline(
+                        nextSession.UltimaAtividadeEm,
+                        nextSession.ExpiraEm),
                     nextSession.ExpiraEm,
                     new LoginUser(
                         authenticationSession.User.Id,
@@ -182,15 +186,19 @@ public sealed record RenewSessionResult(
     string? AccessToken,
     DateTime? ExpiresAtUtc,
     string? RefreshToken,
+    DateTime? SessionObservedAtUtc,
+    DateTime? SessionInactivityExpiresAtUtc,
     DateTime? SessionExpiresAtUtc,
     LoginUser? User)
 {
     public static RenewSessionResult Invalid() =>
-        new(false, null, null, null, null, null);
+        new(false, null, null, null, null, null, null, null);
 
     public static RenewSessionResult Success(
         AccessToken accessToken,
         string refreshToken,
+        DateTime sessionObservedAtUtc,
+        DateTime sessionInactivityExpiresAtUtc,
         DateTime sessionExpiresAtUtc,
         LoginUser user) =>
         new(
@@ -198,6 +206,8 @@ public sealed record RenewSessionResult(
             accessToken.Value,
             accessToken.ExpiresAtUtc,
             refreshToken,
+            sessionObservedAtUtc,
+            sessionInactivityExpiresAtUtc,
             sessionExpiresAtUtc,
             user);
 }
