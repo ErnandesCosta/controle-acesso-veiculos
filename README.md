@@ -15,11 +15,11 @@ Sistema web para digitalizar o registro, a consulta e a auditoria da movimentaç
 
 ## Materiais acadêmicos e de acompanhamento
 
-| Material | Finalidade | Acesso |
-|---|---|---|
-| Wiki do projeto | Visão, requisitos, arquitetura, segurança, testes, operação e andamento do projeto | [Acessar a Wiki](https://github.com/ifpebj-ti/controle-acesso-veiculos/wiki) |
-| Protótipo no Figma | Fluxos, telas e validações de UX/UI do sistema | [Abrir o protótipo](https://www.figma.com/design/N6EOkXw8Ex7cZayyh4MJfY/Propotipagem?node-id=56-64&t=xA090z9jSE17HXUq-1) |
-| Slides das weeklies | Apresentações semanais de acompanhamento do Projeto Integrador | [Ver no Canva](https://canva.link/tjsp5iu5c5iwbdp) |
+| Material            | Finalidade                                                                         | Acesso                                                                                                                   |
+| ------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Wiki do projeto     | Visão, requisitos, arquitetura, segurança, testes, operação e andamento do projeto | [Acessar a Wiki](https://github.com/ifpebj-ti/controle-acesso-veiculos/wiki)                                             |
+| Protótipo no Figma  | Fluxos, telas e validações de UX/UI do sistema                                     | [Abrir o protótipo](https://www.figma.com/design/N6EOkXw8Ex7cZayyh4MJfY/Propotipagem?node-id=56-64&t=xA090z9jSE17HXUq-1) |
+| Slides das weeklies | Apresentações semanais de acompanhamento do Projeto Integrador                     | [Ver no Canva](https://canva.link/tjsp5iu5c5iwbdp)                                                                       |
 
 Esses materiais apoiam o acompanhamento acadêmico. Decisões técnicas e
 históricas que afetem o projeto devem continuar registradas no repositório e na
@@ -27,58 +27,66 @@ Wiki para preservar a rastreabilidade.
 
 ## Estado atual
 
-> Atualizado em 13 de setembro de 2026. O MVP técnico está integrado localmente, mas ainda depende de homologação institucional e infraestrutura de produção antes do uso real na portaria.
+> Atualizado em 28 de setembro de 2026. O MVP técnico está integrado na
+> `main` e possui uma release versionada para demonstração, mas ainda depende
+> de homologação institucional e infraestrutura de produção antes do uso real
+> na portaria.
 
-| Área | Estado |
-|---|---|
-| Produto | MVP documentado para os Formulários nº 01 e nº 02; regras institucionais ainda precisam de validação |
-| Frontend | Aplicação responsiva integrada à API para autenticação, acessos, histórico, correção, frota, motoristas, eventos e resumo diário; renovação segura da sessão permanece na Issue #191 |
-| Backend | API .NET 10 com autenticação, ciclo administrativo de contas, consulta administrativa da auditoria, fluxo geral, histórico e correção descritiva rastreável, manutenção de frota, motoristas, saída/retorno, histórico institucional, autorizações de eventos e resumo operacional diário |
-| Dados | PostgreSQL 16, EF Core 10, treze entidades e treze migrations versionadas |
-| Infraestrutura | Dockerfiles e Compose endurecidos, containers não privilegiados, Nginx com política de conteúdo e cabeçalhos defensivos verificados pela CI, build e scan por arquitetura, smoke test integrado, publicação multi-plataforma `linux/amd64` e `linux/arm64` no GHCR, proveniência assinada e SBOM SPDX por arquitetura atestado no digest do manifesto após integração na `main`, além de ensaio local de backup/restauração e exportação OpenTelemetry configurável |
-| Qualidade | 189 testes automatizados no backend, incluindo PostgreSQL real, e 249 testes no frontend da `main`, com cobertura publicada pela CI |
-| Segurança | JWT curto, sessões renováveis com rotação e revogação no servidor, cookies protegidos, CSRF, contas individuais, autorização por operação, rate limiting e auditoria transacional implementados; integração frontend da sessão, matriz final, retenção e imutabilidade em produção pendentes |
-| Deploy | Imagens OCI versionadas no GHCR pela CI e base OTLP implementada; ambiente de homologação, HTTPS, collector, painéis, alertas, backup protegido e deploy ainda não configurados |
+| Área           | Estado                                                                                                                                                                                                                                                                          |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Produto        | MVP de veículos documentado e demonstrável; regras ainda não confirmadas permanecem identificadas como hipóteses                                                                                                                                                                |
+| Frontend       | Aplicação responsiva integrada à API para autenticação, acessos, histórico, correção e encerramento excepcional, frota, motoristas, eventos, contas, auditoria e resumo diário                                                                                                  |
+| Backend        | API .NET 10 com autenticação renovável, ciclo administrativo de contas, auditoria, fluxo geral, frota institucional, eventos e resumo operacional                                                                                                                               |
+| Dados          | PostgreSQL 16, EF Core 10, treze entidades e dezesseis migrations versionadas                                                                                                                                                                                                   |
+| Infraestrutura | Containers endurecidos, smoke test integrado, scans, SBOM, proveniência e imagens GHCR para `linux/amd64` e `linux/arm64`; Compose de produção consome a mesma versão publicada sem recompilar no host                                                                          |
+| Qualidade      | 251 testes automatizados no backend, incluindo 133 testes com PostgreSQL real, e 378 testes no frontend da `main`, com cobertura publicada pela CI                                                                                                                              |
+| Segurança      | JWT curto, refresh token em cookie protegido, rotação, revogação, CSRF, contas individuais, credenciais temporárias, troca de senha, autorização no servidor, rate limiting, auditoria, CodeQL, Dependency Review, Trivy e ZAP passivo; riscos residuais continuam documentados |
+| Deploy         | Release técnica `v0.2.0` e imagens semânticas no GHCR disponíveis; homologação, HTTPS, segredos gerenciados, monitoramento, backup protegido e deploy institucional continuam pendentes                                                                                         |
+
+A [matriz de evidências da Unidade 1](docs/validation/unit-1-readiness.md)
+relaciona cada requisito acadêmico ao documento, código, workflow ou release
+que permite verificá-lo. O registro é uma fotografia da entrega e não substitui
+os checks atuais do GitHub.
 
 Os endpoints `/health`, `/health/live` e `/health/ready` são verificações técnicas. Autenticação, autorização e demais controles são exercitados diretamente nos contratos reais do produto; a API não mantém endpoints de exemplo do template ASP.NET Core.
 
 Os contratos operacionais e administrativos disponíveis são:
 
-| Método e rota | Finalidade |
-|---|---|
-| `POST /auth/login` | autentica uma conta ativa e retorna JWT, expiração e identidade mínima (`id`, e-mail e perfil) |
-| `GET /auth/csrf` | emite o token antifalsificação necessário para renovar ou encerrar a sessão |
-| `POST /auth/refresh` | rotaciona o refresh token em cookie `HttpOnly` e retorna um novo JWT curto |
-| `POST /auth/logout` | revoga a família da sessão no servidor e expira o cookie |
-| `GET /users` | pesquisa contas por nome/e-mail e estado, com paginação restrita a Administrador |
-| `POST /users` | cria uma conta individual para um dos perfis preliminares do MVP |
-| `DELETE /users/{id}` | desativa uma conta, revoga seus JWTs na próxima requisição e preserva o histórico |
-| `POST /users/{id}/reactivation` | reativa a conta e limpa bloqueio temporário e tentativas anteriores |
-| `GET /audits` | consulta a trilha por período, ação, entidade, registro e ator, restrita a Administrador |
-| `GET /access-records/entry-candidates` | pesquisa pares ativos de veículo e condutor para o fluxo recorrente, com resposta mínima e limite de resultados |
-| `POST /access-records/entries` | registra entrada e cria ou reutiliza pessoa, veículo, vínculo e categoria em uma transação; uma seleção recorrente é revalidada no servidor |
-| `GET /access-records/open` | lista veículos com acesso ainda aberto |
-| `GET /access-records/history` | pesquisa acessos por período, placa, condutor, categoria ou status para Portaria, Vigilância, Transporte e Administração |
-| `POST /access-records/{id}/exit` | encerra um acesso usando horário e usuário autenticado do servidor |
-| `POST /access-records/{id}/exceptional-closure` | regulariza uma saída não registrada sem inventar horário e mantém auditoria separada |
-| `PUT /access-records/{id}/correction` | corrige objetivo, categoria e observação com justificativa para Porteiro, Vigilante e Administrador |
-| `GET /institutional-vehicles` | lista a frota institucional ativa para operação e conferência |
-| `POST /institutional-vehicles` | cadastra veículo institucional para `SetorTransporte` ou `Administrador` |
-| `PUT /institutional-vehicles/{id}` | atualiza os dados da frota com auditoria transacional |
-| `DELETE /institutional-vehicles/{id}` | inativa o veículo sem apagar viagens ou histórico |
-| `POST /institutional-vehicles/{id}/reactivation` | reativa explicitamente um veículo institucional |
-| `GET /institutional-drivers` | lista somente pessoas com autorização ativa para dirigir a frota |
-| `POST /institutional-drivers` | autoriza um motorista para `SetorTransporte` ou `Administrador` |
-| `DELETE /institutional-drivers/{id}` | revoga a autorização sem apagar seu histórico |
-| `POST /institutional-vehicle-usages/departures` | registra a saída de veículo institucional e motorista já cadastrados |
-| `GET /institutional-vehicle-usages/open` | lista usos institucionais ainda sem retorno |
-| `GET /institutional-vehicle-usages/history` | pesquisa usos por período, veículo ou motorista para Transporte e Administrador |
-| `POST /institutional-vehicle-usages/{id}/returns` | registra retorno e valida a quilometragem |
-| `GET /event-authorizations` | pesquisa autorizações de eventos por período, nome e estado para os quatro perfis do MVP |
-| `POST /event-authorizations` | cria uma autorização de evento somente para `Administrador` |
-| `PUT /event-authorizations/{id}` | atualiza evento e regras de veículos na mesma transação auditada, somente para `Administrador` |
-| `DELETE /event-authorizations/{id}` | cancela logicamente a autorização sem apagar seu histórico, somente para `Administrador` |
-| `GET /operations/daily-summary` | resume entradas, saídas, usos institucionais e acessos vinculados a eventos no dia local informado |
+| Método e rota                                     | Finalidade                                                                                                                                  |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /auth/login`                                | autentica uma conta ativa e retorna JWT, expiração e identidade mínima (`id`, e-mail e perfil)                                              |
+| `GET /auth/csrf`                                  | emite o token antifalsificação necessário para renovar ou encerrar a sessão                                                                 |
+| `POST /auth/refresh`                              | rotaciona o refresh token em cookie `HttpOnly` e retorna um novo JWT curto                                                                  |
+| `POST /auth/logout`                               | revoga a família da sessão no servidor e expira o cookie                                                                                    |
+| `GET /users`                                      | pesquisa contas por nome/e-mail e estado, com paginação restrita a Administrador                                                            |
+| `POST /users`                                     | cria uma conta individual para um dos perfis preliminares do MVP                                                                            |
+| `DELETE /users/{id}`                              | desativa uma conta, revoga seus JWTs na próxima requisição e preserva o histórico                                                           |
+| `POST /users/{id}/reactivation`                   | reativa a conta e limpa bloqueio temporário e tentativas anteriores                                                                         |
+| `GET /audits`                                     | consulta a trilha por período, ação, entidade, registro e ator, restrita a Administrador                                                    |
+| `GET /access-records/entry-candidates`            | pesquisa pares ativos de veículo e condutor para o fluxo recorrente, com resposta mínima e limite de resultados                             |
+| `POST /access-records/entries`                    | registra entrada e cria ou reutiliza pessoa, veículo, vínculo e categoria em uma transação; uma seleção recorrente é revalidada no servidor |
+| `GET /access-records/open`                        | lista veículos com acesso ainda aberto                                                                                                      |
+| `GET /access-records/history`                     | pesquisa acessos por período, placa, condutor, categoria ou status para Portaria, Vigilância, Transporte e Administração                    |
+| `POST /access-records/{id}/exit`                  | encerra um acesso usando horário e usuário autenticado do servidor                                                                          |
+| `POST /access-records/{id}/exceptional-closure`   | regulariza uma saída não registrada sem inventar horário e mantém auditoria separada                                                        |
+| `PUT /access-records/{id}/correction`             | corrige objetivo, categoria e observação com justificativa para Porteiro, Vigilante e Administrador                                         |
+| `GET /institutional-vehicles`                     | lista a frota institucional ativa para operação e conferência                                                                               |
+| `POST /institutional-vehicles`                    | cadastra veículo institucional para `SetorTransporte` ou `Administrador`                                                                    |
+| `PUT /institutional-vehicles/{id}`                | atualiza os dados da frota com auditoria transacional                                                                                       |
+| `DELETE /institutional-vehicles/{id}`             | inativa o veículo sem apagar viagens ou histórico                                                                                           |
+| `POST /institutional-vehicles/{id}/reactivation`  | reativa explicitamente um veículo institucional                                                                                             |
+| `GET /institutional-drivers`                      | lista somente pessoas com autorização ativa para dirigir a frota                                                                            |
+| `POST /institutional-drivers`                     | autoriza um motorista para `SetorTransporte` ou `Administrador`                                                                             |
+| `DELETE /institutional-drivers/{id}`              | revoga a autorização sem apagar seu histórico                                                                                               |
+| `POST /institutional-vehicle-usages/departures`   | registra a saída de veículo institucional e motorista já cadastrados                                                                        |
+| `GET /institutional-vehicle-usages/open`          | lista usos institucionais ainda sem retorno                                                                                                 |
+| `GET /institutional-vehicle-usages/history`       | pesquisa usos por período, veículo ou motorista para Transporte e Administrador                                                             |
+| `POST /institutional-vehicle-usages/{id}/returns` | registra retorno e valida a quilometragem                                                                                                   |
+| `GET /event-authorizations`                       | pesquisa autorizações de eventos por período, nome e estado para os quatro perfis do MVP                                                    |
+| `POST /event-authorizations`                      | cria uma autorização de evento somente para `Administrador`                                                                                 |
+| `PUT /event-authorizations/{id}`                  | atualiza evento e regras de veículos na mesma transação auditada, somente para `Administrador`                                              |
+| `DELETE /event-authorizations/{id}`               | cancela logicamente a autorização sem apagar seu histórico, somente para `Administrador`                                                    |
+| `GET /operations/daily-summary`                   | resume entradas, saídas, usos institucionais e acessos vinculados a eventos no dia local informado                                          |
 
 A placa e a identificação de frota são normalizadas. O PostgreSQL impede duplicidades no catálogo, autorizações repetidas e dois acessos ou usos institucionais abertos para o mesmo veículo, inclusive em requisições concorrentes. As operações geram trilha de auditoria com operador, horário, registro e transição de estado na mesma transação; se a auditoria falhar, a operação é revertida. Nome do condutor, placa, objetivo e categoria são obrigatórios no fluxo geral. Porteiro, Vigilante e Administrador podem corrigir objetivo, categoria e observação com justificativa, sem alterar placa, condutor, horários, status ou autoria original. No fluxo institucional, o veículo deve estar ativo e a pessoa precisa de autorização explícita e ativa como motorista; revogar a autorização bloqueia novas saídas, mas não impede registrar o retorno de uma viagem aberta.
 
@@ -129,14 +137,14 @@ Application -> Domain
 Infrastructure -> EF Core -> PostgreSQL
 ```
 
-| Área | Tecnologias |
-|---|---|
-| Frontend | React 19, TypeScript, Vite 8, Tailwind CSS 4, React Router, Axios, React Hook Form e Zod |
-| Backend | .NET 10, ASP.NET Core Web API e C# |
-| Persistência | Entity Framework Core 10, Npgsql e PostgreSQL 16 |
-| Testes | xUnit, Testcontainers, `WebApplicationFactory` e coverlet |
-| Infraestrutura | Docker, Docker Compose, Nginx e GitHub Actions |
-| Implantação futura | VM Linux na Oracle Cloud Infrastructure, ainda não configurada |
+| Área               | Tecnologias                                                                              |
+| ------------------ | ---------------------------------------------------------------------------------------- |
+| Frontend           | React 19, TypeScript, Vite 8, Tailwind CSS 4, React Router, Axios, React Hook Form e Zod |
+| Backend            | .NET 10, ASP.NET Core Web API e C#                                                       |
+| Persistência       | Entity Framework Core 10, Npgsql e PostgreSQL 16                                         |
+| Testes             | xUnit, Testcontainers, `WebApplicationFactory` e coverlet                                |
+| Infraestrutura     | Docker, Docker Compose, Nginx e GitHub Actions                                           |
+| Implantação futura | VM Linux na Oracle Cloud Infrastructure, ainda não configurada                           |
 
 O Domain não referencia Entity Framework Core. O `DbContext`, as configurações Fluent API e as migrations permanecem em Infrastructure.
 
@@ -202,11 +210,11 @@ docker compose up --build
 
 Serviços padrão:
 
-| Serviço | Endereço local |
-|---|---|
-| Frontend | `http://localhost:3000` |
-| API | `http://localhost:8080` |
-| PostgreSQL | `localhost:5432` |
+| Serviço    | Endereço local          |
+| ---------- | ----------------------- |
+| Frontend   | `http://localhost:3000` |
+| API        | `http://localhost:8080` |
+| PostgreSQL | `localhost:5432`        |
 
 O Compose não aplica migrations automaticamente. Em outro terminal, a partir da raiz do repositório, configure a conexão com os mesmos valores do seu `.env` e execute `dotnet ef database update` conforme a seção de migrations.
 
@@ -230,6 +238,29 @@ antes de executar `pull` ou promover uma release.
 
 Esse Compose é uma base operacional reproduzível, não uma declaração de que o
 ambiente institucional de produção já foi provisionado ou aprovado.
+
+A release técnica atual pode ser inspecionada sem usar tags por digest ou
+recompilar as aplicações no servidor:
+
+```bash
+docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-backend:0.2.0
+docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-frontend:0.2.0
+```
+
+Para validar e iniciar a composição completa, crie localmente o arquivo
+`.env.production` conforme o exemplo versionado e execute:
+
+```bash
+cd infrastructure/docker
+docker compose --env-file .env.production --file docker-compose.production.yml config --quiet
+docker compose --env-file .env.production --file docker-compose.production.yml pull
+docker compose --env-file .env.production --file docker-compose.production.yml up --detach --remove-orphans --wait
+```
+
+Use somente uma versão existente no
+[`CHANGELOG.md`](CHANGELOG.md) e nas
+[Releases](https://github.com/ifpebj-ti/controle-acesso-veiculos/releases). Não
+use `main` ou `latest` para implantação.
 
 ### Backup e restauração local
 
@@ -661,10 +692,10 @@ A Wiki abrange o projeto completo, não apenas o backend. Documentos acadêmicos
 
 Papéis principais:
 
-| Pessoa | Responsabilidade principal | Apoio |
-|---|---|---|
-| [Raíssa Beatriz](https://github.com/Raissa-Beatriz) | Frontend e UX/UI | DevOps, infraestrutura e QA |
-| [José Ernandes](https://github.com/ErnandesCosta) | Backend e banco de dados | DevOps, infraestrutura e QA |
+| Pessoa                                              | Responsabilidade principal | Apoio                       |
+| --------------------------------------------------- | -------------------------- | --------------------------- |
+| [Raíssa Beatriz](https://github.com/Raissa-Beatriz) | Frontend e UX/UI           | DevOps, infraestrutura e QA |
+| [José Ernandes](https://github.com/ErnandesCosta)   | Backend e banco de dados   | DevOps, infraestrutura e QA |
 
 ## Licença
 
