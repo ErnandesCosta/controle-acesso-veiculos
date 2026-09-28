@@ -1,7 +1,12 @@
 const refreshLockName = "controle-acesso-veiculos:session-refresh";
 const channelName = "controle-acesso-veiculos:session-events";
 
-type SessionEvent = { type: "session-ended" };
+export type SessionEvent =
+  | {
+      occurredAtEpochMilliseconds: number;
+      type: "human-activity";
+    }
+  | { reason?: "inactivity"; type: "session-ended" };
 type SessionEventListener = (event: SessionEvent) => void;
 
 let channel: BroadcastChannel | null = null;
@@ -28,8 +33,17 @@ export async function runWithSessionRefreshLock<T>(
   );
 }
 
-export function broadcastSessionEnded() {
+export function broadcastHumanActivity(occurredAtEpochMilliseconds: number) {
+  if (!Number.isFinite(occurredAtEpochMilliseconds)) return;
   getSessionChannel()?.postMessage({
+    occurredAtEpochMilliseconds,
+    type: "human-activity",
+  } satisfies SessionEvent);
+}
+
+export function broadcastSessionEnded(reason?: "inactivity") {
+  getSessionChannel()?.postMessage({
+    ...(reason ? { reason } : {}),
     type: "session-ended",
   } satisfies SessionEvent);
 }
@@ -40,6 +54,10 @@ export function subscribeToSessionEvents(listener: SessionEventListener) {
 
   return () => {
     listeners.delete(listener);
+    if (listeners.size === 0) {
+      channel?.close();
+      channel = null;
+    }
   };
 }
 
@@ -56,10 +74,22 @@ function getSessionChannel() {
 }
 
 function isSessionEvent(value: unknown): value is SessionEvent {
+  if (typeof value !== "object" || value === null || !("type" in value)) {
+    return false;
+  }
+
+  if (value.type === "session-ended") {
+    return (
+      !("reason" in value) ||
+      value.reason === undefined ||
+      value.reason === "inactivity"
+    );
+  }
+
   return (
-    typeof value === "object" &&
-    value !== null &&
-    "type" in value &&
-    value.type === "session-ended"
+    value.type === "human-activity" &&
+    "occurredAtEpochMilliseconds" in value &&
+    typeof value.occurredAtEpochMilliseconds === "number" &&
+    Number.isFinite(value.occurredAtEpochMilliseconds)
   );
 }

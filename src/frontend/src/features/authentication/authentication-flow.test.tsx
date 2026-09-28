@@ -1,7 +1,32 @@
+import { StrictMode } from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const humanActivityHarness = vi.hoisted(() => ({
+  onActivity: undefined as
+    ((occurredAtEpochMilliseconds: number) => void) | undefined,
+  onResume: undefined as (() => void) | undefined,
+}));
+
+vi.mock("./session/humanActivity", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("./session/humanActivity")>();
+  return {
+    ...actual,
+    subscribeToHumanActivity: vi.fn(({ onActivity, onResume }) => {
+      humanActivityHarness.onActivity = onActivity;
+      humanActivityHarness.onResume = onResume;
+      return () => {
+        if (humanActivityHarness.onActivity === onActivity) {
+          humanActivityHarness.onActivity = undefined;
+          humanActivityHarness.onResume = undefined;
+        }
+      };
+    }),
+  };
+});
 
 import { AppLayout } from "../../components/layout/AppLayout";
 import { LoginPage } from "../../pages/LoginPage";
@@ -16,6 +41,10 @@ import {
   setApiUnauthorizedHandler,
 } from "../../services/api";
 import { SessionProvider } from "./session/SessionProvider";
+import {
+  sessionContinuityStorageKey,
+  writeSessionContinuity,
+} from "./session/sessionContinuity";
 import { useAuthenticatedSession } from "./session/useSession";
 import type { AuthenticatedSession, ProfileName } from "./types";
 
@@ -25,8 +54,11 @@ function sessionFor(
   requiresPasswordChange = false,
 ): AuthenticatedSession {
   return {
+    absoluteExpiresAtUtc: new Date(Date.now() + 12 * 60 * 60_000).toISOString(),
     accessToken: "test-only-access-token",
     expiresAtUtc: new Date(Date.now() + expiresInMilliseconds).toISOString(),
+    inactivityExpiresAtUtc: new Date(Date.now() + 15 * 60_000).toISOString(),
+    serverTimeUtc: new Date(Date.now()).toISOString(),
     user: {
       email: "operator@example.test",
       id: 42,
@@ -34,6 +66,42 @@ function sessionFor(
       requiresPasswordChange,
     },
   };
+}
+
+function responseFor(
+  profileName: ProfileName,
+  expiresInMilliseconds = 60_000,
+  requiresPasswordChange = false,
+) {
+  const data = sessionFor(
+    profileName,
+    expiresInMilliseconds,
+    requiresPasswordChange,
+  );
+  const {
+    absoluteExpiresAtUtc,
+    inactivityExpiresAtUtc,
+    serverTimeUtc,
+    ...responseData
+  } = data;
+  return {
+    data: responseData,
+    headers: {
+      "x-session-absolute-expires-at": absoluteExpiresAtUtc,
+      "x-session-inactivity-expires-at": inactivityExpiresAtUtc,
+      "x-session-server-time": serverTimeUtc,
+    },
+  };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, reject, resolve };
 }
 
 function renderRestrictedApplication(
@@ -100,8 +168,9 @@ function AppFrame() {
 
 function renderAuthenticationFlow(
   initialEntry: string | { pathname: string; state?: unknown } = "/login",
+  strictMode = false,
 ) {
-  return render(
+  const application = (
     <SessionProvider>
       <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
@@ -116,7 +185,10 @@ function renderAuthenticationFlow(
           </Route>
         </Routes>
       </MemoryRouter>
-    </SessionProvider>,
+    </SessionProvider>
+  );
+  return render(
+    strictMode ? <StrictMode>{application}</StrictMode> : application,
   );
 }
 
@@ -131,6 +203,10 @@ async function submitCredentials() {
 }
 
 beforeEach(() => {
+  humanActivityHarness.onActivity = undefined;
+  humanActivityHarness.onResume = undefined;
+  window.localStorage.clear();
+  window.sessionStorage.clear();
   Object.defineProperty(navigator, "locks", {
     configurable: true,
     value: {
@@ -150,16 +226,28 @@ afterEach(() => {
   setApiAccessToken(null);
   setApiSessionRefreshHandler(null);
   setApiUnauthorizedHandler(null);
+  window.localStorage.clear();
+  window.sessionStorage.clear();
 });
+
+function seedRestorableSession() {
+  const now = Date.now();
+  writeSessionContinuity({
+    absoluteDeadlineEpochMilliseconds: now + 12 * 60 * 60_000,
+    humanDeadlineEpochMilliseconds: now + 15 * 60_000,
+    observedAtEpochMilliseconds: now,
+  });
+}
 
 describe("authentication flow", () => {
   it("restores a renewable session before rendering protected content", async () => {
+    seedRestorableSession();
     vi.mocked(api.get).mockResolvedValue({
       data: { requestToken: "test-only-csrf-token" },
     });
-    const post = vi.spyOn(api, "post").mockResolvedValue({
-      data: sessionFor("Porteiro"),
-    });
+    const post = vi
+      .spyOn(api, "post")
+      .mockResolvedValue(responseFor("Porteiro"));
 
     renderAuthenticationFlow("/visao-geral");
 
@@ -176,10 +264,90 @@ describe("authentication flow", () => {
     });
   });
 
+  it("does not duplicate refresh or continuity writes during a StrictMode remount", async () => {
+    seedRestorableSession();
+    const setItem = vi.spyOn(Storage.prototype, "setItem");
+    vi.mocked(api.get).mockResolvedValue({
+      data: { requestToken: "test-only-csrf-token" },
+    });
+    const post = vi
+      .spyOn(api, "post")
+      .mockResolvedValue(responseFor("Porteiro"));
+
+    renderAuthenticationFlow("/visao-geral", true);
+
+    expect(
+      await screen.findByText("operator@example.test — Porteiro"),
+    ).toBeInTheDocument();
+    expect(
+      post.mock.calls.filter(([url]) => url === "/auth/refresh"),
+    ).toHaveLength(1);
+    expect(
+      setItem.mock.calls.filter(([key]) => key === sessionContinuityStorageKey),
+    ).toHaveLength(1);
+  });
+
+  it("does not request refresh when temporal continuity metadata is absent", async () => {
+    const post = vi.spyOn(api, "post");
+
+    renderAuthenticationFlow("/visao-geral");
+
+    expect(
+      await screen.findByRole("heading", { name: "Bem-vindo," }),
+    ).toBeInTheDocument();
+    expect(post.mock.calls.some(([url]) => url === "/auth/refresh")).toBe(
+      false,
+    );
+  });
+
+  it("does not request refresh with expired continuity metadata", async () => {
+    const now = Date.now();
+    window.localStorage.setItem(
+      sessionContinuityStorageKey,
+      JSON.stringify({
+        absoluteDeadlineEpochMilliseconds: now + 60_000,
+        humanDeadlineEpochMilliseconds: now - 1,
+        observedAtEpochMilliseconds: now - 15 * 60_000,
+        version: 1,
+      }),
+    );
+    const post = vi.spyOn(api, "post");
+
+    renderAuthenticationFlow("/visao-geral");
+
+    expect(
+      await screen.findByRole("heading", { name: "Bem-vindo," }),
+    ).toBeInTheDocument();
+    expect(post).not.toHaveBeenCalled();
+    expect(window.localStorage).toHaveLength(0);
+  });
+
+  it("does not restore a discarded application while it is in the background", async () => {
+    seedRestorableSession();
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "hidden",
+    });
+    const post = vi.spyOn(api, "post");
+
+    try {
+      renderAuthenticationFlow("/visao-geral");
+      expect(
+        await screen.findByRole("heading", { name: "Bem-vindo," }),
+      ).toBeInTheDocument();
+      expect(post).not.toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+    }
+  });
+
   it("uses the identity and profile returned by the API", async () => {
     const post = vi
       .spyOn(api, "post")
-      .mockResolvedValue({ data: sessionFor("Porteiro") });
+      .mockResolvedValue(responseFor("Porteiro"));
 
     renderAuthenticationFlow();
     await submitCredentials();
@@ -195,14 +363,16 @@ describe("authentication flow", () => {
       },
       { skipSessionRefresh: true },
     );
-    expect(window.localStorage).toHaveLength(0);
+    const continuity = window.localStorage.getItem(sessionContinuityStorageKey);
+    expect(continuity).not.toBeNull();
+    expect(continuity).not.toMatch(/token|email|profile|password|user/i);
     expect(window.sessionStorage).toHaveLength(0);
   });
 
   it("routes a restricted login directly to mandatory password change", async () => {
-    vi.spyOn(api, "post").mockResolvedValue({
-      data: sessionFor("Porteiro", 60_000, true),
-    });
+    vi.spyOn(api, "post").mockResolvedValue(
+      responseFor("Porteiro", 60_000, true),
+    );
 
     renderRestrictedApplication();
     await submitCredentials();
@@ -225,9 +395,9 @@ describe("authentication flow", () => {
   });
 
   it("routes a normal login to the requested application page", async () => {
-    vi.spyOn(api, "post").mockResolvedValue({
-      data: sessionFor("Porteiro", 60_000, false),
-    });
+    vi.spyOn(api, "post").mockResolvedValue(
+      responseFor("Porteiro", 60_000, false),
+    );
 
     renderRestrictedApplication();
     await submitCredentials();
@@ -241,12 +411,13 @@ describe("authentication flow", () => {
   });
 
   it("restores a restricted session into password change before rendering a manual operational URL", async () => {
+    seedRestorableSession();
     vi.mocked(api.get).mockResolvedValue({
       data: { requestToken: "test-only-csrf-token" },
     });
-    vi.spyOn(api, "post").mockResolvedValue({
-      data: sessionFor("Vigilante", 60_000, true),
-    });
+    vi.spyOn(api, "post").mockResolvedValue(
+      responseFor("Vigilante", 60_000, true),
+    );
 
     renderRestrictedApplication("/acessos/novo");
 
@@ -265,7 +436,7 @@ describe("authentication flow", () => {
       .spyOn(api, "post")
       .mockImplementation(async (url) =>
         url === "/auth/login"
-          ? { data: sessionFor("SetorTransporte", 60_000, true) }
+          ? responseFor("SetorTransporte", 60_000, true)
           : { data: undefined },
       );
 
@@ -300,7 +471,7 @@ describe("authentication flow", () => {
       .spyOn(api, "post")
       .mockImplementation(async (url) =>
         url === "/auth/login"
-          ? { data: sessionFor("Administrador", 60_000, true) }
+          ? responseFor("Administrador", 60_000, true)
           : { data: undefined },
       );
 
@@ -371,12 +542,11 @@ describe("authentication flow", () => {
     expect(
       await screen.findByRole("heading", { name: "Bem-vindo," }),
     ).toBeInTheDocument();
+    expect(window.localStorage).toHaveLength(0);
   });
 
   it("shows an explicit access denied state for an incompatible profile", async () => {
-    vi.spyOn(api, "post").mockResolvedValue({
-      data: sessionFor("SetorTransporte"),
-    });
+    vi.spyOn(api, "post").mockResolvedValue(responseFor("SetorTransporte"));
 
     renderAuthenticationFlow({
       pathname: "/login",
@@ -393,7 +563,7 @@ describe("authentication flow", () => {
   it("clears the local session on logout", async () => {
     vi.spyOn(api, "post").mockImplementation(async (url) =>
       url === "/auth/login"
-        ? { data: sessionFor("Administrador") }
+        ? responseFor("Administrador")
         : { data: undefined },
     );
 
@@ -408,12 +578,11 @@ describe("authentication flow", () => {
     expect(
       await screen.findByRole("heading", { name: "Bem-vindo," }),
     ).toBeInTheDocument();
+    expect(window.localStorage).toHaveLength(0);
   });
 
   it("clears the local session and announces a completed password change", async () => {
-    vi.spyOn(api, "post").mockResolvedValue({
-      data: sessionFor("Porteiro"),
-    });
+    vi.spyOn(api, "post").mockResolvedValue(responseFor("Porteiro"));
 
     renderAuthenticationFlow();
     await submitCredentials();
@@ -435,9 +604,7 @@ describe("authentication flow", () => {
   });
 
   it("clears the local session even when server logout cannot be confirmed", async () => {
-    vi.spyOn(api, "post").mockResolvedValue({
-      data: sessionFor("Administrador"),
-    });
+    vi.spyOn(api, "post").mockResolvedValue(responseFor("Administrador"));
 
     renderAuthenticationFlow();
     await submitCredentials();
@@ -462,15 +629,8 @@ describe("authentication flow", () => {
     vi.setSystemTime(new Date("2030-06-10T12:00:00Z"));
 
     try {
-      vi.mocked(api.get)
-        .mockRejectedValueOnce({
-          isAxiosError: true,
-          response: { status: 401 },
-        })
-        .mockRejectedValue(new Error("network unavailable"));
-      vi.spyOn(api, "post").mockResolvedValue({
-        data: sessionFor("Porteiro", 120_000),
-      });
+      vi.mocked(api.get).mockRejectedValue(new Error("network unavailable"));
+      vi.spyOn(api, "post").mockResolvedValue(responseFor("Porteiro", 120_000));
       renderAuthenticationFlow();
       await act(async () => vi.advanceTimersByTimeAsync(0));
       fireEvent.change(screen.getByLabelText("E-mail:"), {
@@ -500,20 +660,13 @@ describe("authentication flow", () => {
     }
   });
 
-  it("ends the in-memory session when the token reaches its expiration", async () => {
+  it("keeps a renewable session when only the access token expires", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2030-06-10T12:00:00Z"));
 
     try {
-      vi.mocked(api.get)
-        .mockRejectedValueOnce({
-          isAxiosError: true,
-          response: { status: 401 },
-        })
-        .mockRejectedValue(new Error("connection failed"));
-      vi.spyOn(api, "post").mockResolvedValue({
-        data: sessionFor("Vigilante", 60_000),
-      });
+      vi.mocked(api.get).mockRejectedValue(new Error("connection failed"));
+      vi.spyOn(api, "post").mockResolvedValue(responseFor("Vigilante", 60_000));
 
       renderAuthenticationFlow();
       await act(async () => {
@@ -539,14 +692,398 @@ describe("authentication flow", () => {
         await vi.advanceTimersByTimeAsync(60_000);
       });
 
+      expect(
+        screen.getByText("operator@example.test — Vigilante"),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(window.localStorage).not.toHaveLength(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("waits for human activity after the access token expires in the background", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2030-06-10T12:00:00Z"));
+
+    try {
+      vi.mocked(api.get).mockResolvedValue({
+        data: { requestToken: "test-only-csrf-token" },
+      });
+      const post = vi
+        .spyOn(api, "post")
+        .mockResolvedValue(responseFor("Porteiro", 120_000));
+      renderAuthenticationFlow();
+      await act(async () => vi.advanceTimersByTimeAsync(0));
+      fireEvent.change(screen.getByLabelText("E-mail:"), {
+        target: { value: "operator@example.test" },
+      });
+      fireEvent.change(screen.getByLabelText("Senha:"), {
+        target: { value: "test-only-password" },
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Entrar" }));
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "hidden",
+      });
+
+      await act(async () => vi.advanceTimersByTimeAsync(120_000));
+
+      expect(
+        post.mock.calls.filter(([url]) => url === "/auth/refresh"),
+      ).toHaveLength(0);
+      expect(
+        screen.getByText("operator@example.test — Porteiro"),
+      ).toBeInTheDocument();
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      act(() => humanActivityHarness.onResume?.());
+      expect(
+        post.mock.calls.filter(([url]) => url === "/auth/refresh"),
+      ).toHaveLength(0);
+      expect(
+        screen.getByText("operator@example.test — Porteiro"),
+      ).toBeInTheDocument();
+
+      await act(async () => {
+        humanActivityHarness.onActivity?.(Date.now());
+        humanActivityHarness.onActivity?.(Date.now());
+        await vi.advanceTimersByTimeAsync(0);
+      });
+
+      expect(
+        post.mock.calls.filter(([url]) => url === "/auth/refresh"),
+      ).toHaveLength(1);
+    } finally {
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      vi.useRealTimers();
+    }
+  });
+
+  it("reconciles newer human activity persisted by another tab after suspension", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2030-06-10T12:00:00Z"));
+
+    try {
+      vi.spyOn(api, "post").mockResolvedValue(
+        responseFor("Vigilante", 30 * 60_000),
+      );
+      renderAuthenticationFlow();
+      await act(async () => vi.advanceTimersByTimeAsync(0));
+      fireEvent.change(screen.getByLabelText("E-mail:"), {
+        target: { value: "operator@example.test" },
+      });
+      fireEvent.change(screen.getByLabelText("Senha:"), {
+        target: { value: "test-only-password" },
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Entrar" }));
+        await vi.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(10 * 60_000);
+      });
+      const previous = JSON.parse(
+        window.localStorage.getItem(sessionContinuityStorageKey) ?? "null",
+      ) as {
+        absoluteDeadlineEpochMilliseconds: number;
+        version: number;
+      };
+      window.localStorage.setItem(
+        sessionContinuityStorageKey,
+        JSON.stringify({
+          absoluteDeadlineEpochMilliseconds:
+            previous.absoluteDeadlineEpochMilliseconds,
+          humanDeadlineEpochMilliseconds: Date.now() + 15 * 60_000,
+          observedAtEpochMilliseconds: Date.now(),
+          version: previous.version,
+        }),
+      );
+
+      act(() => humanActivityHarness.onResume?.());
+
+      const canonical = JSON.parse(
+        window.localStorage.getItem(sessionContinuityStorageKey) ?? "null",
+      ) as {
+        absoluteDeadlineEpochMilliseconds: number;
+        humanDeadlineEpochMilliseconds: number;
+      };
+      expect(canonical.humanDeadlineEpochMilliseconds).toBe(
+        Date.now() + 15 * 60_000,
+      );
+      expect(canonical.absoluteDeadlineEpochMilliseconds).toBe(
+        previous.absoluteDeadlineEpochMilliseconds,
+      );
+      expect(
+        screen.getByText("operator@example.test — Vigilante"),
+      ).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not let an HTTP 401 bypass a renewal awaiting human activity", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2030-06-10T12:00:00Z"));
+
+    try {
+      const post = vi
+        .spyOn(api, "post")
+        .mockResolvedValue(responseFor("Porteiro", 120_000));
+      renderAuthenticationFlow();
+      await act(async () => vi.advanceTimersByTimeAsync(0));
+      fireEvent.change(screen.getByLabelText("E-mail:"), {
+        target: { value: "operator@example.test" },
+      });
+      fireEvent.change(screen.getByLabelText("Senha:"), {
+        target: { value: "test-only-password" },
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Entrar" }));
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "hidden",
+      });
+      await act(async () => vi.advanceTimersByTimeAsync(60_000));
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      act(() => humanActivityHarness.onResume?.());
+      vi.mocked(api.get).mockRestore();
+
+      await expect(
+        api.get("/protected", {
+          adapter: async (config) =>
+            Promise.reject({
+              config,
+              isAxiosError: true,
+              response: { config, data: null, headers: {}, status: 401 },
+            }),
+        }),
+      ).rejects.toMatchObject({ isAxiosError: true });
+
+      expect(
+        post.mock.calls.filter(([url]) => url === "/auth/refresh"),
+      ).toHaveLength(0);
+      vi.spyOn(api, "get").mockResolvedValue({
+        data: { requestToken: "test-only-csrf-token" },
+      });
+      await act(async () => {
+        humanActivityHarness.onActivity?.(Date.now());
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(
+        post.mock.calls.filter(([url]) => url === "/auth/refresh"),
+      ).toHaveLength(1);
+    } finally {
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      vi.useRealTimers();
+    }
+  });
+
+  it("clears a pending background renewal when the operator logs out", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2030-06-10T12:00:00Z"));
+
+    try {
+      vi.mocked(api.get).mockResolvedValue({
+        data: { requestToken: "test-only-csrf-token" },
+      });
+      const post = vi
+        .spyOn(api, "post")
+        .mockImplementation(async (url) =>
+          url === "/auth/login"
+            ? responseFor("Administrador", 120_000)
+            : { data: undefined },
+        );
+      renderAuthenticationFlow();
+      await act(async () => vi.advanceTimersByTimeAsync(0));
+      fireEvent.change(screen.getByLabelText("E-mail:"), {
+        target: { value: "operator@example.test" },
+      });
+      fireEvent.change(screen.getByLabelText("Senha:"), {
+        target: { value: "test-only-password" },
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Entrar" }));
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      const staleActivityCallback = humanActivityHarness.onActivity;
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "hidden",
+      });
+      await act(async () => vi.advanceTimersByTimeAsync(60_000));
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Sair" }));
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      act(() => staleActivityCallback?.(Date.now()));
+
+      expect(
+        post.mock.calls.filter(([url]) => url === "/auth/refresh"),
+      ).toHaveLength(0);
+      expect(window.localStorage).toHaveLength(0);
+    } finally {
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      vi.useRealTimers();
+    }
+  });
+
+  it("ends safely when resumed continuity metadata is corrupt", async () => {
+    vi.spyOn(api, "post").mockResolvedValue(responseFor("Porteiro"));
+    renderAuthenticationFlow();
+    await submitCredentials();
+    await screen.findByText("operator@example.test — Porteiro");
+    window.localStorage.setItem(sessionContinuityStorageKey, "not-json");
+
+    act(() => humanActivityHarness.onResume?.());
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Sua sessão terminou por inatividade. Entre novamente para continuar.",
+    );
+    expect(window.localStorage).toHaveLength(0);
+  });
+
+  it("ends and revokes the session after fifteen minutes without human activity", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2030-06-10T12:00:00Z"));
+
+    try {
+      vi.mocked(api.get).mockResolvedValue({
+        data: { requestToken: "test-only-csrf-token" },
+      });
+      const post = vi
+        .spyOn(api, "post")
+        .mockImplementation(async (url) =>
+          url === "/auth/login"
+            ? responseFor("Porteiro", 20 * 60_000)
+            : { data: undefined },
+        );
+
+      renderAuthenticationFlow();
+      await act(async () => vi.advanceTimersByTimeAsync(0));
+      fireEvent.change(screen.getByLabelText("E-mail:"), {
+        target: { value: "operator@example.test" },
+      });
+      fireEvent.change(screen.getByLabelText("Senha:"), {
+        target: { value: "test-only-password" },
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Entrar" }));
+        await vi.advanceTimersByTimeAsync(0);
+      });
+
+      expect(
+        screen.getByText("operator@example.test — Porteiro"),
+      ).toBeInTheDocument();
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "hidden",
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(15 * 60_000);
+      });
+
       expect(screen.getByRole("alert")).toHaveTextContent(
-        "Sua sessão expirou. Entre novamente para continuar.",
+        "Sua sessão terminou por inatividade. Entre novamente para continuar.",
       );
       expect(screen.getByLabelText("E-mail:")).toHaveAttribute(
         "aria-describedby",
         "login-status-message",
       );
+      expect(
+        post.mock.calls.filter(([url]) => url === "/auth/logout"),
+      ).toHaveLength(1);
+      expect(window.localStorage).toHaveLength(0);
+      act(() => humanActivityHarness.onActivity?.(Date.now()));
+      expect(
+        post.mock.calls.filter(([url]) => url === "/auth/refresh"),
+      ).toHaveLength(0);
     } finally {
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not restore a session when refresh finishes after inactivity", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2030-06-10T12:00:00Z"));
+    const refreshResponse = deferred<ReturnType<typeof responseFor>>();
+
+    try {
+      vi.mocked(api.get).mockResolvedValue({
+        data: { requestToken: "test-only-csrf-token" },
+      });
+      const post = vi.spyOn(api, "post").mockImplementation(async (url) => {
+        if (url === "/auth/login") {
+          return responseFor("Vigilante", 15 * 60_000 + 30_000);
+        }
+        if (url === "/auth/refresh") return refreshResponse.promise;
+        return { data: undefined };
+      });
+
+      renderAuthenticationFlow();
+      await act(async () => vi.advanceTimersByTimeAsync(0));
+      fireEvent.change(screen.getByLabelText("E-mail:"), {
+        target: { value: "operator@example.test" },
+      });
+      fireEvent.change(screen.getByLabelText("Senha:"), {
+        target: { value: "test-only-password" },
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Entrar" }));
+        await vi.advanceTimersByTimeAsync(0);
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(14 * 60_000 + 30_000);
+      });
+      expect(
+        post.mock.calls.filter(([url]) => url === "/auth/refresh"),
+      ).toHaveLength(1);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_000);
+      });
+      refreshResponse.resolve(responseFor("Vigilante", 15 * 60_000));
+      await act(async () => vi.advanceTimersByTimeAsync(0));
+
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Sua sessão terminou por inatividade. Entre novamente para continuar.",
+      );
+      expect(
+        screen.queryByText("operator@example.test — Vigilante"),
+      ).not.toBeInTheDocument();
+    } finally {
+      refreshResponse.reject(new Error("test cleanup"));
       vi.useRealTimers();
     }
   });

@@ -27,13 +27,17 @@ export interface AuthenticatedUser {
 }
 
 export interface AuthenticatedSession {
+  absoluteExpiresAtUtc: string;
   accessToken: string;
   expiresAtUtc: string;
+  inactivityExpiresAtUtc: string;
+  serverTimeUtc: string;
   user: AuthenticatedUser;
 }
 
 export type SessionEndReason =
   | "expired"
+  | "inactive"
   | "logout-unconfirmed"
   | "password-changed"
   | "restoration-unavailable"
