@@ -8,6 +8,8 @@ from its first published release.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-29
+
 ### Added
 
 - A production-oriented Compose file consumes matching versioned backend and
@@ -27,10 +29,17 @@ from its first published release.
 
 - Primary backend and frontend GHCR packages publish only from reviewed semantic
   release tags, keeping ordinary `main` pushes validation-only.
+- User-facing text and high-priority actions use consistent language, visual
+  hierarchy, and accessible confirmation patterns across the main workflows.
 - Destructive and sensitive frontend operations use reusable accessible
   confirmation dialogs with focus management and keyboard support.
 - Unit 1 evidence, the integrated homologation guide, ZAP evidence, retention,
   recovery targets, and the protected OCI backup design were consolidated.
+
+### Fixed
+
+- Conditional form controls receive focus only after they become available,
+  preserving keyboard operation without focus races.
 
 ### Security
 
@@ -46,6 +55,9 @@ from its first published release.
   Administrator profile while read access remains available to all MVP profiles.
 - HTTP telemetry records route templates instead of user-controlled request
   targets, avoiding query-string and path-value disclosure.
+
+This is a technical MVP release for demonstration and evaluation. It is not an
+institutional production approval or deployment.
 
 ## [0.2.0] - 2026-09-20
 
@@ -114,5 +126,6 @@ Changes merged before this changelog was introduced remain traceable through the
 Git history, Pull Requests, Issues, and project Wiki. They must not be
 retroactively presented as a published release without an evidence-based review.
 
-[Unreleased]: https://github.com/ifpebj-ti/controle-acesso-veiculos/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/ifpebj-ti/controle-acesso-veiculos/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/ifpebj-ti/controle-acesso-veiculos/releases/tag/v0.3.0
 [0.2.0]: https://github.com/ifpebj-ti/controle-acesso-veiculos/releases/tag/v0.2.0
