@@ -1,9 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import type {
   Control,
   FieldErrors,
   UseFormClearErrors,
   UseFormRegister,
+  UseFormSetFocus,
 } from "react-hook-form";
 import { Controller } from "react-hook-form";
 
@@ -20,6 +21,7 @@ interface EntryVehicleTypeFieldProps {
   errors: FieldErrors<AccessEntryFormValues>;
   register: UseFormRegister<AccessEntryFormValues>;
   selectedVehicleType: AccessEntryFormValues["vehicleType"];
+  setFocus: UseFormSetFocus<AccessEntryFormValues>;
 }
 
 export function EntryVehicleTypeField({
@@ -28,23 +30,9 @@ export function EntryVehicleTypeField({
   errors,
   register,
   selectedVehicleType,
+  setFocus,
 }: EntryVehicleTypeFieldProps) {
-  const previousVehicleType = useRef(selectedVehicleType);
-
-  useEffect(() => {
-    if (selectedVehicleType !== previousVehicleType.current) {
-      clearErrors(["vehicleType", "vehicleTypeOther"]);
-    }
-    if (
-      selectedVehicleType === customEntryOption &&
-      previousVehicleType.current !== customEntryOption
-    ) {
-      window.requestAnimationFrame(() =>
-        document.getElementById("vehicleTypeOther")?.focus(),
-      );
-    }
-    previousVehicleType.current = selectedVehicleType;
-  }, [clearErrors, selectedVehicleType]);
+  const focusCustomFieldOnClose = useRef(false);
 
   return (
     <div>
@@ -65,7 +53,19 @@ export function EntryVehicleTypeField({
             id="vehicleType"
             name={field.name}
             onBlur={field.onBlur}
-            onValueChange={field.onChange}
+            onCloseAutoFocus={(event) => {
+              if (!focusCustomFieldOnClose.current) return;
+              event.preventDefault();
+              focusCustomFieldOnClose.current = false;
+              setFocus("vehicleTypeOther");
+            }}
+            onValueChange={(value) => {
+              clearErrors(["vehicleType", "vehicleTypeOther"]);
+              focusCustomFieldOnClose.current =
+                value === customEntryOption &&
+                selectedVehicleType !== customEntryOption;
+              field.onChange(value);
+            }}
             options={[
               { label: "Não informado", value: "" },
               ...vehicleTypeOptions.map((option) => ({
