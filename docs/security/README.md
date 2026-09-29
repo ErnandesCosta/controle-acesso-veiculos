@@ -9,6 +9,7 @@ Esta pasta contém a fonte versionada dos documentos de segurança do projeto.
 - [Análise dinâmica com OWASP ZAP](dynamic-application-security-testing.md)
 - [Amostra histórica do baseline passivo do ZAP](evidence/zap-baseline-2026-09-16/README.md)
 - [ADR 0001 — ciclo de vida seguro de sessões](../architecture/decisions/0001-secure-session-lifecycle.md)
+- [ADR 0002 — retenção de dados e backup protegido na OCI](../architecture/decisions/0002-data-retention-and-oci-backup.md)
 
 A Wiki apresenta cópias de leitura e contexto acadêmico, mas mudanças nestes
 documentos devem passar por Issue, branch, revisão e Pull Request.
@@ -40,8 +41,8 @@ Antes da apresentação, confira se o relatório contém:
 - 1 ator, 5 processos, 4 depósitos, 8 fluxos e 5 fronteiras;
 - as ameaças `TM-01` a `TM-23` sem duplicidade;
 - distinção entre controles mitigados e riscos ainda abertos;
-- OCI, HTTPS, backup externo, observabilidade operada e homologação como
-  pendências, não como funcionalidades prontas.
+- desenho de backup na OCI como decisão aprovada, mas provisionamento, HTTPS,
+  observabilidade operada e homologação como pendências, não funcionalidades prontas.
 
 Não inclua credenciais, endereços internos, dados pessoais, capturas de produção
 ou segredos no modelo ou no PDF exportado.
