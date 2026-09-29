@@ -24,8 +24,10 @@ A partir da raiz do repositório:
 ```
 
 O dump é criado em `infrastructure/database/backups/`, no formato custom do
-PostgreSQL, com nome UTC. O diretório inteiro é ignorado pelo Git. O script também
-valida a estrutura do arquivo com `pg_restore --list`.
+PostgreSQL, com nome UTC. Ao lado dele, o script cria o manifesto
+`<arquivo>.dump.manifest.json`, contendo somente versão do formato, algoritmo,
+nome, tamanho, SHA-256 e horário UTC. O diretório inteiro é ignorado pelo Git. O
+script também valida a estrutura do arquivo com `pg_restore --list`.
 
 ## Comprovar a restauração
 
@@ -38,11 +40,13 @@ Informe o dump criado:
 
 O script:
 
-1. valida o arquivo;
-2. cria um banco temporário com nome aleatório;
-3. restaura todo o dump com falha explícita;
-4. confirma a presença das tabelas essenciais;
-5. remove o banco temporário e a cópia no container, inclusive após falha.
+1. exige e valida o manifesto correspondente;
+2. confere nome, tamanho e SHA-256 antes de copiar o dump ao container;
+3. valida a estrutura do arquivo;
+4. cria um banco temporário com nome aleatório;
+5. restaura todo o dump com falha explícita;
+6. confirma a presença das tabelas essenciais;
+7. remove o banco temporário e a cópia no container, inclusive após falha.
 
 Ele não aceita um banco de destino e nunca substitui o banco operacional.
 
@@ -59,11 +63,17 @@ definir na Issue #30:
 - contingência da portaria e reconciliação posterior;
 - procedimento aprovado para restauração real, que é uma ação destrutiva.
 
+O SHA-256 detecta corrupção ou troca acidental quando o manifesto permanece
+íntegro. Ele não autentica a origem: quem puder substituir os dois arquivos
+também poderá calcular outro hash. Portanto, o manifesto não substitui
+criptografia, assinatura, armazenamento imutável ou controle de acesso.
+
 Os scripts atuais são destinados exclusivamente ao desenvolvimento local e ao
 ensaio técnico. Um backup só deve ser considerado recuperável após a restauração
 ter sido testada com sucesso.
 
 O workflow `CI - Database recovery` repete o ciclo com dados fictícios sempre que
-os scripts ou a configuração local do PostgreSQL mudam. Essa verificação evita
-regressões técnicas, mas não substitui ensaios periódicos com a infraestrutura e
-os responsáveis institucionais reais.
+os scripts ou a configuração local do PostgreSQL mudam. Ele comprova a
+restauração do arquivo íntegro e a rejeição de uma cópia alterada. Essa
+verificação evita regressões técnicas, mas não substitui ensaios periódicos com a
+infraestrutura e os responsáveis institucionais reais.
