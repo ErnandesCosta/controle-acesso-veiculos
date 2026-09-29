@@ -81,6 +81,7 @@ export function NewAccessPage() {
     reset,
     clearErrors,
     setError,
+    setFocus,
     setValue,
   } = useForm<AccessEntryFormValues>({
     defaultValues,
@@ -418,6 +419,7 @@ export function NewAccessPage() {
                 errors={errors}
                 register={register}
                 selectedVehicleType={selectedVehicleType}
+                setFocus={setFocus}
               />
 
               <Controller

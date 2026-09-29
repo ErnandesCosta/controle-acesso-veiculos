@@ -18,6 +18,7 @@ interface SelectFieldProps {
   id: string;
   name?: string;
   onBlur?: () => void;
+  onCloseAutoFocus?: (event: Event) => void;
   onValueChange: (value: string) => void;
   options: SelectOption[];
   placeholder?: string;
@@ -41,6 +42,7 @@ export function SelectField({
   id,
   name,
   onBlur,
+  onCloseAutoFocus,
   onValueChange,
   options,
   placeholder,
@@ -73,6 +75,7 @@ export function SelectField({
         <SelectPrimitive.Content
           className="z-50 max-h-[min(22rem,var(--radix-select-content-available-height))] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-2xl border border-ink/15 bg-white p-1.5 text-ink shadow-[0_18px_45px_rgba(0,73,83,0.18)]"
           collisionPadding={12}
+          onCloseAutoFocus={onCloseAutoFocus}
           position="popper"
           sideOffset={6}
         >

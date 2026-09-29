@@ -6,6 +6,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { StrictMode } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -157,15 +158,16 @@ function apiError(status: number, data: unknown) {
   return { isAxiosError: true, response: { data, status } };
 }
 
-function renderPage() {
-  return render(
+function renderPage({ strictMode = false } = {}) {
+  const page = (
     <MemoryRouter initialEntries={["/acessos/novo"]}>
       <Routes>
         <Route path="/acessos/novo" element={<NewAccessPage />} />
         <Route path="/acessos/abertos" element={<h1>Acessos carregados</h1>} />
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
+  return render(strictMode ? <StrictMode>{page}</StrictMode> : page);
 }
 
 type TestUser = ReturnType<typeof userEvent.setup>;
@@ -1142,6 +1144,31 @@ describe("NewAccessPage", () => {
       "vehicleTypeOther-error",
     );
     expect(registerAccessEntry).not.toHaveBeenCalled();
+  });
+
+  it("moves focus to the conditional vehicle type and back using only the keyboard", async () => {
+    const user = userEvent.setup();
+    renderPage({ strictMode: true });
+
+    const vehicleType = screen.getByLabelText(/Tipo do veículo/);
+    vehicleType.focus();
+    await user.keyboard("{Enter}Outro{Enter}");
+
+    const vehicleTypeOther = await screen.findByLabelText(
+      /Outro tipo de veículo/,
+    );
+    expect(vehicleTypeOther).toHaveFocus();
+    await user.type(vehicleTypeOther, "Triciclo fictício");
+
+    await user.tab({ shift: true });
+    expect(vehicleType).toHaveFocus();
+    await user.keyboard("{Enter}Automóvel{Enter}");
+
+    expect(vehicleType).toHaveFocus();
+    expect(vehicleType).toHaveAttribute("data-value", vehicleTypeOptions[0]);
+    expect(
+      screen.queryByLabelText(/Outro tipo de veículo/),
+    ).not.toBeInTheDocument();
   });
 
   it("associates API errors with the active custom fields", async () => {
