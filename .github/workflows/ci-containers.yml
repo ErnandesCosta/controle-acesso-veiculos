@@ -368,12 +368,37 @@ jobs:
         working-directory: infrastructure/docker
         run: docker compose down --volumes --remove-orphans --timeout 10
 
+  validate-release-tag:
+    name: Validate semantic release tag
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Validate release version
+        id: version
+        shell: bash
+        run: |
+          release_version="${GITHUB_REF_NAME#v}"
+
+          if [[ ! "${release_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid release tag: ${GITHUB_REF_NAME}" >&2
+            exit 1
+          fi
+
+          echo "version=${release_version}" >> "${GITHUB_OUTPUT}"
+
   publish-platform:
     name: Publish verified ${{ matrix.image }} (${{ matrix.platform }})
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs:
       - build-and-scan
       - compose-smoke-test
+      - validate-release-tag
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -527,9 +552,10 @@ jobs:
 
   publish-manifest:
     name: Publish verified ${{ matrix.image }} multi-platform manifest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs:
       - publish-platform
+      - validate-release-tag
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -546,6 +572,7 @@ jobs:
           - frontend
     env:
       IMAGE_NAME: ghcr.io/ifpebj-ti/controle-acesso-veiculos-${{ matrix.image }}
+      RELEASE_VERSION: ${{ needs.validate-release-tag.outputs.version }}
 
     steps:
       - name: Set up Docker Buildx
@@ -574,7 +601,6 @@ jobs:
 
           docker buildx imagetools create \
             --tag "${immutable_tag}" \
-            --tag "${IMAGE_NAME}:main" \
             "${IMAGE_NAME}:sha-${GITHUB_SHA}-amd64" \
             "${IMAGE_NAME}:sha-${GITHUB_SHA}-arm64"
 
@@ -627,71 +653,28 @@ jobs:
           sbom-path: ${{ github.workspace }}/sboms/${{ matrix.image }}-arm64.spdx.json
           push-to-registry: true
 
-  publish-release-tag:
-    name: Publish verified ${{ matrix.image }} release tag
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    needs:
-      - build-and-scan
-      - compose-smoke-test
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-      packages: write
-    strategy:
-      fail-fast: false
-      matrix:
-        image:
-          - backend
-          - frontend
-    env:
-      IMAGE_NAME: ghcr.io/ifpebj-ti/controle-acesso-veiculos-${{ matrix.image }}
-
-    steps:
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          logout: true
-
-      - name: Validate and publish semantic version tag
+      - name: Publish immutable semantic release tag
         shell: bash
         run: |
-          release_version="${GITHUB_REF_NAME#v}"
-
-          if [[ ! "${release_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Invalid release tag: ${GITHUB_REF_NAME}" >&2
-            exit 1
-          fi
-
           immutable_tag="${IMAGE_NAME}:sha-${GITHUB_SHA}"
-          release_tag="${IMAGE_NAME}:${release_version}"
-          manifest_json="$(docker buildx imagetools inspect "${immutable_tag}" --raw)"
-
-          jq --exit-status '
-            (.schemaVersion == 2)
-            and ([
-              .manifests[]
-              | select(.platform.os == "linux")
-              | .platform.architecture
-            ] | sort == ["amd64", "arm64"])
-            and ([.manifests[] | select(.platform.os == "linux")] | length == 2)
-          ' <<< "${manifest_json}" > /dev/null
-
-          source_digest="$(
-            docker buildx imagetools inspect \
-              "${immutable_tag}" \
-              --format '{{json .Manifest.Digest}}' \
-              | tr -d '"'
-          )"
+          release_tag="${IMAGE_NAME}:${RELEASE_VERSION}"
+          source_digest="${{ steps.manifest.outputs.digest }}"
 
           if [[ ! "${source_digest}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
             echo "Could not resolve a valid digest for ${immutable_tag}" >&2
+            exit 1
+          fi
+
+          existing_digest="$(
+            docker buildx imagetools inspect \
+              "${release_tag}" \
+              --format '{{json .Manifest.Digest}}' 2>/dev/null \
+              | tr -d '"' \
+              || true
+          )"
+
+          if [[ -n "${existing_digest}" && "${existing_digest}" != "${source_digest}" ]]; then
+            echo "Refusing to move existing release tag ${release_tag}." >&2
             exit 1
           fi
 

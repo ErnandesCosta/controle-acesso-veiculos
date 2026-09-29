@@ -158,12 +158,15 @@ mais recente da branch `main`.
 | versão semântica | implantação de uma release revisada | `:0.2.0`           |
 | commit           | rastreabilidade técnica da CI       | `:sha-<commit>`    |
 | digest           | fixação criptográfica exata         | `@sha256:<digest>` |
-| `main`           | integração contínua; nunca produção | `:main`            |
 
 A página do package no GitHub também pode exibir objetos `sha256-...` gerados
 para armazenamento e atestações OCI. Eles não substituem a tag legível da
 release. Quando for necessário fixar um digest, a sintaxe correta usa `@sha256:`,
 e não `:sha256-`.
+
+Os packages principais recebem novas imagens somente em tags Git revisadas no
+formato `vMAJOR.MINOR.PATCH`. Pushes comuns na `main` continuam sendo validados,
+mas não substituem a versão exibida no GHCR.
 
 O Compose de produção não contém `build` e exige a mesma versão para frontend e
 backend:
