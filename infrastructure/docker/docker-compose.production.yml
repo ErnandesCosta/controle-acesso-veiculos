@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: ghcr.io/ifpebj-ti/controle-acesso-veiculos-frontend:${DEPLOYMENT_VERSION:?Defina DEPLOYMENT_VERSION com uma versao publicada, por exemplo 0.2.0}
+    image: ghcr.io/ifpebj-ti/controle-acesso-veiculos-frontend:${DEPLOYMENT_VERSION:?Defina DEPLOYMENT_VERSION com uma versao publicada, por exemplo 0.3.0}
     pull_policy: always
     ports:
       - "${FRONTEND_BIND_ADDRESS:-127.0.0.1}:${FRONTEND_PORT:-8080}:8080"
@@ -31,7 +31,7 @@ services:
       - edge
 
   backend:
-    image: ghcr.io/ifpebj-ti/controle-acesso-veiculos-backend:${DEPLOYMENT_VERSION:?Defina DEPLOYMENT_VERSION com uma versao publicada, por exemplo 0.2.0}
+    image: ghcr.io/ifpebj-ti/controle-acesso-veiculos-backend:${DEPLOYMENT_VERSION:?Defina DEPLOYMENT_VERSION com uma versao publicada, por exemplo 0.3.0}
     pull_policy: always
     environment:
       ASPNETCORE_ENVIRONMENT: Production
