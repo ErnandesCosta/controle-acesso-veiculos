@@ -36,7 +36,7 @@
                   "title": "TM-01 — Conta compartilhada, inicial ou roubada",
                   "type": "Spoofing",
                   "description": "Uma conta compartilhada ou comprometida impede atribuir com confiança a operação ao responsável real.",
-                  "mitigation": "Usar contas individuais, hash de senha, bloqueio temporário, troca autenticada com versão de credencial, credencial temporária de uso único e expiração curta, troca obrigatória, revogação transacional e auditoria. Canal de entrega, responsáveis institucionais e homologação permanecem pendentes nas Issues #162 e #220.",
+                  "mitigation": "Usar contas individuais, hash de senha, bloqueio temporário, troca autenticada com versão de credencial, credencial temporária de uso único e expiração curta, troca obrigatória, revogação transacional e auditoria. Dois Administradores funcionais realizam a recuperação e entregam a credencial diretamente ao titular; o procedimento e o prazo ainda devem ser observados na homologação da Issue #162.",
                   "modelType": "STRIDE",
                   "id": "10000000-0000-4000-8000-000000000001"
                 }

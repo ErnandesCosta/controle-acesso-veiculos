@@ -6,11 +6,11 @@
 
 **Método:** diagrama de fluxo de dados e classificação STRIDE
 
-**Versão:** 3.3
+**Versão:** 3.4
 
-**Data de referência:** 21 de setembro de 2026
+**Data de referência:** 29 de setembro de 2026
 
-**Rastreabilidade:** Issues #26, #67, #69, #71, #73, #76, #78, #90, #102, #104, #106, #190, #191, #196, #210, #213, #218, #227, #251 e #258
+**Rastreabilidade:** Issues #26, #67, #69, #71, #73, #76, #78, #90, #102, #104, #106, #190, #191, #196, #210, #213, #218, #220, #227, #251 e #258
 
 ## Objetivo e limites
 
@@ -20,7 +20,7 @@ CI/CD, operação local, implantação futura e backups.
 
 Não são considerados implementados:
 
-- matriz definitiva de autorização e recuperação de acesso;
+- matriz definitiva de autorização;
 - auditoria transversal e imutável;
 - demais endpoints funcionais além dos fluxos geral, correção descritiva, institucional, consultas históricas e catálogos de frota e motoristas;
 - ambiente de homologação ou produção;
@@ -149,7 +149,7 @@ frontend melhora usabilidade, mas não é controle de segurança suficiente.
 
 | ID    | STRIDE                             | Cenário                                                                                                        |   P |   I | Nível | Mitigação e rastreabilidade                                                                                                                                                                                                                                                  | Estado                                                                                                                                                                                                                                 |
 | ----- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------- | --: | --: | ----: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TM-01 | Spoofing                           | Conta compartilhada, credencial inicial conhecida por terceiro ou credencial roubada impede identificar o operador |   3 |   3 |     9 | Contas individuais, hash de senha, login uniforme, bloqueio, troca autenticada, versão de credencial, credencial temporária de uso único e expiração curta, troca obrigatória, revogação transacional, auditoria mínima e testes — #29, #71, #73, #251 e #258 | Parcialmente mitigado; provisionamento e redefinição seguros estão implementados, enquanto canal de entrega, responsáveis institucionais e homologação permanecem pendentes nas #162 e #220 |
+| TM-01 | Spoofing                           | Conta compartilhada, credencial inicial conhecida por terceiro ou credencial roubada impede identificar o operador |   3 |   3 |     9 | Contas individuais, hash de senha, login uniforme, bloqueio, troca autenticada, versão de credencial, credencial temporária de uso único e expiração curta, troca obrigatória, revogação transacional, auditoria mínima, dois Administradores funcionais e entrega direta ao titular — #29, #71, #73, #220, #251 e #258 | Mitigado no recorte do MVP; o procedimento de entrega direta e o prazo da credencial ainda devem ser observados na homologação da #162, e HTTPS permanece dependência da implantação institucional |
 | TM-02 | Spoofing                           | Usuário acessa frontend ou API falsos em rede não confiável                                                    |   2 |   3 |     6 | Domínio controlado, HTTPS, certificados e orientação operacional — #25 e implantação futura                                                                                                                                                                                  | Planejado                                                                                                                                                                                                                              |
 | TM-03 | Tampering                          | Cliente altera IDs, status, horários, quilometragem, evento ou identificação de frota enviados à API           |   3 |   3 |     9 | Políticas por recurso, DTOs, validação, normalização, horário do servidor, FK e unicidade/transação — #29, #31, #47, #53, #55, #61, #65, #82 e #271                                                                                                                          | Associação de evento validada e imutável após a entrada; encerramento excepcional separa saída observada de regularização e não aceita horário futuro; correções institucionais pendentes                                               |
 | TM-04 | Tampering                          | Acesso direto ao banco altera ou remove histórico                                                              |   2 |   3 |     6 | Rede restrita, menor privilégio, auditoria, backup e separação de usuários — #30 e #67                                                                                                                                                                                       | Ensaio local de recuperação implementado; controles de produção pendentes                                                                                                                                                              |
