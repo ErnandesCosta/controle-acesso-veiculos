@@ -661,7 +661,7 @@ validação, privacidade, alertas propostos e pendências de produção.
 - Não use dados pessoais reais em testes, seeds, exemplos, issues ou capturas de tela.
 - O frontend recebe apenas variáveis prefixadas por `VITE_`; elas não podem conter segredos.
 - Revise migrations, permissões e logs antes de usar dados institucionais.
-- Os primeiros fluxos de negócio, a manutenção inicial da frota, o catálogo de motoristas e as consultas históricas geral e institucional existem, mas a matriz final de perfis, recuperação e outros casos de uso ainda estão em desenvolvimento; o sistema não deve ser exposto publicamente.
+- Os primeiros fluxos de negócio, a manutenção inicial da frota, o catálogo de motoristas, as consultas históricas e a recuperação administrativa por credencial temporária existem, mas a matriz final de perfis e outros casos de uso ainda estão em desenvolvimento; o sistema não deve ser exposto publicamente.
 
 Consulte a [modelagem de ameaças](docs/security/threat-model.md), o [guia de desenvolvimento seguro](docs/security/secure-development-guide.md) e as [instruções de segurança](.github/instructions/security.instructions.md).
 As decisões e pendências da fundação de login estão em [autenticação e autorização](docs/security/authentication.md).
