@@ -356,6 +356,29 @@ Continuam pendentes antes de produção:
 - transformar cada mudança aprovada em issue independente antes de alterar o
   comportamento implementado.
 
+### 3.11. Decisões de continuidade registradas em 29 de setembro de 2026
+
+O responsável pelo processo confirmou Eurico, do Setor de Transporte, como dono
+funcional. A manutenção técnica será transferida entre as equipes designadas pelo
+curso de Engenharia de Software, acompanhadas pelos orientadores.
+
+Também foram registradas as seguintes decisões:
+
+- cinco anos para registros operacionais, auditoria e formulários físicos de
+  contingência, sujeitos à confirmação do enquadramento arquivístico antes de
+  automatizar o descarte;
+- formulários produzidos durante indisponibilidade serão digitados no sistema,
+  conferidos e mantidos como evidência física pelo mesmo prazo;
+- RPO-alvo de uma hora e RTO-alvo de quatro horas, com contingência imediata em
+  papel;
+- OCI Object Storage privado, OCI Vault, instance principal, MFA e separação de
+  grupos IAM como desenho de produção;
+- primeiro exercício de recuperação e contingência durante a segunda unidade.
+
+O dump diário atual ainda comprova somente RPO técnico de até 24 horas. A Issue
+#311 implementará a cópia protegida e a Issue #312 tratará WAL/PITR para comprovar
+o RPO de uma hora. Nenhuma dessas decisões autoriza produção antes do exercício.
+
 ## 4. Ordem da demonstração
 
 Antes de iniciar, substitua na cópia `*.local.http`:
@@ -516,26 +539,26 @@ apenas coleta evidências e dúvidas que possam apoiar essas decisões.
 
 ## 5. Matriz de rastreabilidade
 
-| Capacidade do MVP               | Contratos principais                                      | Evidência automatizada                                                                                    |
-| ------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Saúde técnica                   | `GET /health`, `/health/live`, `/health/ready`            | `TechnicalEndpointsTests`                                                                                 |
-| Login e bloqueio                | `POST /auth/login`                                        | `AuthenticationTests`, `UsuarioTests`                                                                     |
-| Administração de contas         | `GET/POST/DELETE /users`, reativação                      | `UserAccountLifecycleTests`, `CreateUserAccountServiceTests`, `UserAccountLifecycleServiceTests`          |
+| Capacidade do MVP               | Contratos principais                                                          | Evidência automatizada                                                                                    |
+| ------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Saúde técnica                   | `GET /health`, `/health/live`, `/health/ready`                                | `TechnicalEndpointsTests`                                                                                 |
+| Login e bloqueio                | `POST /auth/login`                                                            | `AuthenticationTests`, `UsuarioTests`                                                                     |
+| Administração de contas         | `GET/POST/DELETE /users`, reativação                                          | `UserAccountLifecycleTests`, `CreateUserAccountServiceTests`, `UserAccountLifecycleServiceTests`          |
 | Entrada, abertos e saída geral  | `/access-records/entries`, `/open`, `/{id}/exit`, `/{id}/exceptional-closure` | `VehicleAccessTests`, `VehicleAccessServiceTests`, `RegistroAcessoTests`                                  |
-| Histórico e correção geral      | `/access-records/history`, `/{id}/correction`             | `VehicleAccessTests`, `VehicleAccessServiceTests`                                                         |
-| Catálogo de frota               | `/institutional-vehicles`                                 | `InstitutionalVehicleCatalogTests`, `InstitutionalVehicleCatalogServiceTests`, `VeiculoTests`             |
-| Motoristas autorizados          | `/institutional-drivers`                                  | `InstitutionalDriverTests`, `InstitutionalDriverServiceTests`, `MotoristaInstitucionalTests`              |
-| Uso institucional               | `/institutional-vehicle-usages`                           | `InstitutionalVehicleUsageTests`, `InstitutionalVehicleUsageServiceTests`, `UsoVeiculoInstitucionalTests` |
-| Autorizações de eventos         | `/event-authorizations`                                   | `EventAuthorizationTests`, `EventAuthorizationServiceTests`, `EventoAcessoTests`                          |
-| Entrada vinculada ao evento     | `POST /access-records/entries` com `eventAuthorizationId` | `EventAccessAssociationTests`                                                                             |
-| Formulário de entrada otimizado | campos existentes de `POST /access-records/entries`       | testes de `NewAccessPage` e validação dos campos condicionais                                             |
-| Lista compacta de abertos       | `GET /access-records/open`, `POST /{id}/exit`             | testes de `OpenAccessPage`, `OpenAccessList` e cálculo de tempo                                           |
-| Navegação por perfil            | rotas e políticas existentes                              | testes de `routeMetadata`, `ProfileRoute` e `AppLayout`                                                   |
-| Resumo diário                   | `GET /operations/daily-summary`                           | `OperationalSummaryTests`, `OperationalSummaryServiceTests`                                               |
-| Auditoria administrativa        | `GET /audits`                                             | `AuditTrailTests`, `AuditTrailServiceTests`, `AuditoriaTests`                                             |
-| Segurança das requisições       | middleware, Problem Details e rate limiting               | `RequestSafetyTests`, `RateLimitingTests`                                                                 |
-| PostgreSQL e migrations         | schema `dbo`, constraints e índices                       | `PostgreSqlPersistenceTests`, setup de `ApiFactory`                                                       |
-| Fronteiras arquiteturais        | dependências entre projetos                               | `ArchitectureTests`                                                                                       |
+| Histórico e correção geral      | `/access-records/history`, `/{id}/correction`                                 | `VehicleAccessTests`, `VehicleAccessServiceTests`                                                         |
+| Catálogo de frota               | `/institutional-vehicles`                                                     | `InstitutionalVehicleCatalogTests`, `InstitutionalVehicleCatalogServiceTests`, `VeiculoTests`             |
+| Motoristas autorizados          | `/institutional-drivers`                                                      | `InstitutionalDriverTests`, `InstitutionalDriverServiceTests`, `MotoristaInstitucionalTests`              |
+| Uso institucional               | `/institutional-vehicle-usages`                                               | `InstitutionalVehicleUsageTests`, `InstitutionalVehicleUsageServiceTests`, `UsoVeiculoInstitucionalTests` |
+| Autorizações de eventos         | `/event-authorizations`                                                       | `EventAuthorizationTests`, `EventAuthorizationServiceTests`, `EventoAcessoTests`                          |
+| Entrada vinculada ao evento     | `POST /access-records/entries` com `eventAuthorizationId`                     | `EventAccessAssociationTests`                                                                             |
+| Formulário de entrada otimizado | campos existentes de `POST /access-records/entries`                           | testes de `NewAccessPage` e validação dos campos condicionais                                             |
+| Lista compacta de abertos       | `GET /access-records/open`, `POST /{id}/exit`                                 | testes de `OpenAccessPage`, `OpenAccessList` e cálculo de tempo                                           |
+| Navegação por perfil            | rotas e políticas existentes                                                  | testes de `routeMetadata`, `ProfileRoute` e `AppLayout`                                                   |
+| Resumo diário                   | `GET /operations/daily-summary`                                               | `OperationalSummaryTests`, `OperationalSummaryServiceTests`                                               |
+| Auditoria administrativa        | `GET /audits`                                                                 | `AuditTrailTests`, `AuditTrailServiceTests`, `AuditoriaTests`                                             |
+| Segurança das requisições       | middleware, Problem Details e rate limiting                                   | `RequestSafetyTests`, `RateLimitingTests`                                                                 |
+| PostgreSQL e migrations         | schema `dbo`, constraints e índices                                           | `PostgreSqlPersistenceTests`, setup de `ApiFactory`                                                       |
+| Fronteiras arquiteturais        | dependências entre projetos                                                   | `ArchitectureTests`                                                                                       |
 
 A suíte automatizada reduz regressões técnicas, mas não substitui a avaliação de
 clareza, utilidade e adequação do processo pelos usuários.
@@ -548,8 +571,12 @@ clareza, utilidade e adequação do processo pelos usuários.
 - [ ] Confirmar os campos mínimos e se documento pessoal pode continuar opcional.
 - [ ] Confirmar quem aciona TI e Setor de Transporte e por qual canal.
 - [ ] Validar dupla conferência e fechamento da reconciliação pelo setor responsável.
-- [ ] Aprovar ou revisar RPO de 24 horas e RTO de 4 horas propostos.
-- [ ] Definir responsáveis nominais, retenção e descarte do formulário reconciliado.
+- [x] Registrar RPO-alvo de 1 hora e RTO-alvo de 4 horas.
+- [x] Definir Eurico como responsável funcional e retenção operacional de cinco
+      anos para o formulário reconciliado.
+- [ ] Designar substituto do responsável, membros dos grupos IAM e referência
+      arquivística ou de proteção de dados.
+- [ ] Executar o exercício na OCI durante a segunda unidade e medir RPO/RTO.
 - [ ] Não usar os endpoints atuais para simular horários históricos; registrar a
       necessidade do fluxo específico de reconciliação.
 
