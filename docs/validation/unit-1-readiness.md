@@ -3,9 +3,9 @@
 ## Objetivo
 
 Este documento relaciona o marco acadêmico da Unidade 1 às evidências
-versionadas do projeto. A fotografia foi verificada em **28 de setembro de 2026**
-sobre a `main` após o merge do PR #290 e deve ser conferida novamente antes da
-apresentação.
+versionadas do projeto. A fotografia foi verificada em **29 de setembro de 2026**
+sobre a `main` após o merge do [PR #304](https://github.com/ifpebj-ti/controle-acesso-veiculos/pull/304)
+e deve ser conferida novamente antes da apresentação.
 
 As classificações usadas são:
 
@@ -29,12 +29,17 @@ As classificações usadas são:
 | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | Modelagem de ameaças                                    | [Modelo STRIDE](../security/threat-model.md), [arquivo do OWASP Threat Dragon](../security/controle-acesso-veiculos-threat-model.json) e [visão na Wiki](https://github.com/ifpebj-ti/controle-acesso-veiculos/wiki/Modelagem-de-Amea%C3%A7as) | Ampliado com riscos, controles, responsáveis e risco residual                              |
 | Guia de boas práticas de desenvolvimento seguro         | [Guia versionado](../security/secure-development-guide.md) e [guia na Wiki](https://github.com/ifpebj-ti/controle-acesso-veiculos/wiki/Guia-de-Boas-Praticas-de-Desenvolvimento-Seguro)                                                        | Atendido                                                                                   |
-| Zero vulnerabilidades críticas aferidas pelo Dependabot | [Dependabot](https://github.com/ifpebj-ti/controle-acesso-veiculos/security/dependabot) e [Dependency Review](https://github.com/ifpebj-ti/controle-acesso-veiculos/actions/workflows/dependency-review.yml)                                   | Atendido na verificação de 28/09/2026: nenhum alerta aberto; isso não significa risco zero |
+| Zero vulnerabilidades críticas aferidas pelo Dependabot | [Dependabot](https://github.com/ifpebj-ti/controle-acesso-veiculos/security/dependabot) e [Dependency Review](https://github.com/ifpebj-ti/controle-acesso-veiculos/actions/workflows/dependency-review.yml)                                   | Atendido na verificação de 29/09/2026: nenhum alerta aberto; isso não significa risco zero |
 
 Controles adicionais incluem CodeQL, Trivy para imagens, SBOM SPDX,
 proveniência assinada, segredos detectados pelo GitHub e baseline passiva do
 OWASP ZAP. O [guia de DAST](../security/dynamic-application-security-testing.md)
 explica o alcance e as limitações do ZAP.
+
+A recuperação administrativa do MVP possui dois Administradores funcionais e
+entrega direta da credencial temporária ao titular, conforme a Issue #220. A
+observação desse procedimento no ambiente real continua na Issue #162 e não
+representa liberação para produção.
 
 ## Infraestrutura
 
@@ -66,10 +71,10 @@ executado.
 
 ## Evidência quantitativa da baseline
 
-| Item na `main`             | Evidência em 28/09/2026                            |
+| Item na `main`             | Evidência em 29/09/2026                            |
 | -------------------------- | -------------------------------------------------- |
 | Testes de backend          | 254 aprovados, incluindo integração com PostgreSQL |
-| Testes de frontend         | 431 aprovados em 44 arquivos                       |
+| Testes de frontend         | 432 aprovados em 44 arquivos                       |
 | Migrations EF Core         | 16 migrations versionadas                          |
 | Alertas Dependabot abertos | 0                                                  |
 | Alertas CodeQL abertos     | 0                                                  |
