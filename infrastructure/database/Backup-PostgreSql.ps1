@@ -27,11 +27,13 @@ if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
 $timestamp = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssfffZ')
 $containerBackupPath = "/tmp/controle-acesso-$([Guid]::NewGuid().ToString('N')).dump"
 $backupFileName = "controle-acesso-$timestamp.dump"
+$containerBackupCreated = $false
 $operationSucceeded = $false
 
 [void](New-Item -ItemType Directory -Path $BackupDirectory -Force)
 $resolvedBackupDirectory = (Resolve-Path -LiteralPath $BackupDirectory).Path
 $backupPath = Join-Path $resolvedBackupDirectory $backupFileName
+$manifestPath = "$backupPath.manifest.json"
 
 try {
   $postgresUser = (Invoke-DockerCompose @('exec', '-T', 'postgresql', 'printenv', 'POSTGRES_USER')).Trim()
@@ -43,6 +45,7 @@ try {
     '--format=custom', '--compress=6', '--no-owner', '--no-privileges',
     "--file=$containerBackupPath"
   ))
+  $containerBackupCreated = $true
   [void](Invoke-DockerCompose @('exec', '-T', 'postgresql', 'pg_restore', '--list', $containerBackupPath))
 
   Invoke-DockerCompose @('cp', "postgresql:$containerBackupPath", $backupPath)
@@ -52,11 +55,24 @@ try {
     throw "The backup file is empty: $backupPath"
   }
 
+  $manifest = [ordered]@{
+    formatVersion = 1
+    algorithm = 'SHA-256'
+    backupFile = $backup.Name
+    sizeBytes = $backup.Length
+    sha256 = (Get-FileHash -LiteralPath $backup.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+    createdAtUtc = [DateTimeOffset]::UtcNow.ToString('O')
+  }
+  $manifestJson = $manifest | ConvertTo-Json
+  [IO.File]::WriteAllText($manifestPath, $manifestJson, [Text.UTF8Encoding]::new($false))
+
   $operationSucceeded = $true
 }
 finally {
   try {
-    [void](Invoke-DockerCompose @('exec', '-T', 'postgresql', 'rm', '-f', '--', $containerBackupPath))
+    if ($containerBackupCreated) {
+      [void](Invoke-DockerCompose @('exec', '-T', 'postgresql', 'rm', '-f', '--', $containerBackupPath))
+    }
   }
   catch {
     if ($operationSucceeded) {
@@ -65,8 +81,17 @@ finally {
 
     Write-Warning "Could not remove the temporary container file: $containerBackupPath"
   }
+
+  if (-not $operationSucceeded) {
+    foreach ($localPath in @($backupPath, $manifestPath)) {
+      if (Test-Path -LiteralPath $localPath -PathType Leaf) {
+        Remove-Item -LiteralPath $localPath -Force
+      }
+    }
+  }
 }
 
 Write-Output "Backup created and archive structure validated: $($backup.FullName)"
 Write-Output "Size: $($backup.Length) bytes"
+Write-Output "Integrity manifest created: $manifestPath"
 Write-Output 'Run Test-PostgreSqlRestore.ps1 before treating this backup as recoverable.'

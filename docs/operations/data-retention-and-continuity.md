@@ -114,9 +114,11 @@ equivalente, com custo, operação e testes próprios.
   conteúdo confiável somente quando sua procedência e integridade são conhecidas.
 
 O procedimento local atual usa `pg_dump` custom e `pg_restore`, não incorpora a
-senha ao arquivo e comprova tabelas essenciais em banco temporário. Ele é uma base
-de teste, mas ainda não oferece armazenamento externo, criptografia ou agendamento
-de produção.
+senha ao arquivo, produz um manifesto SHA-256 e comprova tabelas essenciais em
+banco temporário. O manifesto detecta corrupção quando preservado, mas não prova
+origem se dump e manifesto forem substituídos juntos. O ensaio é uma base de
+teste, mas ainda não oferece armazenamento externo, criptografia, assinatura ou
+agendamento de produção.
 
 ## Contingência da portaria
 

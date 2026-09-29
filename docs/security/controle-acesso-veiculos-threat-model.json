@@ -304,7 +304,7 @@
             "zIndex": 7,
             "data": {
               "name": "Backup protegido",
-              "description": "Dump e restauração são verificáveis localmente. Armazenamento externo de produção ainda não foi definido.",
+              "description": "Dump, manifesto SHA-256 e restauração são verificáveis localmente. Armazenamento externo de produção ainda não foi definido.",
               "type": "tm.Store",
               "isTrustBoundary": false,
               "outOfScope": false,
@@ -321,7 +321,7 @@
                   "title": "TM-15 — Backup desprotegido",
                   "type": "Information disclosure",
                   "description": "Um dump desprotegido pode expor pessoas, placas e histórico operacional.",
-                  "mitigation": "Manter fora do Git; definir criptografia, controle de acesso, retenção, inventário e restauração periódica na Issue #30.",
+                  "mitigation": "Manter fora do Git e verificar o manifesto SHA-256 para detectar corrupção; definir autenticidade, criptografia, controle de acesso, retenção, inventário e restauração periódica nas Issues #30 e #308.",
                   "modelType": "STRIDE",
                   "id": "10000000-0000-4000-8000-000000000015"
                 }
@@ -550,7 +550,7 @@
             "labels": [{ "position": 0.5, "attrs": { "label": { "text": "Backup" } } }],
             "source": { "cell": "00000000-0000-4000-8000-000000000005" },
             "target": { "cell": "00000000-0000-4000-8000-000000000007" },
-            "data": { "type": "tm.Flow", "name": "Dump e restauração", "description": "Verificado localmente; transporte e armazenamento protegido de produção permanecem pendentes.", "protocol": "pg_dump/pg_restore", "isEncrypted": false, "isPublicNetwork": false, "isTrustBoundary": false, "outOfScope": false, "reasonOutOfScope": "", "hasOpenThreats": false, "threats": [] }
+            "data": { "type": "tm.Flow", "name": "Dump e restauração", "description": "Dump e manifesto SHA-256 verificados localmente; transporte, autenticidade e armazenamento protegido de produção permanecem pendentes.", "protocol": "pg_dump/pg_restore + SHA-256", "isEncrypted": false, "isPublicNetwork": false, "isTrustBoundary": false, "outOfScope": false, "reasonOutOfScope": "", "hasOpenThreats": false, "threats": [] }
           },
           {
             "shape": "flow",
