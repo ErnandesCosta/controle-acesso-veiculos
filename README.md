@@ -27,7 +27,7 @@ Wiki para preservar a rastreabilidade.
 
 ## Estado atual
 
-> Atualizado em 28 de setembro de 2026. O MVP técnico está integrado na
+> Atualizado em 29 de setembro de 2026. O MVP técnico está integrado na
 > `main` e possui uma release versionada para demonstração, mas ainda depende
 > de homologação institucional e infraestrutura de produção antes do uso real
 > na portaria.
@@ -39,7 +39,7 @@ Wiki para preservar a rastreabilidade.
 | Backend        | API .NET 10 com autenticação renovável, inatividade de 15 minutos, limite absoluto de 12 horas, ciclo administrativo de contas, auditoria, fluxo geral, frota institucional, eventos e resumo operacional                                                                       |
 | Dados          | PostgreSQL 16, EF Core 10, treze entidades e dezesseis migrations versionadas                                                                                                                                                                                                   |
 | Infraestrutura | Containers endurecidos, smoke test integrado, scans, SBOM, proveniência e imagens GHCR para `linux/amd64` e `linux/arm64`; Compose de produção consome a mesma versão publicada sem recompilar no host                                                                          |
-| Qualidade      | 254 testes automatizados no backend, incluindo PostgreSQL real, e 431 testes no frontend da `main`, com cobertura publicada pela CI                                                                                                                                             |
+| Qualidade      | 254 testes automatizados no backend, incluindo PostgreSQL real, e 432 testes no frontend da `main`, com cobertura publicada pela CI                                                                                                                                             |
 | Segurança      | JWT curto, refresh token em cookie protegido, rotação, revogação, CSRF, contas individuais, credenciais temporárias, troca de senha, autorização no servidor, rate limiting, auditoria, CodeQL, Dependency Review, Trivy e ZAP passivo; riscos residuais continuam documentados |
 | Deploy         | Release técnica `v0.2.0` e imagens semânticas no GHCR disponíveis; homologação, HTTPS, segredos gerenciados, monitoramento, backup protegido e deploy institucional continuam pendentes                                                                                         |
 
