@@ -2,7 +2,7 @@
 
 ## Estado
 
-A fundação técnica da Issue #29 implementa login individual, provisionamento inicial controlado, criação, consulta, desativação e reativação administrativas de contas, hash de senha, bloqueio temporário, access token JWT, negação por padrão e políticas preliminares. A Issue #190 acrescenta o ciclo de vida de sessão controlado pelo servidor, a Issue #251 acrescenta a troca autenticada de senha e a Issue #258 acrescenta credencial temporária, troca obrigatória e redefinição administrativa. A validação institucional da matriz, dos tempos operacionais e do canal definitivo de recuperação permanece nas Issues #75, #162 e #220.
+A fundação técnica da Issue #29 implementa login individual, provisionamento inicial controlado, criação, consulta, desativação e reativação administrativas de contas, hash de senha, bloqueio temporário, access token JWT, negação por padrão e políticas preliminares. A Issue #190 acrescenta o ciclo de vida de sessão controlado pelo servidor, a Issue #251 acrescenta a troca autenticada de senha e a Issue #258 acrescenta credencial temporária, troca obrigatória e redefinição administrativa. A Issue #220 consolida a decisão institucional do MVP: dois Administradores funcionais podem provisionar ou redefinir contas e entregam a credencial temporária diretamente ao titular. A observação do procedimento no ambiente real e a matriz final permanecem na Issue #162.
 
 ## Decisões implementadas
 
@@ -35,7 +35,7 @@ A fundação técnica da Issue #29 implementa login individual, provisionamento 
 - A criação administrativa exige que `password` seja omitido; qualquer valor enviado é rejeitado. O servidor gera uma credencial temporária com 144 bits de entropia, devolvida uma única vez com `Cache-Control: no-store`, impedindo que o Administrador escolha ou conheça a senha permanente do titular.
 - Credenciais temporárias expiram em 30 minutos por padrão e são consumidas atomicamente no primeiro login. Tentativas posteriores recebem o mesmo HTTP 401 genérico; a sessão restrita criada no primeiro uso continua válida apenas para troca de senha, renovação e logout. Somente o hash e os estados técnicos mínimos são persistidos, e a conta não acessa operações de negócio antes de concluir `POST /auth/password`.
 - `POST /users/{id}/temporary-credential` permite somente ao Administrador redefinir outra conta ativa com motivo categorizado. A operação incrementa a versão, revoga sessões, registra auditoria transacional e retorna a nova credencial uma única vez.
-- Porteiro, Vigilante e Setor de Transporte não recebem poder de redefinição. Entrega presencial, delegação e canal institucional continuam como hipóteses a validar.
+- Dois Administradores funcionais são os responsáveis institucionais pelo provisionamento e pela recuperação de acesso no MVP. A credencial temporária gerada pelo servidor deve ser entregue diretamente ao titular, sem planilha, issue, log ou mensageria não aprovada. Porteiro, Vigilante e Setor de Transporte não recebem poder de redefinição; recuperação automática por e-mail, SMS, MFA ou SSO não foi adotada neste recorte.
 - Login bem-sucedido e o momento do bloqueio temporário geram auditoria `Login` associada ao usuário, na mesma unidade de trabalho da mudança de estado.
 - Somente `users:manage` consulta, desativa ou reativa contas; auto-desativação e remoção do último Administrador ativo são rejeitadas.
 - A API confirma a cada requisição autenticada que a conta e o perfil do JWT permanecem ativos.
@@ -132,7 +132,7 @@ tentativas por minuto, sem fila.
 A validade da credencial temporária é configurável por
 `TemporaryCredential__LifetimeMinutes`. O startup aceita de 5 minutos a 24
 horas; o valor padrão de 30 minutos é hipótese operacional do MVP. Alterar essa
-configuração não substitui a validação do canal de entrega com a instituição.
+configuração não substitui a observação do procedimento no ambiente real.
 
 ## Provisionamento inicial
 
@@ -144,7 +144,7 @@ dotnet run --project src/backend/ControleAcessoVeiculos.API -- --bootstrap-admin
 
 O comando cria uma pessoa, o perfil `Administrador` e a primeira conta somente quando a tabela de usuários está vazia. Pessoa, conta e auditoria são persistidas na mesma transação. A auditoria usa ator nulo e origem explícita de sistema, sem nome, e-mail, senha ou hash. O comando não abre endpoint anônimo nem imprime credenciais. Remova as três variáveis logo após o uso.
 
-Administradores autenticados podem criar outras contas pelo endpoint `POST /users`. Nome, e-mail e perfil preliminar são obrigatórios, e `password` deve ser omitido para que a API gere a credencial temporária. A resposta é o único momento em que o valor bruto aparece, e o Administrador deve entregá-lo diretamente ao titular sem copiar para planilhas, issues, logs ou mensageria não aprovada. O titular usa essa credencial uma vez, fica restrito ao fluxo de troca e define sua senha permanente. Se perder a sessão antes de concluir, precisa solicitar nova redefinição; reabrir o uso do mesmo segredo enfraqueceria o controle contra reutilização. `GET /users` pesquisa nome ou e-mail, informa o estado da credencial sem expor segredo e limita cada página a 100 itens. `DELETE /users/{id}` desativa sem apagar o histórico; `POST /users/{id}/reactivation` reativa e limpa tentativas e bloqueio temporário anteriores. Uma credencial temporária vencida exige nova redefinição administrativa.
+Administradores autenticados podem criar outras contas pelo endpoint `POST /users`. Nome, e-mail e perfil preliminar são obrigatórios, e `password` deve ser omitido para que a API gere a credencial temporária. A resposta é o único momento em que o valor bruto aparece, e o Administrador deve entregá-lo diretamente ao titular sem copiar para planilhas, issues, logs ou mensageria não aprovada. Esse procedimento e a existência de dois Administradores funcionais foram validados institucionalmente em 21 de setembro de 2026. O titular usa essa credencial uma vez, fica restrito ao fluxo de troca e define sua senha permanente. Se perder a sessão antes de concluir, precisa solicitar nova redefinição; reabrir o uso do mesmo segredo enfraqueceria o controle contra reutilização. `GET /users` pesquisa nome ou e-mail, informa o estado da credencial sem expor segredo e limita cada página a 100 itens. `DELETE /users/{id}` desativa sem apagar o histórico; `POST /users/{id}/reactivation` reativa e limpa tentativas e bloqueio temporário anteriores. Uma credencial temporária vencida exige nova redefinição administrativa.
 
 ## Políticas preliminares
 
@@ -174,7 +174,7 @@ fluxo operacional.
 
 - validar ajustes solicitados durante a homologação da matriz da Issue #75;
 - validar o resumo operacional diário durante a homologação e definir se haverá conferência formal ou exportação;
-- definir responsáveis e canal confiável para recuperação de acesso na Issue #220;
+- observar a entrega direta da credencial temporária e calibrar sua validade durante a homologação da Issue #162;
 - decidir se haverá integração com identidade institucional;
 - concluir no frontend a política de inatividade compartilhada da Issue #268 e validá-la no tablet da portaria;
 - definir retenção e limpeza operacional das sessões revogadas e expiradas;

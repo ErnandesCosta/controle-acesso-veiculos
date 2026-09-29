@@ -106,9 +106,11 @@ sessões e políticas estão em [Autenticação e autorização](authentication.
 Issue #190 implementa renovação rotativa, revogação no servidor e logout; a
 Issue #191 integra esse contrato no frontend. A Issue #251 implementa a troca
 autenticada e a Issue #258 implementa a fundação de credencial temporária e
-redefinição administrativa sem inventar e-mail, SMS ou SSO. Canal de entrega,
-responsáveis institucionais e matriz final de perfis permanecem pendentes de
-validação nas Issues #162 e #220.
+redefinição administrativa sem inventar e-mail, SMS ou SSO. A decisão
+institucional consolidada na Issue #220 atribui o procedimento a dois
+Administradores funcionais e exige entrega direta da credencial temporária ao
+titular. A observação desse procedimento e a matriz final de perfis permanecem
+na homologação da Issue #162.
 
 Referências:
 
