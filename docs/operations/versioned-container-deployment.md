@@ -29,6 +29,11 @@ release. Para fixar conteúdo por digest, use
 Nunca mova uma versão publicada para outro digest: mudanças posteriores exigem
 uma nova release.
 
+Os packages principais são canais de release. Pushes comuns na `main` executam
+as validações, mas não publicam uma nova versão. Em uma tag Git revisada, a CI
+publica as variantes, o manifesto por commit e as atestações antes de aplicar a
+tag `MAJOR.MINOR.PATCH` ao mesmo digest. Não são criadas tags `latest` ou `main`.
+
 ## Pré-requisitos
 
 - Docker Engine com o plugin Compose;

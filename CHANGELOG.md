@@ -25,6 +25,8 @@ from its first published release.
 
 ### Changed
 
+- Primary backend and frontend GHCR packages publish only from reviewed semantic
+  release tags, keeping ordinary `main` pushes validation-only.
 - Destructive and sensitive frontend operations use reusable accessible
   confirmation dialogs with focus management and keyboard support.
 - Unit 1 evidence, the integrated homologation guide, ZAP evidence, retention,
