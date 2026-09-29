@@ -12,6 +12,10 @@ from its first published release.
 
 - A production-oriented Compose file consumes matching versioned backend and
   frontend images from GHCR without rebuilding application images on the host.
+- Exceptional access closure records the declared outcome without fabricating
+  an exit time and keeps its reason, observation, actor, and audit trail.
+- A verified PostgreSQL dump manifest records size and SHA-256, is checked before
+  restore, and is exercised with a negative tampering test in CI.
 - Authenticated password changes require the current credential and atomically
   replace its hash, revoke renewable sessions, invalidate previously issued
   access tokens, and write a credential-free audit record.
@@ -19,16 +23,27 @@ from its first published release.
   credential, and administrative resets rotate credential state while revoking
   existing sessions and requiring the account holder to choose a permanent password.
 
+### Changed
+
+- Destructive and sensitive frontend operations use reusable accessible
+  confirmation dialogs with focus management and keyboard support.
+- Unit 1 evidence, the integrated homologation guide, ZAP evidence, retention,
+  recovery targets, and the protected OCI backup design were consolidated.
+
 ### Security
 
 - JWT validation now checks a server-side credential version, and password
   changes have a dedicated per-user rate limit and PostgreSQL concurrency lock.
+- Shared-device sessions now expire after 15 minutes without valid human
+  activity and retain an absolute server-controlled limit of 12 hours.
 - Temporary credentials are generated with operating-system cryptographic
   randomness, consumed atomically on first login, stored only as password hashes,
   returned with no-store headers, and restricted from business operations until
   their mandatory replacement.
 - Event authorization creation, changes, and cancellation are restricted to the
   Administrator profile while read access remains available to all MVP profiles.
+- HTTP telemetry records route templates instead of user-controlled request
+  targets, avoiding query-string and path-value disclosure.
 
 ## [0.2.0] - 2026-09-20
 

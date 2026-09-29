@@ -158,10 +158,11 @@ referências imutáveis das variantes efetivamente analisadas. Elas formam o
 manifesto e permitem auditoria por arquitetura; consumidores normais devem usar
 `sha-<commit>` ou seu digest.
 
-Exemplo de download da versão do backend associada a uma release:
+Exemplo de download dos dois componentes associados à release atual:
 
 ```bash
 docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-backend:0.2.0
+docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-frontend:0.2.0
 ```
 
 Para fixar exatamente o conteúdo, use o digest com `@`, e não como se fosse uma
@@ -177,6 +178,11 @@ Exemplo de download da imagem rastreável por commit:
 ```bash
 docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-backend:sha-<commit>
 ```
+
+Entradas `sha256-...` exibidas pela interface do package podem representar
+objetos auxiliares de armazenamento ou atestação OCI. Elas não são versões
+SemVer. A referência imutável por conteúdo usa `@sha256:<digest>`; a versão
+operacional revisada usa `:MAJOR.MINOR.PATCH`.
 
 Confirme as plataformas declaradas sem executar a imagem:
 

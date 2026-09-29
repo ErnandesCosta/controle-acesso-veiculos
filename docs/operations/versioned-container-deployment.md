@@ -12,6 +12,23 @@ um ambiente institucional de produção aprovado. Antes de uso real ainda são
 obrigatórios servidor administrado, DNS, terminação HTTPS, gestão externa de
 segredos, firewall, backup protegido, monitoramento e autorização institucional.
 
+## Release disponível
+
+A release técnica atual é `v0.2.0`. As duas imagens foram verificadas como
+manifestos para `linux/amd64` e `linux/arm64`:
+
+```bash
+docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-backend:0.2.0
+docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-frontend:0.2.0
+```
+
+A interface do GHCR também apresenta objetos internos com nomes derivados de
+SHA-256. Eles suportam armazenamento e atestações OCI, mas não são o nome da
+release. Para fixar conteúdo por digest, use
+`imagem@sha256:<digest>`; para implantar a release revisada, use `imagem:0.2.0`.
+Nunca mova uma versão publicada para outro digest: mudanças posteriores exigem
+uma nova release.
+
 ## Pré-requisitos
 
 - Docker Engine com o plugin Compose;
