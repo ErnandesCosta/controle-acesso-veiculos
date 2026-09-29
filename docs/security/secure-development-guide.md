@@ -138,6 +138,8 @@ Referências:
 
 - tratar todo dump como dado confidencial, mesmo quando criado localmente;
 - manter dumps fora do Git e não transmiti-los por canais pessoais;
+- verificar nome, tamanho e SHA-256 pelo manifesto antes da restauração, sem
+  tratar checksum como prova de autenticidade;
 - validar o arquivo com uma restauração completa em banco isolado;
 - nunca restaurar sobre o banco operacional por padrão;
 - limpar bancos e arquivos temporários após o ensaio;
