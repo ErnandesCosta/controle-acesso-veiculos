@@ -2,33 +2,40 @@
 
 ## Estado e autoridade
 
-Este documento é a proposta técnica inicial da Issue #30. Ele organiza decisões
-para homologação, mas **não representa uma política institucional aprovada**. Os
-prazos, responsáveis e metas somente se tornam obrigatórios depois da validação
-do IFPE — Campus Belo Jardim, incluindo o responsável pelo processo, a área de TI
-e o encarregado ou referência institucional de proteção de dados.
+Este documento registra as decisões operacionais comunicadas pela equipe na
+Issue #30 e validadas pelo contato principal do processo em 29 de setembro de 2026. Eurico, do Setor de Transporte, é o responsável funcional pelo processo. A
+manutenção técnica pertence à equipe designada pelo curso de Engenharia de
+Software, sob acompanhamento acadêmico dos orientadores do curso.
 
-Até essa aprovação:
+O prazo de cinco anos é uma decisão operacional do responsável pelo processo;
+não é apresentado como interpretação jurídica. O setor arquivístico ou a
+referência institucional de proteção de dados ainda precisa confirmar o
+enquadramento aplicável antes da ativação de descarte automático.
+
+Até a implantação e o exercício institucional:
 
 - não existe descarte automático de registros no sistema;
-- o acervo físico anterior segue a regra institucional vigente;
+- o acervo físico anterior e os novos formulários de contingência seguem o prazo
+  operacional de cinco anos, sujeito à revisão arquivística formal;
 - os scripts de backup permanecem restritos ao desenvolvimento e ao ensaio de CI;
-- nenhum dump local deve ser tratado como backup de produção.
+- nenhum dump local deve ser tratado como backup de produção;
+- o uso real depende do backup protegido na OCI e do exercício de recuperação e
+  contingência previsto para a segunda unidade.
 
 ### Progresso da Issue #30
 
-| Critério de aceite | Estado verificável |
-|---|---|
-| decisões e responsáveis institucionais | pendente de reunião e nomes formais |
-| prazos com finalidade e justificativa | proposta registrada abaixo; pendente de aprovação |
-| backup sem credencial em texto simples | atendido pelo ensaio local; senha não entra no dump ou na linha de comando |
-| restauração testada | atendido localmente e na CI com banco temporário isolado e dados fictícios |
-| RPO e RTO iniciais | propostos abaixo; pendentes de aprovação |
-| contingência e reconciliação | fluxo proposto; exercício e endpoint seguro pendentes |
-| guia operacional e Wiki | guia versionado nesta issue; Wiki deve ser atualizada após o merge |
+| Critério de aceite                     | Estado verificável                                                                                 |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| decisões e responsáveis institucionais | papéis funcional e técnico definidos; referência arquivística/proteção de dados pendente           |
+| prazos com finalidade e justificativa  | prazo operacional de cinco anos aprovado; enquadramento arquivístico formal pendente               |
+| backup sem credencial em texto simples | atendido pelo ensaio local; senha não entra no dump ou na linha de comando                         |
+| restauração testada                    | atendido localmente e na CI com banco temporário isolado e dados fictícios                         |
+| RPO e RTO iniciais                     | metas de produção definidas abaixo; comprovação técnica do RPO de uma hora pendente                |
+| contingência e reconciliação           | fluxo em papel aprovado em princípio; exercício e endpoint seguro pendentes para a segunda unidade |
+| guia operacional e Wiki                | guia versionado atualizado nesta issue; Wiki deve ser atualizada após o merge                      |
 
-A Issue #30 não deve ser fechada enquanto os itens institucionais e o exercício de
-contingência permanecerem pendentes.
+A Issue #30 não deve ser fechada enquanto o ambiente protegido na OCI, a revisão
+arquivística e o exercício de contingência permanecerem pendentes.
 
 ## Princípios
 
@@ -48,54 +55,92 @@ institucional, não da equipe de desenvolvimento.
 
 ## Inventário e finalidade
 
-| Grupo | Exemplos no sistema | Finalidade do MVP | Acesso esperado | Decisão de retenção |
-|---|---|---|---|---|
-| Identidade | nome, tipo e número de documento opcional, vínculo e e-mail | identificar condutor, motorista institucional e usuário | operação conforme política; gestão por Administrador | pendente |
-| Credencial | e-mail da conta, hash de senha, bloqueio e perfil | autenticação e autorização individual | serviço de autenticação e gestão administrativa | pendente |
-| Veículo | placa, tipo, identificação de frota, marca, modelo, cor e ano | identificar veículo e manter catálogo institucional | operação, Transporte e Administração conforme política | pendente |
-| Acesso geral | entrada, saída, objetivo, categoria, observação e autoria | controlar e consultar circulação no campus | Portaria, Vigilância, Transporte e Administração conforme política | pendente |
-| Uso institucional | motorista, veículo, horários, quilometragem, itinerário e autoria | controlar saída e retorno da frota | Transporte e Administração; consulta operacional limitada | pendente |
-| Evento | responsável, período, local, pernoite, tipos, quantidades e placas opcionais | antecipar e conferir acessos autorizados | operação, Transporte e Administração conforme política | pendente |
-| Auditoria | ação, entidade, registro, ator, horário e transição de estado | responsabilização, investigação e integridade | Administrador | pendente |
-| Log técnico | correlação, rota, status, duração e falha sem corpo ou credenciais | diagnóstico e segurança operacional | equipe técnica autorizada | pendente |
-| Backup | cópia integral dos grupos persistidos no PostgreSQL | recuperação de desastre | custodiante técnico autorizado | pendente |
+| Grupo             | Exemplos no sistema                                                          | Finalidade do MVP                                       | Acesso esperado                                                    | Decisão de retenção                                                                   |
+| ----------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Identidade        | nome, tipo e número de documento opcional, vínculo e e-mail                  | identificar condutor, motorista institucional e usuário | operação conforme política; gestão por Administrador               | enquanto ativa ou referenciada por registro dentro do prazo de cinco anos             |
+| Credencial        | e-mail da conta, hash de senha, bloqueio e perfil                            | autenticação e autorização individual                   | serviço de autenticação e gestão administrativa                    | conta ativa; identidade mínima vinculada à auditoria pelo prazo do evento relacionado |
+| Veículo           | placa, tipo, identificação de frota, marca, modelo, cor e ano                | identificar veículo e manter catálogo institucional     | operação, Transporte e Administração conforme política             | enquanto ativo ou referenciado por registro dentro do prazo de cinco anos             |
+| Acesso geral      | entrada, saída, objetivo, categoria, observação e autoria                    | controlar e consultar circulação no campus              | Portaria, Vigilância, Transporte e Administração conforme política | cinco anos após o encerramento                                                        |
+| Uso institucional | motorista, veículo, horários, quilometragem, itinerário e autoria            | controlar saída e retorno da frota                      | Transporte e Administração; consulta operacional limitada          | cinco anos após o encerramento                                                        |
+| Evento            | responsável, período, local, pernoite, tipos, quantidades e placas opcionais | antecipar e conferir acessos autorizados                | operação, Transporte e Administração conforme política             | cinco anos após o encerramento                                                        |
+| Auditoria         | ação, entidade, registro, ator, horário e transição de estado                | responsabilização, investigação e integridade           | Administrador                                                      | cinco anos após o evento auditado                                                     |
+| Log técnico       | correlação, rota, status, duração e falha sem corpo ou credenciais           | diagnóstico e segurança operacional                     | equipe técnica autorizada                                          | 90 dias, salvo preservação documentada por incidente                                  |
+| Backup            | cópia integral dos grupos persistidos no PostgreSQL                          | recuperação de desastre                                 | custodiante técnico autorizado                                     | janela móvel de 35 dias; não é arquivo histórico                                      |
 
 Documento pessoal continua opcional no fluxo geral. A homologação deve confirmar
 se ele é realmente necessário em cada categoria antes de ampliar a coleta.
 
-## Proposta de prazos para decisão
+## Prazos operacionais aprovados
 
-Os valores abaixo são uma **hipótese operacional**, não uma interpretação jurídica.
-Eles tornam a conversa objetiva e devem ser aprovados, substituídos ou rejeitados.
+Os valores abaixo registram a decisão operacional do responsável pelo processo.
+Eles devem ser revistos pela referência arquivística ou de proteção de dados antes
+que qualquer descarte automático seja implementado.
 
-| Grupo | Proposta inicial | Justificativa a validar | Decisor |
-|---|---|---|---|
-| Acessos, usos, eventos e auditorias relacionados | 24 meses após o encerramento | permitir consulta entre períodos letivos e apuração posterior sem manter histórico indefinido | responsável pelo processo + proteção de dados |
-| Cadastros de pessoas e veículos | enquanto ativos ou referenciados por registros ainda retidos | preservar integridade referencial; depois avaliar eliminação ou anonimização | responsável pelo processo + proteção de dados |
-| Contas de usuário | desativação imediata ao perder autorização; dados mínimos enquanto houver auditoria vinculada | revogar acesso sem apagar autoria histórica | Administração + proteção de dados |
-| Logs técnicos | 30 dias | diagnóstico e investigação com exposição reduzida | TI + segurança |
-| Backups de produção | janela móvel de 30 dias | recuperar falhas recentes sem transformar backup em arquivo permanente | TI + responsável pelo processo |
-| Formulários de contingência reconciliados | até a conferência e pelo prazo adicional aprovado; depois descarte seguro | comprovar a reconciliação sem manter duplicata permanente | responsável pelo processo |
+| Grupo                                            | Prazo operacional                                                                                                | Finalidade                                                                                      | Autoridade                                                                 |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Acessos, usos, eventos e auditorias relacionados | cinco anos após o encerramento                                                                                   | atender consulta operacional e apuração no período solicitado pelo responsável pelo processo    | responsável pelo processo; revisão arquivística/proteção de dados pendente |
+| Cadastros de pessoas e veículos                  | enquanto ativos ou referenciados por registros dentro dos cinco anos                                             | preservar integridade referencial; depois eliminar ou anonimizar conforme procedimento aprovado | responsável pelo processo + proteção de dados                              |
+| Contas de usuário                                | desativação imediata ao perder autorização; identidade mínima por cinco anos quando vinculada à auditoria retida | revogar acesso sem apagar autoria histórica                                                     | Administração + proteção de dados                                          |
+| Logs técnicos                                    | 90 dias                                                                                                          | investigar incidentes sem duplicar o histórico de negócio de cinco anos nos logs                | manutenção técnica + segurança                                             |
+| Backups de produção                              | janela móvel de 35 dias                                                                                          | recuperar falhas recentes sem transformar backup em arquivo histórico de cinco anos             | custodiante dos backups + responsável pelo processo                        |
+| Formulários de contingência reconciliados        | cinco anos após o fechamento do incidente                                                                        | preservar a evidência original e a comprovação da transcrição pelo mesmo prazo operacional      | responsável pelo processo                                                  |
 
 Uma obrigação legal, apuração, incidente ou ordem institucional pode suspender o
 descarte de registros específicos. A exceção deve possuir motivo, responsável,
 escopo e data de revisão. A implementação de expurgo ou anonimização só deve ser
 aberta após a aprovação desta tabela e a análise dos relacionamentos do banco.
 
-## Metas iniciais de continuidade
+## Metas de continuidade e capacidade atual
 
-| Indicador | Proposta para homologação | Interpretação |
-|---|---|---|
-| RPO | até 24 horas | no pior caso aceito, perde-se no máximo o intervalo desde o último backup diário |
-| RTO | até 4 horas no período com suporte disponível | prazo para restaurar um serviço utilizável; a portaria entra em contingência imediatamente |
-| Backup | diário, automatizado e monitorado | dump consistente em formato custom do PostgreSQL |
-| Cópia protegida | fora do host do banco, criptografada e não sincronizada em tempo real | reduz perda conjunta e propagação imediata de corrupção ou ransomware |
-| Teste de restauração | trimestral e após mudança relevante na estratégia | restauração integral em ambiente isolado, com evidência e tempo medido |
-| Verificação técnica em CI | a cada alteração dos scripts ou do Compose | usa somente dados fictícios e não substitui o exercício institucional |
+| Indicador                 | Meta ou capacidade                                                                            | Interpretação                                                                                       |
+| ------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| RPO-alvo de produção      | até 1 hora                                                                                    | exige arquivamento contínuo de WAL/PITR; ainda não é atendido pelo dump atual                       |
+| RPO técnico atual         | até 24 horas                                                                                  | o dump lógico diário é a capacidade intermediária e não deve ser apresentado como meta de produção  |
+| RTO-alvo de produção      | até 4 horas no período com suporte disponível                                                 | prazo para restaurar um serviço utilizável; a portaria entra imediatamente em contingência no papel |
+| Backup lógico             | diário, automatizado e monitorado                                                             | dump portátil no formato custom do PostgreSQL, mantido como caminho adicional de recuperação        |
+| Cópia protegida           | bucket privado no OCI Object Storage, criptografado com OCI Vault e separado do host do banco | reduz perda conjunta e o acesso por um operador que possua apenas privilégios na VM do banco        |
+| Teste de restauração      | trimestral e após mudança relevante na estratégia                                             | restauração integral em ambiente isolado, com evidência e tempo medido                              |
+| Verificação técnica em CI | a cada alteração dos scripts ou do Compose                                                    | usa somente dados fictícios e não substitui o exercício institucional                               |
 
-Se o IFPE exigir RPO menor que 24 horas, um dump diário deixa de ser suficiente.
-Nesse caso deve ser planejado arquivamento contínuo de WAL/PITR ou serviço gerenciado
-equivalente, com custo, operação e testes próprios.
+A Issue #311 prepara a cópia protegida na OCI. A Issue #312 permanece bloqueada
+até esse destino e a topologia do banco existirem; ela implementará arquivamento
+contínuo de WAL/PITR e comprovará o RPO de uma hora. O PostgreSQL documenta que
+`pg_dump` é um backup lógico e não pode ser combinado ao replay de WAL como se
+fosse um backup-base físico.
+
+## Papéis e separação de funções
+
+| Papel                     | Autoridade designada                                         | Responsabilidade permitida                                                                 | Proibição                                                            |
+| ------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| responsável pelo processo | Eurico, Setor de Transporte                                  | aprovar fluxo operacional, exceções de retenção e fechamento de incidentes                 | manter ou operar material criptográfico                              |
+| manutenção técnica        | equipe designada pelo curso de Engenharia de Software        | implantar, monitorar, criar backups e executar runbooks aprovados                          | compartilhar credenciais ou apagar permanentemente cópias protegidas |
+| acompanhamento acadêmico  | orientadores do curso                                        | aprovar acessos privilegiados, designar substitutos e acompanhar exercícios                | utilizar uma única conta compartilhada                               |
+| custódia de chaves        | grupo IAM restrito designado pelo curso e pelos orientadores | governar política do Vault, rotação e recuperação emergencial com revisão por duas pessoas | exportar, enviar ou versionar chaves brutas                          |
+| serviço de backup         | instance principal da VM OCI                                 | enviar apenas os objetos esperados ao bucket dedicado                                      | administrar bucket, retenção, chaves ou usuários humanos             |
+| operadores de recuperação | grupo técnico autorizado separadamente                       | ler cópia protegida e restaurar somente em destino isolado após aprovação                  | sobrescrever produção como parte de teste                            |
+| auditoria                 | orientadores ou revisores institucionais                     | inspecionar configuração, eventos e evidências sem alterar recursos                        | operar backup ou ciclo de chaves                                     |
+
+O acesso administrativo humano deve usar contas individuais e MFA. “Custódia
+das chaves” significa autorização pelo OCI IAM e Vault, não posse de arquivo de
+chave privada. O acesso será revisto em cada troca de semestre e removido quando
+a pessoa deixar o projeto.
+
+## Desenho aprovado de proteção na OCI
+
+- bucket privado do Object Storage em compartimento dedicado à produção;
+- chave de criptografia gerenciada no OCI Vault, com rotação e acesso limitados
+  ao grupo de custódia;
+- VM autenticada por instance principal e grupo dinâmico, sem chave de API de
+  usuário armazenada no host;
+- nomes de objetos únicos e temporais para dump e manifesto;
+- regra temporal de retenção do Object Storage por 35 dias, testada em homologação
+  antes do bloqueio, pois o bloqueio é irreversível;
+- ausência de versionamento no mesmo bucket, porque a OCI não permite regra de
+  retenção ativa e versionamento simultâneos;
+- exclusão por lifecycle somente depois da janela protegida de 35 dias;
+- monitoramento e alerta quando o backup esperado estiver ausente ou o envio falhar;
+- restauração trimestral em banco isolado e após toda mudança material;
+- nenhum OCID, configuração da tenancy, credencial ou dado real no repositório.
 
 ## Controles mínimos do backup de produção
 
@@ -190,24 +235,32 @@ O aceite institucional deve incluir um cenário controlado:
 6. decidir destino e descarte do papel;
 7. registrar RPO, RTO, responsáveis, canais e prazos aprovados.
 
+O primeiro exercício no ambiente OCI está planejado para a segunda unidade
+acadêmica. Até sua execução com evidências, o ambiente será classificado como
+homologação e não poderá ser declarado pronto para produção institucional.
+
 ## Registro das decisões pendentes
 
-| Decisão | Responsável nominal | Data | Resultado/evidência |
-|---|---|---|---|
-| dono institucional do processo e substituto | pendente | pendente | pendente |
-| custodiante dos backups e substituto | pendente | pendente | pendente |
-| encarregado/referência de proteção de dados | pendente | pendente | pendente |
-| tabela de retenção e exceções | pendente | pendente | pendente |
-| RPO e RTO | pendente | pendente | pendente |
-| destino protegido, chaves e acesso ao backup | pendente | pendente | pendente |
-| canal de acionamento e escalonamento | pendente | pendente | pendente |
-| formulário mínimo de contingência | pendente | pendente | pendente |
-| responsáveis pela digitação, conferência e fechamento | pendente | pendente | pendente |
-| periodicidade do exercício de restauração/contingência | pendente | pendente | pendente |
+| Decisão                                                | Responsável nominal                                                           | Data       | Resultado/evidência                                                                          |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------- |
+| dono institucional do processo e substituto            | Eurico / substituto a designar pelo Setor de Transporte                       | 29/09/2026 | responsável pelo processo confirmado; substituto pendente                                    |
+| custodiante dos backups e substituto                   | equipe técnica designada pelo curso / substituto designado pelos orientadores | 29/09/2026 | papel aprovado; membros nominais do IAM pendentes do provisionamento OCI                     |
+| encarregado/referência de proteção de dados            | pendente                                                                      | pendente   | pendente                                                                                     |
+| tabela de retenção e exceções                          | responsável pelo processo; revisão arquivística/proteção de dados pendente    | 29/09/2026 | cinco anos para registros operacionais e papel; 90 dias para logs; 35 dias para backups      |
+| RPO e RTO                                              | responsável pelo processo + manutenção técnica                                | 29/09/2026 | metas de RPO de 1 hora e RTO de 4 horas; prova pendente nas Issues #311 e #312               |
+| destino protegido, chaves e acesso ao backup           | orientadores do curso + manutenção técnica                                    | 29/09/2026 | OCI Object Storage + Vault + separação IAM aprovados; provisionamento pendente na #311       |
+| canal de acionamento e escalonamento                   | pendente                                                                      | pendente   | pendente                                                                                     |
+| formulário mínimo de contingência                      | responsável pelo processo                                                     | 29/09/2026 | versão atual aceita como base para o exercício da segunda unidade                            |
+| responsáveis pela digitação, conferência e fechamento  | operador da portaria / segundo conferente / Eurico ou delegado                | 29/09/2026 | nomes variam por turno; autoria individual é obrigatória                                     |
+| periodicidade do exercício de restauração/contingência | orientadores do curso + responsável pelo processo                             | 29/09/2026 | trimestral após produção e depois de mudança material; primeiro exercício na segunda unidade |
 
 ## Referências
 
 - [Lei nº 13.709/2018 — LGPD](https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709compilado.htm)
 - [Guia de Segurança da Informação da ANPD](https://www.gov.br/anpd/pt-br/centrais-de-conteudo/materiais-educativos-e-publicacoes/guia-vf.pdf/@@display-file/file)
 - [PostgreSQL 16 — Backup and Restore](https://www.postgresql.org/docs/16/backup.html)
+- [PostgreSQL 16 — Continuous Archiving and PITR](https://www.postgresql.org/docs/16/continuous-archiving.html)
+- [OCI — Calling services from an instance](https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/callingservicesfrominstances.htm)
+- [OCI — Securing Object Storage](https://docs.oracle.com/en-us/iaas/Content/Security/Reference/objectstorage_security.htm)
+- [OCI — Object Storage retention rules](https://docs.oracle.com/en-us/iaas/Content/Object/Tasks/usingretentionrules.htm)
 - [NIST SP 800-34 Rev. 1 — Contingency Planning Guide](https://csrc.nist.gov/pubs/sp/800/34/r1/final)

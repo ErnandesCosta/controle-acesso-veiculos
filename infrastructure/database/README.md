@@ -2,7 +2,8 @@
 
 Este diretório contém o procedimento técnico da Issue #67 para gerar um backup
 lógico e comprovar sua restauração em um banco isolado. Ele apoia a Issue #30,
-mas não define retenção, RPO, RTO, criptografia ou contingência institucional.
+mas não implementa o desenho institucional de retenção, RPO, RTO, criptografia
+ou contingência.
 
 ## Pré-requisitos
 
@@ -54,14 +55,18 @@ Ele não aceita um banco de destino e nunca substitui o banco operacional.
 
 O dump pode conter dados pessoais e históricos. Estar fora do Git não equivale a
 estar protegido para produção. Não envie o arquivo por e-mail, mensageria ou
-armazenamento pessoal. Em homologação ou produção, a instituição ainda deve
-definir na Issue #30:
+armazenamento pessoal. A Issue #30 e o ADR 0002 definem como direção:
 
-- responsável, frequência, retenção e descarte;
-- armazenamento externo e criptografado, controle de acesso e rotação de chaves;
-- RPO, RTO, monitoramento e evidências periódicas de restauração;
-- contingência da portaria e reconciliação posterior;
-- procedimento aprovado para restauração real, que é uma ação destrutiva.
+- janela móvel de 35 dias para backups, sem confundi-los com o histórico de cinco
+  anos dos registros operacionais;
+- OCI Object Storage privado, OCI Vault, instance principal e separação por IAM;
+- RPO-alvo de uma hora e RTO-alvo de quatro horas;
+- monitoramento e evidência trimestral de restauração;
+- contingência em papel com reconciliação posterior.
+
+Esses controles ainda precisam ser provisionados e exercitados nas Issues #311
+e #312. Restauração real continua sendo ação destrutiva sujeita a autorização e
+runbook aprovado.
 
 O SHA-256 detecta corrupção ou troca acidental quando o manifesto permanece
 íntegro. Ele não autentica a origem: quem puder substituir os dois arquivos

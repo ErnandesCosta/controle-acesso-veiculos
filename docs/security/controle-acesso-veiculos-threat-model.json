@@ -225,7 +225,7 @@
                   "title": "TM-16 — Retenção sem finalidade",
                   "type": "Information disclosure",
                   "description": "Dados pessoais e histórico mantidos indefinidamente aumentam exposição e podem contrariar a finalidade.",
-                  "mitigation": "Aprovar política de retenção, descarte e anonimização com a instituição antes da produção — Issue #30.",
+                  "mitigation": "Aplicar os prazos operacionais da Issue #30: cinco anos para registros e papel reconciliado, 90 dias para logs e 35 dias para backups. Revisão arquivística e expurgo seguro ainda são obrigatórios.",
                   "modelType": "STRIDE",
                   "id": "10000000-0000-4000-8000-000000000016"
                 },
@@ -321,7 +321,7 @@
                   "title": "TM-15 — Backup desprotegido",
                   "type": "Information disclosure",
                   "description": "Um dump desprotegido pode expor pessoas, placas e histórico operacional.",
-                  "mitigation": "Manter fora do Git e verificar o manifesto SHA-256 para detectar corrupção; definir autenticidade, criptografia, controle de acesso, retenção, inventário e restauração periódica nas Issues #30 e #308.",
+                  "mitigation": "Manter fora do Git e verificar o manifesto SHA-256; provisionar OCI Object Storage privado, Vault, instance principal, MFA, separação IAM, retenção imutável e restauração periódica nas Issues #30, #308 e #311.",
                   "modelType": "STRIDE",
                   "id": "10000000-0000-4000-8000-000000000015"
                 }
@@ -398,7 +398,7 @@
             "zIndex": 10,
             "data": {
               "name": "OCI futura",
-              "description": "Ambiente institucional planejado. Topologia, HTTPS, segredos, observabilidade, backup e operação ainda não foram aprovados.",
+              "description": "Ambiente institucional planejado. O desenho de backup na OCI foi aprovado, mas topologia, HTTPS, segredos, observabilidade e operação ainda não foram provisionados nem exercitados.",
               "type": "tm.Process",
               "isTrustBoundary": false,
               "outOfScope": true,

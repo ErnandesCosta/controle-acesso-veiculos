@@ -666,6 +666,8 @@ validação, privacidade, alertas propostos e pendências de produção.
 Consulte a [modelagem de ameaças](docs/security/threat-model.md), o [guia de desenvolvimento seguro](docs/security/secure-development-guide.md) e as [instruções de segurança](.github/instructions/security.instructions.md).
 As decisões e pendências da fundação de login estão em [autenticação e autorização](docs/security/authentication.md).
 O desenho de renovação, rotação e revogação está registrado no [ADR 0001 — ciclo de vida seguro de sessões](docs/architecture/decisions/0001-secure-session-lifecycle.md).
+Retenção, metas de recuperação e proteção prevista na OCI estão registradas no
+[ADR 0002 — retenção de dados e backup protegido na OCI](docs/architecture/decisions/0002-data-retention-and-oci-backup.md).
 
 ## Documentação
 
@@ -678,6 +680,7 @@ O desenho de renovação, rotação e revogação está registrado no [ADR 0001 
 - [Modelagem de ameaças](docs/security/threat-model.md).
 - [Guia de desenvolvimento seguro](docs/security/secure-development-guide.md).
 - [ADR 0001 — ciclo de vida seguro de sessões](docs/architecture/decisions/0001-secure-session-lifecycle.md).
+- [ADR 0002 — retenção de dados e backup protegido na OCI](docs/architecture/decisions/0002-data-retention-and-oci-backup.md).
 
 A Wiki abrange o projeto completo, não apenas o backend. Documentos acadêmicos e decisões históricas devem ser atualizados de forma aditiva, preservando contexto e rastreabilidade.
 

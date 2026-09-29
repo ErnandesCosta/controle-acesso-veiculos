@@ -144,8 +144,13 @@ Referências:
 - nunca restaurar sobre o banco operacional por padrão;
 - limpar bancos e arquivos temporários após o ensaio;
 - não confundir o ensaio local da Issue #67 com backup protegido de produção;
-- definir com a instituição retenção, criptografia, responsáveis, RPO e RTO antes
-  da implantação real, conforme a Issue #30.
+- aplicar a decisão da Issue #30: cinco anos para registros operacionais e papel
+  reconciliado, 90 dias para logs e 35 dias para backups, sem ativar descarte
+  automático antes da revisão arquivística ou de proteção de dados;
+- tratar RPO de uma hora e RTO de quatro horas como metas de produção ainda não
+  comprovadas, conforme as Issues #311 e #312;
+- usar no ambiente OCI instance principal, Object Storage privado, Vault, MFA e
+  grupos IAM separados; nunca distribuir arquivos de chave entre integrantes;
 - registrar decisões e exercícios no
   [plano de retenção, backup e continuidade](../operations/data-retention-and-continuity.md).
 
