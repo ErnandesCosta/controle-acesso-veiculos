@@ -66,6 +66,28 @@ jobs:
           }
           ./infrastructure/database/Test-PostgreSqlRestore.ps1 -BackupPath $backup.FullName
 
+          $bytes = [IO.File]::ReadAllBytes($backup.FullName)
+          if ($bytes.Length -eq 0) {
+            throw 'The backup created for the tampering test is empty.'
+          }
+          $bytes[$bytes.Length - 1] = $bytes[$bytes.Length - 1] -bxor 1
+          [IO.File]::WriteAllBytes($backup.FullName, $bytes)
+
+          $tamperingRejected = $false
+          try {
+            ./infrastructure/database/Test-PostgreSqlRestore.ps1 -BackupPath $backup.FullName
+          }
+          catch {
+            if ($_.Exception.Message -notmatch 'Backup integrity verification failed') {
+              throw
+            }
+            $tamperingRejected = $true
+          }
+
+          if (-not $tamperingRejected) {
+            throw 'The restore procedure accepted a backup that did not match its manifest.'
+          }
+
       - name: Stop PostgreSQL
         if: always()
         run: >-
