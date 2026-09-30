@@ -31,11 +31,9 @@ public sealed class InstitutionalVehicleUsageTests(ApiFactory factory)
             itinerary = "Campus - Unidade rural"
         };
 
-        var departureResponse = await client.PostAsJsonAsync(
-            "/institutional-vehicle-usages/departures",
-            request);
+        var departureResponse = await client.PostAsJsonAsync("/institutional-vehicle-usages/departures", request, cancellationToken: TestContext.Current.CancellationToken);
         var departure = await departureResponse.Content
-            .ReadFromJsonAsync<InstitutionalUsageResponse>();
+            .ReadFromJsonAsync<InstitutionalUsageResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, departureResponse.StatusCode);
         Assert.NotNull(departure);
@@ -43,13 +41,10 @@ public sealed class InstitutionalVehicleUsageTests(ApiFactory factory)
         Assert.Equal(userId, departure.CreatedById);
         Assert.Equal(catalog.Plate, departure.Plate);
 
-        var openUsages = await client.GetFromJsonAsync<List<InstitutionalUsageResponse>>(
-            "/institutional-vehicle-usages/open");
+        var openUsages = await client.GetFromJsonAsync<List<InstitutionalUsageResponse>>("/institutional-vehicle-usages/open", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Contains(openUsages!, item => item.Id == departure.Id);
 
-        var invalidReturn = await client.PostAsJsonAsync(
-            $"/institutional-vehicle-usages/{departure.Id}/returns",
-            new { returnMileage = 12499 });
+        var invalidReturn = await client.PostAsJsonAsync($"/institutional-vehicle-usages/{departure.Id}/returns", new { returnMileage = 12499 }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, invalidReturn.StatusCode);
 
         using (var deactivationScope = factory.Services.CreateScope())
@@ -57,16 +52,14 @@ public sealed class InstitutionalVehicleUsageTests(ApiFactory factory)
             var deactivationDbContext = deactivationScope.ServiceProvider
                 .GetRequiredService<ControleAcessoVeiculosDbContext>();
             var authorization = await deactivationDbContext.MotoristasInstitucionais
-                .SingleAsync(item => item.PessoaId == catalog.DriverId);
+                .SingleAsync(item => item.PessoaId == catalog.DriverId, cancellationToken: TestContext.Current.CancellationToken);
             authorization.Desativar(DateTime.UtcNow, userId);
-            await deactivationDbContext.SaveChangesAsync();
+            await deactivationDbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
-        var returnResponse = await client.PostAsJsonAsync(
-            $"/institutional-vehicle-usages/{departure.Id}/returns",
-            new { returnMileage = 12542 });
+        var returnResponse = await client.PostAsJsonAsync($"/institutional-vehicle-usages/{departure.Id}/returns", new { returnMileage = 12542 }, cancellationToken: TestContext.Current.CancellationToken);
         var returned = await returnResponse.Content
-            .ReadFromJsonAsync<InstitutionalUsageResponse>();
+            .ReadFromJsonAsync<InstitutionalUsageResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, returnResponse.StatusCode);
         Assert.NotNull(returned);
@@ -75,8 +68,7 @@ public sealed class InstitutionalVehicleUsageTests(ApiFactory factory)
         Assert.NotNull(returned.ReturnAtUtc);
         Assert.Equal(userId, returned.UpdatedById);
 
-        openUsages = await client.GetFromJsonAsync<List<InstitutionalUsageResponse>>(
-            "/institutional-vehicle-usages/open");
+        openUsages = await client.GetFromJsonAsync<List<InstitutionalUsageResponse>>("/institutional-vehicle-usages/open", cancellationToken: TestContext.Current.CancellationToken);
         Assert.DoesNotContain(openUsages!, item => item.Id == departure.Id);
 
         using var scope = factory.Services.CreateScope();
@@ -86,7 +78,7 @@ public sealed class InstitutionalVehicleUsageTests(ApiFactory factory)
             .Where(item => item.Entidade == nameof(UsoVeiculoInstitucional) &&
                 item.RegistroId == departure.Id)
             .OrderBy(item => item.Id)
-            .ToListAsync();
+            .ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Collection(
             audits,
@@ -130,37 +122,31 @@ public sealed class InstitutionalVehicleUsageTests(ApiFactory factory)
         using var client = factory.CreateClient();
         await AuthenticateClientAsync(client, email, password);
 
-        var invalidResponse = await client.PostAsJsonAsync(
-            "/institutional-vehicle-usages/departures",
-            new
-            {
-                vehicleId = 0,
-                driverId = 0,
-                departureMileage = -1,
-                itinerary = ""
-            });
+        var invalidResponse = await client.PostAsJsonAsync("/institutional-vehicle-usages/departures", new
+        {
+            vehicleId = 0,
+            driverId = 0,
+            departureMileage = -1,
+            itinerary = ""
+        }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, invalidResponse.StatusCode);
 
-        var unavailableResponse = await client.PostAsJsonAsync(
-            "/institutional-vehicle-usages/departures",
-            new
-            {
-                vehicleId = catalog.VehicleId,
-                driverId = catalog.DriverId,
-                departureMileage = 100,
-                itinerary = "Campus"
-            });
+        var unavailableResponse = await client.PostAsJsonAsync("/institutional-vehicle-usages/departures", new
+        {
+            vehicleId = catalog.VehicleId,
+            driverId = catalog.DriverId,
+            departureMileage = 100,
+            itinerary = "Campus"
+        }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, unavailableResponse.StatusCode);
 
-        var unauthorizedDriverResponse = await client.PostAsJsonAsync(
-            "/institutional-vehicle-usages/departures",
-            new
-            {
-                vehicleId = unauthorizedDriverCatalog.VehicleId,
-                driverId = unauthorizedDriverCatalog.DriverId,
-                departureMileage = 100,
-                itinerary = "Campus"
-            });
+        var unauthorizedDriverResponse = await client.PostAsJsonAsync("/institutional-vehicle-usages/departures", new
+        {
+            vehicleId = unauthorizedDriverCatalog.VehicleId,
+            driverId = unauthorizedDriverCatalog.DriverId,
+            departureMileage = 100,
+            itinerary = "Campus"
+        }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, unauthorizedDriverResponse.StatusCode);
     }
 
@@ -169,7 +155,7 @@ public sealed class InstitutionalVehicleUsageTests(ApiFactory factory)
     {
         using var client = factory.CreateClient();
 
-        var response = await client.GetAsync("/institutional-vehicle-usages/open");
+        var response = await client.GetAsync("/institutional-vehicle-usages/open", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -181,16 +167,14 @@ public sealed class InstitutionalVehicleUsageTests(ApiFactory factory)
         using var anonymousClient = factory.CreateClient();
         Assert.Equal(
             HttpStatusCode.Unauthorized,
-            (await anonymousClient.GetAsync(
-                "/institutional-vehicle-usages/history")).StatusCode);
+            (await anonymousClient.GetAsync("/institutional-vehicle-usages/history", TestContext.Current.CancellationToken)).StatusCode);
 
         var (_, doormanEmail) = await CreateUserAsync(ProfileNames.Doorman, password);
         using var doormanClient = factory.CreateClient();
         await AuthenticateClientAsync(doormanClient, doormanEmail, password);
         Assert.Equal(
             HttpStatusCode.Forbidden,
-            (await doormanClient.GetAsync(
-                "/institutional-vehicle-usages/history")).StatusCode);
+            (await doormanClient.GetAsync("/institutional-vehicle-usages/history", TestContext.Current.CancellationToken)).StatusCode);
     }
 
     [Fact]
@@ -208,11 +192,9 @@ public sealed class InstitutionalVehicleUsageTests(ApiFactory factory)
             departureMileage = 2000,
             itinerary = "Campus - Destino fictício"
         };
-        var departureResponse = await client.PostAsJsonAsync(
-            "/institutional-vehicle-usages/departures",
-            request);
+        var departureResponse = await client.PostAsJsonAsync("/institutional-vehicle-usages/departures", request, cancellationToken: TestContext.Current.CancellationToken);
         var departure = await departureResponse.Content
-            .ReadFromJsonAsync<InstitutionalUsageResponse>();
+            .ReadFromJsonAsync<InstitutionalUsageResponse>(cancellationToken: TestContext.Current.CancellationToken);
         departureResponse.EnsureSuccessStatusCode();
         Assert.NotNull(departure);
 
@@ -221,21 +203,17 @@ public sealed class InstitutionalVehicleUsageTests(ApiFactory factory)
             var dbContext = scope.ServiceProvider
                 .GetRequiredService<ControleAcessoVeiculosDbContext>();
             var vehicle = await dbContext.Veiculos
-                .SingleAsync(item => item.Id == catalog.VehicleId);
+                .SingleAsync(item => item.Id == catalog.VehicleId, cancellationToken: TestContext.Current.CancellationToken);
             vehicle.Desativar(DateTime.UtcNow);
-            await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
         Assert.Equal(
             HttpStatusCode.NotFound,
-            (await client.PostAsJsonAsync(
-                "/institutional-vehicle-usages/departures",
-                request)).StatusCode);
+            (await client.PostAsJsonAsync("/institutional-vehicle-usages/departures", request, cancellationToken: TestContext.Current.CancellationToken)).StatusCode);
         Assert.Equal(
             HttpStatusCode.OK,
-            (await client.PostAsJsonAsync(
-                $"/institutional-vehicle-usages/{departure.Id}/returns",
-                new { returnMileage = 2010 })).StatusCode);
+            (await client.PostAsJsonAsync($"/institutional-vehicle-usages/{departure.Id}/returns", new { returnMileage = 2010 }, cancellationToken: TestContext.Current.CancellationToken)).StatusCode);
     }
 
     [Fact]
@@ -254,10 +232,9 @@ public sealed class InstitutionalVehicleUsageTests(ApiFactory factory)
         var from = Uri.EscapeDataString(now.AddDays(-10).ToString("O"));
         var to = Uri.EscapeDataString(now.AddDays(1).ToString("O"));
 
-        var response = await client.GetAsync(
-            $"/institutional-vehicle-usages/history?plate={formattedPlate}" +
-            $"&driverId={catalog.DriverId}&from={from}&to={to}&page=1&pageSize=2");
-        var result = await response.Content.ReadFromJsonAsync<InstitutionalHistoryResponse>();
+        var response = await client.GetAsync($"/institutional-vehicle-usages/history?plate={formattedPlate}" +
+            $"&driverId={catalog.DriverId}&from={from}&to={to}&page=1&pageSize=2", TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<InstitutionalHistoryResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(result);
@@ -273,15 +250,13 @@ public sealed class InstitutionalVehicleUsageTests(ApiFactory factory)
             Assert.Equal(catalog.DriverId, item.DriverId);
         });
 
-        var secondPage = await client.GetFromJsonAsync<InstitutionalHistoryResponse>(
-            $"/institutional-vehicle-usages/history?vehicleIdentification=" +
+        var secondPage = await client.GetFromJsonAsync<InstitutionalHistoryResponse>($"/institutional-vehicle-usages/history?vehicleIdentification=" +
             $"{Uri.EscapeDataString(catalog.VehicleIdentification.ToLowerInvariant())}" +
-            $"&from={from}&to={to}&page=2&pageSize=2");
+            $"&from={from}&to={to}&page=2&pageSize=2", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(secondPage);
         Assert.Single(secondPage.Items);
 
-        var invalid = await client.GetAsync(
-            $"/institutional-vehicle-usages/history?from={to}&to={from}&pageSize=101");
+        var invalid = await client.GetAsync($"/institutional-vehicle-usages/history?from={to}&to={from}&pageSize=101", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
     }
 
@@ -304,26 +279,30 @@ public sealed class InstitutionalVehicleUsageTests(ApiFactory factory)
         var departures = await Task.WhenAll(
             client.PostAsJsonAsync(
                 "/institutional-vehicle-usages/departures",
-                departureRequest),
+                departureRequest,
+                TestContext.Current.CancellationToken),
             client.PostAsJsonAsync(
                 "/institutional-vehicle-usages/departures",
-                departureRequest));
+                departureRequest,
+                TestContext.Current.CancellationToken));
 
         Assert.Single(departures, response => response.StatusCode == HttpStatusCode.Created);
         Assert.Single(departures, response => response.StatusCode == HttpStatusCode.Conflict);
         var createdResponse = departures.Single(
             response => response.StatusCode == HttpStatusCode.Created);
         var usage = await createdResponse.Content
-            .ReadFromJsonAsync<InstitutionalUsageResponse>();
+            .ReadFromJsonAsync<InstitutionalUsageResponse>(cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(usage);
 
         var returns = await Task.WhenAll(
             client.PostAsJsonAsync(
                 $"/institutional-vehicle-usages/{usage.Id}/returns",
-                new { returnMileage = 8010 }),
+                new { returnMileage = 8010 },
+                TestContext.Current.CancellationToken),
             client.PostAsJsonAsync(
                 $"/institutional-vehicle-usages/{usage.Id}/returns",
-                new { returnMileage = 8011 }));
+                new { returnMileage = 8011 },
+                TestContext.Current.CancellationToken));
 
         Assert.Single(returns, response => response.StatusCode == HttpStatusCode.OK);
         Assert.Single(returns, response => response.StatusCode == HttpStatusCode.Conflict);
@@ -333,13 +312,13 @@ public sealed class InstitutionalVehicleUsageTests(ApiFactory factory)
         Assert.Equal(
             1,
             await dbContext.UsosVeiculosInstitucionais.CountAsync(item =>
-                item.VeiculoId == catalog.VehicleId));
+                item.VeiculoId == catalog.VehicleId, cancellationToken: TestContext.Current.CancellationToken));
         Assert.Equal(
             2,
             await dbContext.Auditorias.CountAsync(item =>
                 item.Entidade == nameof(UsoVeiculoInstitucional) &&
                 item.RegistroId == usage.Id &&
-                item.UsuarioId == userId));
+                item.UsuarioId == userId, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -351,17 +330,15 @@ public sealed class InstitutionalVehicleUsageTests(ApiFactory factory)
         var returnCatalog = await CreateCatalogAsync(userId, institutionalVehicle: true);
         using var client = factory.CreateClient();
         await AuthenticateClientAsync(client, email, password);
-        var existingResponse = await client.PostAsJsonAsync(
-            "/institutional-vehicle-usages/departures",
-            new
-            {
-                vehicleId = returnCatalog.VehicleId,
-                driverId = returnCatalog.DriverId,
-                departureMileage = 4000,
-                itinerary = "Campus - Município"
-            });
+        var existingResponse = await client.PostAsJsonAsync("/institutional-vehicle-usages/departures", new
+        {
+            vehicleId = returnCatalog.VehicleId,
+            driverId = returnCatalog.DriverId,
+            departureMileage = 4000,
+            itinerary = "Campus - Município"
+        }, cancellationToken: TestContext.Current.CancellationToken);
         var existing = await existingResponse.Content
-            .ReadFromJsonAsync<InstitutionalUsageResponse>();
+            .ReadFromJsonAsync<InstitutionalUsageResponse>(cancellationToken: TestContext.Current.CancellationToken);
         existingResponse.EnsureSuccessStatusCode();
         Assert.NotNull(existing);
 
@@ -369,18 +346,14 @@ public sealed class InstitutionalVehicleUsageTests(ApiFactory factory)
 
         try
         {
-            var departureResponse = await client.PostAsJsonAsync(
-                "/institutional-vehicle-usages/departures",
-                new
-                {
-                    vehicleId = departureCatalog.VehicleId,
-                    driverId = departureCatalog.DriverId,
-                    departureMileage = 5000,
-                    itinerary = "Campus - Zona rural"
-                });
-            var returnResponse = await client.PostAsJsonAsync(
-                $"/institutional-vehicle-usages/{existing.Id}/returns",
-                new { returnMileage = 4010 });
+            var departureResponse = await client.PostAsJsonAsync("/institutional-vehicle-usages/departures", new
+            {
+                vehicleId = departureCatalog.VehicleId,
+                driverId = departureCatalog.DriverId,
+                departureMileage = 5000,
+                itinerary = "Campus - Zona rural"
+            }, cancellationToken: TestContext.Current.CancellationToken);
+            var returnResponse = await client.PostAsJsonAsync($"/institutional-vehicle-usages/{existing.Id}/returns", new { returnMileage = 4010 }, cancellationToken: TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.InternalServerError, departureResponse.StatusCode);
             Assert.Equal(HttpStatusCode.InternalServerError, returnResponse.StatusCode);
@@ -393,17 +366,17 @@ public sealed class InstitutionalVehicleUsageTests(ApiFactory factory)
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ControleAcessoVeiculosDbContext>();
         Assert.False(await dbContext.UsosVeiculosInstitucionais.AnyAsync(item =>
-            item.VeiculoId == departureCatalog.VehicleId));
+            item.VeiculoId == departureCatalog.VehicleId, cancellationToken: TestContext.Current.CancellationToken));
         var preserved = await dbContext.UsosVeiculosInstitucionais
             .AsNoTracking()
-            .SingleAsync(item => item.Id == existing.Id);
+            .SingleAsync(item => item.Id == existing.Id, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(StatusUsoVeiculoInstitucional.EmUso, preserved.Status);
         Assert.Null(preserved.DataHoraEntrada);
         Assert.Equal(
             1,
             await dbContext.Auditorias.CountAsync(item =>
                 item.Entidade == nameof(UsoVeiculoInstitucional) &&
-                item.RegistroId == existing.Id));
+                item.RegistroId == existing.Id, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     private async Task<(int UserId, string Email)> CreateUserAsync(

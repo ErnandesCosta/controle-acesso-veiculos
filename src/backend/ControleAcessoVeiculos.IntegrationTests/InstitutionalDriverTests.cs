@@ -28,10 +28,8 @@ public sealed class InstitutionalDriverTests(ApiFactory factory)
         var name = $" Motorista {suffix} ";
         var documentNumber = $"DOC{suffix}";
 
-        var response = await manager.PostAsJsonAsync(
-            "/institutional-drivers",
-            new { name, documentType = " id ", documentNumber });
-        var created = await response.Content.ReadFromJsonAsync<DriverResponse>();
+        var response = await manager.PostAsJsonAsync("/institutional-drivers", new { name, documentType = " id ", documentNumber }, cancellationToken: TestContext.Current.CancellationToken);
+        var created = await response.Content.ReadFromJsonAsync<DriverResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.NotNull(created);
@@ -40,8 +38,7 @@ public sealed class InstitutionalDriverTests(ApiFactory factory)
 
         using var doorman = factory.CreateClient();
         await AuthenticateClientAsync(doorman, doormanEmail, password);
-        var drivers = await doorman.GetFromJsonAsync<List<DriverResponse>>(
-            "/institutional-drivers");
+        var drivers = await doorman.GetFromJsonAsync<List<DriverResponse>>("/institutional-drivers", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Contains(drivers!, item => item.Id == created.Id);
 
         using var scope = factory.Services.CreateScope();
@@ -51,7 +48,7 @@ public sealed class InstitutionalDriverTests(ApiFactory factory)
                 (item.Entidade == nameof(Pessoa) && item.RegistroId == created.PersonId) ||
                 (item.Entidade == nameof(MotoristaInstitucional) &&
                     item.RegistroId == created.Id))
-            .ToListAsync();
+            .ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(2, audits.Count);
         Assert.All(audits, audit => Assert.Equal(managerId, audit.UsuarioId));
         var auditContent = string.Join(
@@ -69,16 +66,14 @@ public sealed class InstitutionalDriverTests(ApiFactory factory)
         using var anonymous = factory.CreateClient();
         Assert.Equal(
             HttpStatusCode.Unauthorized,
-            (await anonymous.GetAsync("/institutional-drivers")).StatusCode);
+            (await anonymous.GetAsync("/institutional-drivers", TestContext.Current.CancellationToken)).StatusCode);
 
         var (_, doormanEmail) = await CreateUserAsync(ProfileNames.Doorman, password);
         using var doorman = factory.CreateClient();
         await AuthenticateClientAsync(doorman, doormanEmail, password);
         Assert.Equal(
             HttpStatusCode.Forbidden,
-            (await doorman.PostAsJsonAsync(
-                "/institutional-drivers",
-                new { name = "Motorista" })).StatusCode);
+            (await doorman.PostAsJsonAsync("/institutional-drivers", new { name = "Motorista" }, cancellationToken: TestContext.Current.CancellationToken)).StatusCode);
 
         var (_, managerEmail) = await CreateUserAsync(
             ProfileNames.TransportationDepartment,
@@ -87,9 +82,7 @@ public sealed class InstitutionalDriverTests(ApiFactory factory)
         await AuthenticateClientAsync(manager, managerEmail, password);
         Assert.Equal(
             HttpStatusCode.BadRequest,
-            (await manager.PostAsJsonAsync(
-                "/institutional-drivers",
-                new { name = " ", documentType = "CPF" })).StatusCode);
+            (await manager.PostAsJsonAsync("/institutional-drivers", new { name = " ", documentType = "CPF" }, cancellationToken: TestContext.Current.CancellationToken)).StatusCode);
     }
 
     [Fact]
@@ -108,26 +101,31 @@ public sealed class InstitutionalDriverTests(ApiFactory factory)
         };
 
         var responses = await Task.WhenAll(
-            client.PostAsJsonAsync("/institutional-drivers", request),
-            client.PostAsJsonAsync("/institutional-drivers", request));
+            client.PostAsJsonAsync(
+                "/institutional-drivers",
+                request,
+                TestContext.Current.CancellationToken),
+            client.PostAsJsonAsync(
+                "/institutional-drivers",
+                request,
+                TestContext.Current.CancellationToken));
         Assert.Single(responses, item => item.StatusCode == HttpStatusCode.Created);
         Assert.Single(responses, item => item.StatusCode == HttpStatusCode.Conflict);
         var createdResponse = responses.Single(item => item.StatusCode == HttpStatusCode.Created);
-        var created = await createdResponse.Content.ReadFromJsonAsync<DriverResponse>();
+        var created = await createdResponse.Content.ReadFromJsonAsync<DriverResponse>(cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(created);
 
         Assert.Equal(
             HttpStatusCode.NoContent,
-            (await client.DeleteAsync($"/institutional-drivers/{created.Id}")).StatusCode);
+            (await client.DeleteAsync($"/institutional-drivers/{created.Id}", TestContext.Current.CancellationToken)).StatusCode);
         Assert.Equal(
             HttpStatusCode.Conflict,
-            (await client.DeleteAsync($"/institutional-drivers/{created.Id}")).StatusCode);
-        var active = await client.GetFromJsonAsync<List<DriverResponse>>(
-            "/institutional-drivers");
+            (await client.DeleteAsync($"/institutional-drivers/{created.Id}", TestContext.Current.CancellationToken)).StatusCode);
+        var active = await client.GetFromJsonAsync<List<DriverResponse>>("/institutional-drivers", cancellationToken: TestContext.Current.CancellationToken);
         Assert.DoesNotContain(active!, item => item.Id == created.Id);
 
-        var reactivation = await client.PostAsJsonAsync("/institutional-drivers", request);
-        var reactivated = await reactivation.Content.ReadFromJsonAsync<DriverResponse>();
+        var reactivation = await client.PostAsJsonAsync("/institutional-drivers", request, cancellationToken: TestContext.Current.CancellationToken);
+        var reactivated = await reactivation.Content.ReadFromJsonAsync<DriverResponse>(cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Created, reactivation.StatusCode);
         Assert.NotNull(reactivated);
         Assert.Equal(created.Id, reactivated.Id);
@@ -149,14 +147,12 @@ public sealed class InstitutionalDriverTests(ApiFactory factory)
 
         try
         {
-            var response = await client.PostAsJsonAsync(
-                "/institutional-drivers",
-                new
-                {
-                    name = $"Motorista {suffix}",
-                    documentType = "ID",
-                    documentNumber
-                });
+            var response = await client.PostAsJsonAsync("/institutional-drivers", new
+            {
+                name = $"Motorista {suffix}",
+                documentType = "ID",
+                documentNumber
+            }, cancellationToken: TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         }
         finally
@@ -167,7 +163,7 @@ public sealed class InstitutionalDriverTests(ApiFactory factory)
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ControleAcessoVeiculosDbContext>();
         Assert.False(await dbContext.Pessoas.AnyAsync(item =>
-            item.DocumentoNumero == documentNumber));
+            item.DocumentoNumero == documentNumber, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     private async Task<(int UserId, string Email)> CreateUserAsync(
