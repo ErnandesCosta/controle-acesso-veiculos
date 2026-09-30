@@ -20,7 +20,7 @@ public sealed class RequestSafetyTests(ApiFactory factory)
     {
         using var client = factory.CreateClient();
 
-        var response = await client.GetAsync("/health");
+        var response = await client.GetAsync("/health", TestContext.Current.CancellationToken);
 
         response.EnsureSuccessStatusCode();
         var value = Assert.Single(response.Headers.GetValues(
@@ -37,7 +37,7 @@ public sealed class RequestSafetyTests(ApiFactory factory)
             RequestSafetyMiddleware.CorrelationIdHeaderName,
             correlationId.ToString("B").ToUpperInvariant());
 
-        var response = await client.GetAsync("/health");
+        var response = await client.GetAsync("/health", TestContext.Current.CancellationToken);
 
         response.EnsureSuccessStatusCode();
         Assert.Equal(
@@ -54,7 +54,7 @@ public sealed class RequestSafetyTests(ApiFactory factory)
             RequestSafetyMiddleware.CorrelationIdHeaderName,
             "invalid-correlation-id");
 
-        var response = await client.GetAsync("/health");
+        var response = await client.GetAsync("/health", TestContext.Current.CancellationToken);
 
         response.EnsureSuccessStatusCode();
         var value = Assert.Single(response.Headers.GetValues(
@@ -73,7 +73,7 @@ public sealed class RequestSafetyTests(ApiFactory factory)
             Encoding.UTF8,
             "application/json");
 
-        var response = await client.PostAsync("/auth/login", content);
+        var response = await client.PostAsync("/auth/login", content, TestContext.Current.CancellationToken);
         var body = await ReadProblemDetailsAsync(response);
 
         Assert.Equal(HttpStatusCode.RequestEntityTooLarge, response.StatusCode);
@@ -96,7 +96,7 @@ public sealed class RequestSafetyTests(ApiFactory factory)
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", "secret-test-token");
 
-        var response = await client.GetAsync("/health?document=secret-test-document");
+        var response = await client.GetAsync("/health?document=secret-test-document", TestContext.Current.CancellationToken);
 
         response.EnsureSuccessStatusCode();
         Assert.Contains(
@@ -126,7 +126,7 @@ public sealed class RequestSafetyTests(ApiFactory factory)
     {
         using var client = factory.CreateClient();
 
-        var response = await client.GetAsync("/access-records/open");
+        var response = await client.GetAsync("/access-records/open", TestContext.Current.CancellationToken);
         var body = await ReadProblemDetailsAsync(response);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -145,8 +145,8 @@ public sealed class RequestSafetyTests(ApiFactory factory)
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var response = await client.GetAsync("/__tests/unhandled-error");
-        var responseText = await response.Content.ReadAsStringAsync();
+        var response = await client.GetAsync("/__tests/unhandled-error", TestContext.Current.CancellationToken);
+        var responseText = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var body = JsonDocument.Parse(responseText);
 
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);

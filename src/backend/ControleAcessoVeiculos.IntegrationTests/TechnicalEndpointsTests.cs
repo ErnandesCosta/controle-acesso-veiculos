@@ -17,10 +17,10 @@ public sealed class TechnicalEndpointsTests(ApiFactory factory)
     [Fact]
     public async Task HealthReturnsHealthyStatus()
     {
-        var response = await _client.GetAsync("/health");
+        var response = await _client.GetAsync("/health", TestContext.Current.CancellationToken);
 
         response.EnsureSuccessStatusCode();
-        var body = await response.Content.ReadFromJsonAsync<HealthResponse>();
+        var body = await response.Content.ReadFromJsonAsync<HealthResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(body);
         Assert.Equal("Healthy", body.Status);
@@ -32,10 +32,10 @@ public sealed class TechnicalEndpointsTests(ApiFactory factory)
     [InlineData("/health/ready")]
     public async Task HealthEndpointsReturnHealthyStatus(string endpoint)
     {
-        var response = await _client.GetAsync(endpoint);
+        var response = await _client.GetAsync(endpoint, TestContext.Current.CancellationToken);
 
         response.EnsureSuccessStatusCode();
-        var body = await response.Content.ReadFromJsonAsync<HealthResponse>();
+        var body = await response.Content.ReadFromJsonAsync<HealthResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(body);
         Assert.Equal("Healthy", body.Status);
@@ -60,8 +60,8 @@ public sealed class TechnicalEndpointsTests(ApiFactory factory)
             AllowAutoRedirect = false
         });
 
-        var response = await client.GetAsync("/health/ready");
-        var body = await response.Content.ReadFromJsonAsync<HealthResponse>();
+        var response = await client.GetAsync("/health/ready", TestContext.Current.CancellationToken);
+        var body = await response.Content.ReadFromJsonAsync<HealthResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
         Assert.NotNull(body);
@@ -75,8 +75,8 @@ public sealed class TechnicalEndpointsTests(ApiFactory factory)
             builder.UseEnvironment("Development"));
         using var client = developmentFactory.CreateClient();
 
-        var response = await client.GetAsync("/openapi/v1.json");
-        var responseContent = await response.Content.ReadAsStringAsync();
+        var response = await client.GetAsync("/openapi/v1.json", TestContext.Current.CancellationToken);
+        var responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         response.EnsureSuccessStatusCode();
         using var document = JsonDocument.Parse(responseContent);
