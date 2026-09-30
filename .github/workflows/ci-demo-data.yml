@@ -59,6 +59,7 @@ jobs:
 
           postgres_password="$(openssl rand -hex 24)"
           jwt_signing_key="$(openssl rand -base64 48 | tr -d '\n')"
+          data_protection_password="$(openssl rand -base64 48 | tr -d '\n')"
           bootstrap_password="$(generate_password)"
           doorman_password="$(generate_password)"
           guard_password="$(generate_password)"
@@ -67,6 +68,7 @@ jobs:
           for secret in \
             "${postgres_password}" \
             "${jwt_signing_key}" \
+            "${data_protection_password}" \
             "${bootstrap_password}" \
             "${doorman_password}" \
             "${guard_password}" \
@@ -75,9 +77,25 @@ jobs:
             echo "::add-mask::${secret}"
           done
 
+          mkdir -p infrastructure/docker/secrets
+          openssl req -x509 -newkey rsa:3072 -sha256 -nodes \
+            -subj '/CN=controle-acesso-veiculos-demo-ci' \
+            -keyout "${RUNNER_TEMP}/data-protection.key" \
+            -out "${RUNNER_TEMP}/data-protection.crt" \
+            -days 1
+          openssl pkcs12 -export \
+            -inkey "${RUNNER_TEMP}/data-protection.key" \
+            -in "${RUNNER_TEMP}/data-protection.crt" \
+            -out infrastructure/docker/secrets/data-protection.pfx \
+            -passout "pass:${data_protection_password}"
+          printf '%s' "${data_protection_password}" \
+            > infrastructure/docker/secrets/data-protection-password.txt
+
           {
             echo "POSTGRES_PASSWORD=${postgres_password}"
             echo "JWT_SIGNING_KEY=${jwt_signing_key}"
+            echo "DATA_PROTECTION_CERTIFICATE_FILE=./secrets/data-protection.pfx"
+            echo "DATA_PROTECTION_CERTIFICATE_PASSWORD_FILE=./secrets/data-protection-password.txt"
             echo "BOOTSTRAP_ADMIN_PASSWORD=${bootstrap_password}"
             echo "DEMO_DOORMAN_PASSWORD=${doorman_password}"
             echo "DEMO_GUARD_PASSWORD=${guard_password}"

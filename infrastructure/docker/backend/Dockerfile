@@ -35,6 +35,8 @@ RUN dotnet publish "ControleAcessoVeiculos.API.csproj" -c Release -o /app/publis
 
 FROM base AS final
 WORKDIR /app
+RUN mkdir -p /var/lib/controle-acesso-veiculos/data-protection \
+    && chown -R "$APP_UID:$APP_UID" /var/lib/controle-acesso-veiculos
 COPY --from=publish /app/publish .
 USER $APP_UID
 ENTRYPOINT ["dotnet", "ControleAcessoVeiculos.API.dll"]
