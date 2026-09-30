@@ -12,7 +12,8 @@ public static class AuditTrailEndpoints
         endpoints.MapGet("/audits", SearchAsync)
             .RequireAuthorization(AuthorizationPolicies.ReviewAuditTrail)
             .WithTags("Auditing")
-            .WithName("SearchAuditTrail");
+            .WithName("SearchAuditTrail")
+            .WithSummary("Consulta a trilha de auditoria com filtros e paginação");
 
         return endpoints;
     }

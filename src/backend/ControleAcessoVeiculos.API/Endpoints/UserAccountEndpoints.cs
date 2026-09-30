@@ -13,16 +13,21 @@ public static class UserAccountEndpoints
             .WithTags("Users");
 
         group.MapGet(string.Empty, SearchAsync)
-            .WithName("SearchUsers");
+            .WithName("SearchUsers")
+            .WithSummary("Consulta contas de usuário");
         group.MapPost(string.Empty, CreateAsync)
-            .WithName("CreateUser");
+            .WithName("CreateUser")
+            .WithSummary("Cria uma conta com credencial temporária");
         group.MapDelete("/{id:int}", DeactivateAsync)
-            .WithName("DeactivateUser");
+            .WithName("DeactivateUser")
+            .WithSummary("Desativa uma conta de usuário");
         group.MapPost("/{id:int}/reactivation", ReactivateAsync)
-            .WithName("ReactivateUser");
+            .WithName("ReactivateUser")
+            .WithSummary("Reativa uma conta de usuário");
         group.MapPost("/{id:int}/temporary-credential", ResetCredentialAsync)
             .RequireRateLimiting(ApiRateLimiting.PasswordChangePolicy)
             .WithName("ResetUserCredential")
+            .WithSummary("Emite uma nova credencial temporária para a conta")
             .Produces<TemporaryCredentialResponse>(StatusCodes.Status200OK)
             .ProducesValidationProblem(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status401Unauthorized)

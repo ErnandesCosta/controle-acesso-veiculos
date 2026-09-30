@@ -125,6 +125,55 @@ public sealed class TechnicalEndpointsTests(ApiFactory factory)
     }
 
     [Fact]
+    public async Task DevelopmentOpenApiOperationsHaveStableDiscoveryMetadata()
+    {
+        using var developmentFactory = factory.WithWebHostBuilder(builder =>
+            builder.UseEnvironment("Development"));
+        using var client = developmentFactory.CreateClient();
+
+        var response = await client.GetAsync(
+            "/openapi/v1.json",
+            TestContext.Current.CancellationToken);
+        var responseContent = await response.Content.ReadAsStringAsync(
+            TestContext.Current.CancellationToken);
+
+        response.EnsureSuccessStatusCode();
+        using var document = JsonDocument.Parse(responseContent);
+        var operationIds = new HashSet<string>(StringComparer.Ordinal);
+        var operationCount = 0;
+
+        foreach (var path in document.RootElement.GetProperty("paths").EnumerateObject())
+        {
+            foreach (var operation in path.Value.EnumerateObject())
+            {
+                if (operation.Name is not ("get" or "post" or "put" or "delete" or "patch"))
+                {
+                    continue;
+                }
+
+                operationCount++;
+                var metadata = operation.Value;
+                var operationId = metadata.GetProperty("operationId").GetString();
+                var summary = metadata.GetProperty("summary").GetString();
+                var tags = metadata.GetProperty("tags");
+
+                Assert.False(
+                    string.IsNullOrWhiteSpace(operationId),
+                    $"{operation.Name.ToUpperInvariant()} {path.Name} has no operationId.");
+                Assert.True(
+                    operationIds.Add(operationId),
+                    $"The operationId '{operationId}' is duplicated.");
+                Assert.False(
+                    string.IsNullOrWhiteSpace(summary),
+                    $"{operation.Name.ToUpperInvariant()} {path.Name} has no summary.");
+                Assert.NotEmpty(tags.EnumerateArray());
+            }
+        }
+
+        Assert.NotEqual(0, operationCount);
+    }
+
+    [Fact]
     public async Task DevelopmentSwaggerUiReferencesNativeOpenApiDocument()
     {
         using var developmentFactory = factory.WithWebHostBuilder(builder =>

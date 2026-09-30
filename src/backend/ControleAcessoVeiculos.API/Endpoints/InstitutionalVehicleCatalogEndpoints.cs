@@ -13,19 +13,24 @@ public static class InstitutionalVehicleCatalogEndpoints
             .WithTags("Institutional vehicles");
 
         group.MapGet(string.Empty, ListActiveAsync)
-            .WithName("ListActiveInstitutionalVehicles");
+            .WithName("ListActiveInstitutionalVehicles")
+            .WithSummary("Lista veículos institucionais ativos");
         group.MapPost(string.Empty, CreateAsync)
             .RequireAuthorization(AuthorizationPolicies.ManageInstitutionalVehicleCatalog)
-            .WithName("CreateInstitutionalVehicle");
+            .WithName("CreateInstitutionalVehicle")
+            .WithSummary("Cadastra um veículo institucional");
         group.MapPut("/{id:int}", UpdateAsync)
             .RequireAuthorization(AuthorizationPolicies.ManageInstitutionalVehicleCatalog)
-            .WithName("UpdateInstitutionalVehicle");
+            .WithName("UpdateInstitutionalVehicle")
+            .WithSummary("Atualiza um veículo institucional");
         group.MapDelete("/{id:int}", DeactivateAsync)
             .RequireAuthorization(AuthorizationPolicies.ManageInstitutionalVehicleCatalog)
-            .WithName("DeactivateInstitutionalVehicle");
+            .WithName("DeactivateInstitutionalVehicle")
+            .WithSummary("Desativa um veículo institucional");
         group.MapPost("/{id:int}/reactivation", ReactivateAsync)
             .RequireAuthorization(AuthorizationPolicies.ManageInstitutionalVehicleCatalog)
-            .WithName("ReactivateInstitutionalVehicle");
+            .WithName("ReactivateInstitutionalVehicle")
+            .WithSummary("Reativa um veículo institucional");
 
         return endpoints;
     }

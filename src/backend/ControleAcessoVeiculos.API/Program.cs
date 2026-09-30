@@ -423,7 +423,9 @@ app.MapPost("/auth/login", async (
 })
 .AllowAnonymous()
 .RequireRateLimiting(ApiRateLimiting.LoginPolicy)
+.WithTags("Authentication")
 .WithName("Login")
+.WithSummary("Autentica uma conta e inicia uma sessão renovável")
 .Produces<LoginResponse>(StatusCodes.Status200OK)
 .ProducesValidationProblem(StatusCodes.Status400BadRequest)
 .Produces<LoginErrorResponse>(StatusCodes.Status401Unauthorized);
@@ -437,7 +439,9 @@ app.MapGet("/auth/csrf", (
     return Results.Ok(new CsrfTokenResponse(tokens.RequestToken!));
 })
 .AllowAnonymous()
+.WithTags("Authentication")
 .WithName("GetAuthenticationCsrfToken")
+.WithSummary("Obtém o token CSRF para renovar ou encerrar a sessão")
 .Produces<CsrfTokenResponse>(StatusCodes.Status200OK);
 
 app.MapPost("/auth/refresh", async (
@@ -491,7 +495,9 @@ app.MapPost("/auth/refresh", async (
 })
 .AllowAnonymous()
 .RequireRateLimiting(ApiRateLimiting.LoginPolicy)
+.WithTags("Authentication")
 .WithName("RefreshAuthenticationSession")
+.WithSummary("Renova e rotaciona uma sessão autenticada")
 .Produces<LoginResponse>(StatusCodes.Status200OK)
 .Produces(StatusCodes.Status401Unauthorized);
 
@@ -515,7 +521,9 @@ app.MapPost("/auth/logout", async (
     return Results.NoContent();
 })
 .AllowAnonymous()
+.WithTags("Authentication")
 .WithName("Logout")
+.WithSummary("Encerra e revoga a sessão renovável")
 .Produces(StatusCodes.Status204NoContent);
 
 app.MapPost("/auth/password", async (
@@ -551,7 +559,9 @@ app.MapPost("/auth/password", async (
     };
 })
 .RequireRateLimiting(ApiRateLimiting.PasswordChangePolicy)
+.WithTags("Authentication")
 .WithName("ChangeAuthenticatedPassword")
+.WithSummary("Altera a senha da conta autenticada e revoga sessões anteriores")
 .Produces(StatusCodes.Status204NoContent)
 .ProducesValidationProblem(StatusCodes.Status400BadRequest)
 .Produces(StatusCodes.Status401Unauthorized)

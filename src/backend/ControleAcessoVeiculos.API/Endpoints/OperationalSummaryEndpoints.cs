@@ -11,7 +11,8 @@ public static class OperationalSummaryEndpoints
         endpoints.MapGet("/operations/daily-summary", GetDailyAsync)
             .RequireAuthorization(AuthorizationPolicies.ReviewOperationalSummary)
             .WithTags("Operations")
-            .WithName("GetDailyOperationalSummary");
+            .WithName("GetDailyOperationalSummary")
+            .WithSummary("Obtém o resumo operacional diário");
 
         return endpoints;
     }

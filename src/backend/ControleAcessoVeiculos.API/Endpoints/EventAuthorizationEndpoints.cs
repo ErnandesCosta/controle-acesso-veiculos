@@ -13,16 +13,20 @@ public static class EventAuthorizationEndpoints
             .WithTags("Event authorizations");
 
         group.MapGet(string.Empty, SearchAsync)
-            .WithName("SearchEventAuthorizations");
+            .WithName("SearchEventAuthorizations")
+            .WithSummary("Consulta autorizações de eventos");
         group.MapPost(string.Empty, CreateAsync)
             .RequireAuthorization(AuthorizationPolicies.ManageEventAuthorizations)
-            .WithName("CreateEventAuthorization");
+            .WithName("CreateEventAuthorization")
+            .WithSummary("Cria uma autorização de evento");
         group.MapPut("/{id:int}", UpdateAsync)
             .RequireAuthorization(AuthorizationPolicies.ManageEventAuthorizations)
-            .WithName("UpdateEventAuthorization");
+            .WithName("UpdateEventAuthorization")
+            .WithSummary("Atualiza uma autorização de evento");
         group.MapDelete("/{id:int}", CancelAsync)
             .RequireAuthorization(AuthorizationPolicies.ManageEventAuthorizations)
-            .WithName("CancelEventAuthorization");
+            .WithName("CancelEventAuthorization")
+            .WithSummary("Cancela uma autorização de evento");
 
         return endpoints;
     }
