@@ -28,20 +28,18 @@ public sealed class InstitutionalVehicleCatalogTests(ApiFactory factory)
         var plate = $"if-{suffix[..5]}";
         var identification = $" frota-{suffix} ";
 
-        var createResponse = await managementClient.PostAsJsonAsync(
-            "/institutional-vehicles",
-            new
-            {
-                plate,
-                identification,
-                vehicleType = " Automóvel ",
-                brand = " Marca Fictícia ",
-                model = " Modelo de Teste ",
-                color = " Branco ",
-                year = 2026
-            });
+        var createResponse = await managementClient.PostAsJsonAsync("/institutional-vehicles", new
+        {
+            plate,
+            identification,
+            vehicleType = " Automóvel ",
+            brand = " Marca Fictícia ",
+            model = " Modelo de Teste ",
+            color = " Branco ",
+            year = 2026
+        }, cancellationToken: TestContext.Current.CancellationToken);
         var created = await createResponse.Content
-            .ReadFromJsonAsync<InstitutionalVehicleResponse>();
+            .ReadFromJsonAsync<InstitutionalVehicleResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
         Assert.NotNull(created);
@@ -54,8 +52,7 @@ public sealed class InstitutionalVehicleCatalogTests(ApiFactory factory)
         using var operationalClient = factory.CreateClient();
         await AuthenticateClientAsync(operationalClient, doormanEmail, password);
         var vehicles = await operationalClient
-            .GetFromJsonAsync<List<InstitutionalVehicleResponse>>(
-                "/institutional-vehicles");
+            .GetFromJsonAsync<List<InstitutionalVehicleResponse>>("/institutional-vehicles", cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Contains(vehicles!, vehicle => vehicle.Id == created.Id);
 
@@ -64,7 +61,7 @@ public sealed class InstitutionalVehicleCatalogTests(ApiFactory factory)
         var audit = await dbContext.Auditorias
             .AsNoTracking()
             .SingleAsync(item => item.Entidade == nameof(Veiculo) &&
-                item.RegistroId == created.Id);
+                item.RegistroId == created.Id, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(TipoAcaoAuditoria.Inclusao, audit.TipoAcao);
         Assert.Equal(transportationUserId, audit.UsuarioId);
@@ -83,40 +80,32 @@ public sealed class InstitutionalVehicleCatalogTests(ApiFactory factory)
         var (_, doormanEmail) = await CreateUserAsync(ProfileNames.Doorman, password);
         using var anonymousClient = factory.CreateClient();
 
-        var anonymousResponse = await anonymousClient.GetAsync("/institutional-vehicles");
+        var anonymousResponse = await anonymousClient.GetAsync("/institutional-vehicles", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, anonymousResponse.StatusCode);
 
         using var operationalClient = factory.CreateClient();
         await AuthenticateClientAsync(operationalClient, doormanEmail, password);
-        var forbiddenResponse = await operationalClient.PostAsJsonAsync(
-            "/institutional-vehicles",
-            new { plate = "ABC-1D23", identification = "FROTA-TESTE" });
+        var forbiddenResponse = await operationalClient.PostAsJsonAsync("/institutional-vehicles", new { plate = "ABC-1D23", identification = "FROTA-TESTE" }, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Forbidden, forbiddenResponse.StatusCode);
         Assert.Equal(
             HttpStatusCode.Forbidden,
-            (await operationalClient.PutAsJsonAsync(
-                "/institutional-vehicles/1",
-                new { plate = "ABC-1D23", identification = "FROTA-TESTE" }))
+            (await operationalClient.PutAsJsonAsync("/institutional-vehicles/1", new { plate = "ABC-1D23", identification = "FROTA-TESTE" }, cancellationToken: TestContext.Current.CancellationToken))
             .StatusCode);
         Assert.Equal(
             HttpStatusCode.Forbidden,
-            (await operationalClient.DeleteAsync("/institutional-vehicles/1")).StatusCode);
+            (await operationalClient.DeleteAsync("/institutional-vehicles/1", TestContext.Current.CancellationToken)).StatusCode);
         Assert.Equal(
             HttpStatusCode.Forbidden,
-            (await operationalClient.PostAsync(
-                "/institutional-vehicles/1/reactivation",
-                content: null)).StatusCode);
+            (await operationalClient.PostAsync("/institutional-vehicles/1/reactivation", content: null, cancellationToken: TestContext.Current.CancellationToken)).StatusCode);
 
         var (_, transportationEmail) = await CreateUserAsync(
             ProfileNames.TransportationDepartment,
             password);
         using var managementClient = factory.CreateClient();
         await AuthenticateClientAsync(managementClient, transportationEmail, password);
-        var invalidResponse = await managementClient.PostAsJsonAsync(
-            "/institutional-vehicles",
-            new { plate = "---", identification = (string?)null, year = 2028 });
+        var invalidResponse = await managementClient.PostAsJsonAsync("/institutional-vehicles", new { plate = "---", identification = (string?)null, year = 2028 }, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, invalidResponse.StatusCode);
     }
@@ -137,8 +126,14 @@ public sealed class InstitutionalVehicleCatalogTests(ApiFactory factory)
         };
 
         var responses = await Task.WhenAll(
-            client.PostAsJsonAsync("/institutional-vehicles", request),
-            client.PostAsJsonAsync("/institutional-vehicles", request));
+            client.PostAsJsonAsync(
+                "/institutional-vehicles",
+                request,
+                TestContext.Current.CancellationToken),
+            client.PostAsJsonAsync(
+                "/institutional-vehicles",
+                request,
+                TestContext.Current.CancellationToken));
 
         Assert.Single(responses, response => response.StatusCode == HttpStatusCode.Created);
         Assert.Single(responses, response => response.StatusCode == HttpStatusCode.Conflict);
@@ -156,30 +151,26 @@ public sealed class InstitutionalVehicleCatalogTests(ApiFactory factory)
         var suffix = Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
         var originalPlate = $"IF{suffix[..5]}";
         var originalIdentification = $"FROTA-{suffix}";
-        var createResponse = await client.PostAsJsonAsync(
-            "/institutional-vehicles",
-            new { plate = originalPlate, identification = originalIdentification });
+        var createResponse = await client.PostAsJsonAsync("/institutional-vehicles", new { plate = originalPlate, identification = originalIdentification }, cancellationToken: TestContext.Current.CancellationToken);
         var created = await createResponse.Content
-            .ReadFromJsonAsync<InstitutionalVehicleResponse>();
+            .ReadFromJsonAsync<InstitutionalVehicleResponse>(cancellationToken: TestContext.Current.CancellationToken);
         createResponse.EnsureSuccessStatusCode();
         Assert.NotNull(created);
         var updatedPlate = $"UP{suffix[..5]}";
         var updatedIdentification = $"ATUAL-{suffix}";
 
-        var updateResponse = await client.PutAsJsonAsync(
-            $"/institutional-vehicles/{created.Id}",
-            new
-            {
-                plate = updatedPlate.ToLowerInvariant(),
-                identification = updatedIdentification.ToLowerInvariant(),
-                vehicleType = " Van ",
-                brand = " Marca Fictícia ",
-                model = " Modelo de Teste ",
-                color = " Branco ",
-                year = 2026
-            });
+        var updateResponse = await client.PutAsJsonAsync($"/institutional-vehicles/{created.Id}", new
+        {
+            plate = updatedPlate.ToLowerInvariant(),
+            identification = updatedIdentification.ToLowerInvariant(),
+            vehicleType = " Van ",
+            brand = " Marca Fictícia ",
+            model = " Modelo de Teste ",
+            color = " Branco ",
+            year = 2026
+        }, cancellationToken: TestContext.Current.CancellationToken);
         var updated = await updateResponse.Content
-            .ReadFromJsonAsync<InstitutionalVehicleResponse>();
+            .ReadFromJsonAsync<InstitutionalVehicleResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
         Assert.NotNull(updated);
@@ -188,26 +179,20 @@ public sealed class InstitutionalVehicleCatalogTests(ApiFactory factory)
 
         Assert.Equal(
             HttpStatusCode.NoContent,
-            (await client.DeleteAsync($"/institutional-vehicles/{created.Id}")).StatusCode);
+            (await client.DeleteAsync($"/institutional-vehicles/{created.Id}", TestContext.Current.CancellationToken)).StatusCode);
         Assert.Equal(
             HttpStatusCode.Conflict,
-            (await client.DeleteAsync($"/institutional-vehicles/{created.Id}")).StatusCode);
-        var active = await client.GetFromJsonAsync<List<InstitutionalVehicleResponse>>(
-            "/institutional-vehicles");
+            (await client.DeleteAsync($"/institutional-vehicles/{created.Id}", TestContext.Current.CancellationToken)).StatusCode);
+        var active = await client.GetFromJsonAsync<List<InstitutionalVehicleResponse>>("/institutional-vehicles", cancellationToken: TestContext.Current.CancellationToken);
         Assert.DoesNotContain(active!, item => item.Id == created.Id);
 
         Assert.Equal(
             HttpStatusCode.NoContent,
-            (await client.PostAsync(
-                $"/institutional-vehicles/{created.Id}/reactivation",
-                content: null)).StatusCode);
+            (await client.PostAsync($"/institutional-vehicles/{created.Id}/reactivation", content: null, cancellationToken: TestContext.Current.CancellationToken)).StatusCode);
         Assert.Equal(
             HttpStatusCode.Conflict,
-            (await client.PostAsync(
-                $"/institutional-vehicles/{created.Id}/reactivation",
-                content: null)).StatusCode);
-        active = await client.GetFromJsonAsync<List<InstitutionalVehicleResponse>>(
-            "/institutional-vehicles");
+            (await client.PostAsync($"/institutional-vehicles/{created.Id}/reactivation", content: null, cancellationToken: TestContext.Current.CancellationToken)).StatusCode);
+        active = await client.GetFromJsonAsync<List<InstitutionalVehicleResponse>>("/institutional-vehicles", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Contains(active!, item => item.Id == created.Id);
 
         using var scope = factory.Services.CreateScope();
@@ -216,7 +201,7 @@ public sealed class InstitutionalVehicleCatalogTests(ApiFactory factory)
             .Where(item => item.Entidade == nameof(Veiculo) &&
                 item.RegistroId == created.Id)
             .OrderBy(item => item.Id)
-            .ToListAsync();
+            .ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(4, audits.Count);
         Assert.All(audits, audit => Assert.Equal(userId, audit.UsuarioId));
         Assert.Contains("changedFields", Assert.IsType<string>(audits[1].DadosNovos));
@@ -245,21 +230,15 @@ public sealed class InstitutionalVehicleCatalogTests(ApiFactory factory)
         await AuthenticateClientAsync(client, email, password);
         var suffix = Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
         var firstPlate = $"AA{suffix[..5]}";
-        var first = await client.PostAsJsonAsync(
-            "/institutional-vehicles",
-            new { plate = firstPlate, identification = $"FIRST-{suffix}" });
-        var second = await client.PostAsJsonAsync(
-            "/institutional-vehicles",
-            new { plate = $"BB{suffix[..5]}", identification = $"SECOND-{suffix}" });
+        var first = await client.PostAsJsonAsync("/institutional-vehicles", new { plate = firstPlate, identification = $"FIRST-{suffix}" }, cancellationToken: TestContext.Current.CancellationToken);
+        var second = await client.PostAsJsonAsync("/institutional-vehicles", new { plate = $"BB{suffix[..5]}", identification = $"SECOND-{suffix}" }, cancellationToken: TestContext.Current.CancellationToken);
         var secondVehicle = await second.Content
-            .ReadFromJsonAsync<InstitutionalVehicleResponse>();
+            .ReadFromJsonAsync<InstitutionalVehicleResponse>(cancellationToken: TestContext.Current.CancellationToken);
         first.EnsureSuccessStatusCode();
         second.EnsureSuccessStatusCode();
         Assert.NotNull(secondVehicle);
 
-        var duplicate = await client.PutAsJsonAsync(
-            $"/institutional-vehicles/{secondVehicle.Id}",
-            new { plate = firstPlate, identification = $"SECOND-{suffix}" });
+        var duplicate = await client.PutAsJsonAsync($"/institutional-vehicles/{secondVehicle.Id}", new { plate = firstPlate, identification = $"SECOND-{suffix}" }, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
     }
@@ -275,25 +254,18 @@ public sealed class InstitutionalVehicleCatalogTests(ApiFactory factory)
         await AuthenticateClientAsync(client, email, password);
         var identification = $"ROLLBACK-{Guid.NewGuid():N}".ToUpperInvariant();
         var existingIdentification = $"PRESERVED-{Guid.NewGuid():N}".ToUpperInvariant();
-        var existingResponse = await client.PostAsJsonAsync(
-            "/institutional-vehicles",
-            new { plate = (string?)null, identification = existingIdentification });
+        var existingResponse = await client.PostAsJsonAsync("/institutional-vehicles", new { plate = (string?)null, identification = existingIdentification }, cancellationToken: TestContext.Current.CancellationToken);
         var existing = await existingResponse.Content
-            .ReadFromJsonAsync<InstitutionalVehicleResponse>();
+            .ReadFromJsonAsync<InstitutionalVehicleResponse>(cancellationToken: TestContext.Current.CancellationToken);
         existingResponse.EnsureSuccessStatusCode();
         Assert.NotNull(existing);
         await InstallRejectingAuditTriggerAsync();
 
         try
         {
-            var response = await client.PostAsJsonAsync(
-                "/institutional-vehicles",
-                new { plate = (string?)null, identification });
-            var updateResponse = await client.PutAsJsonAsync(
-                $"/institutional-vehicles/{existing.Id}",
-                new { plate = (string?)null, identification = $"CHANGED-{Guid.NewGuid():N}" });
-            var deactivateResponse = await client.DeleteAsync(
-                $"/institutional-vehicles/{existing.Id}");
+            var response = await client.PostAsJsonAsync("/institutional-vehicles", new { plate = (string?)null, identification }, cancellationToken: TestContext.Current.CancellationToken);
+            var updateResponse = await client.PutAsJsonAsync($"/institutional-vehicles/{existing.Id}", new { plate = (string?)null, identification = $"CHANGED-{Guid.NewGuid():N}" }, cancellationToken: TestContext.Current.CancellationToken);
+            var deactivateResponse = await client.DeleteAsync($"/institutional-vehicles/{existing.Id}", TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
             Assert.Equal(HttpStatusCode.InternalServerError, updateResponse.StatusCode);
@@ -307,9 +279,9 @@ public sealed class InstitutionalVehicleCatalogTests(ApiFactory factory)
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ControleAcessoVeiculosDbContext>();
         Assert.False(await dbContext.Veiculos
-            .AnyAsync(vehicle => vehicle.IdentificacaoVeiculo == identification));
+            .AnyAsync(vehicle => vehicle.IdentificacaoVeiculo == identification, cancellationToken: TestContext.Current.CancellationToken));
         var preserved = await dbContext.Veiculos.AsNoTracking()
-            .SingleAsync(vehicle => vehicle.Id == existing.Id);
+            .SingleAsync(vehicle => vehicle.Id == existing.Id, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(existingIdentification, preserved.IdentificacaoVeiculo);
         Assert.True(preserved.Ativo);
     }
