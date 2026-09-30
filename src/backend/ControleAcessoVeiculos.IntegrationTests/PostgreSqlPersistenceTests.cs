@@ -18,7 +18,7 @@ public sealed class PostgreSqlPersistenceTests(ApiFactory factory)
         var dbContext = scope.ServiceProvider
             .GetRequiredService<ControleAcessoVeiculosDbContext>();
 
-        var migrations = await dbContext.Database.GetAppliedMigrationsAsync();
+        var migrations = await dbContext.Database.GetAppliedMigrationsAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Contains("20260825222017_InitialCreate", migrations);
         Assert.Contains("20260826183028_AlignMvpDataModel", migrations);
@@ -30,7 +30,7 @@ public sealed class PostgreSqlPersistenceTests(ApiFactory factory)
         Assert.Contains("20260830204741_LinkEventAuthorizationsToAccessRecords", migrations);
         Assert.Contains("20260913185634_AddSecureAuthenticationSessions", migrations);
 
-        await dbContext.Database.OpenConnectionAsync();
+        await dbContext.Database.OpenConnectionAsync(cancellationToken: TestContext.Current.CancellationToken);
         await using var command = dbContext.Database.GetDbConnection().CreateCommand();
         command.CommandText = """
             SELECT table_name
@@ -40,9 +40,9 @@ public sealed class PostgreSqlPersistenceTests(ApiFactory factory)
             ORDER BY table_name;
             """;
         var tables = new List<string>();
-        await using (var reader = await command.ExecuteReaderAsync())
+        await using (var reader = await command.ExecuteReaderAsync(TestContext.Current.CancellationToken))
         {
-            while (await reader.ReadAsync())
+            while (await reader.ReadAsync(TestContext.Current.CancellationToken))
             {
                 tables.Add(reader.GetString(0));
             }
@@ -70,9 +70,9 @@ public sealed class PostgreSqlPersistenceTests(ApiFactory factory)
                   'sessoes_autenticacao');
             """;
         var constraints = new List<string>();
-        await using (var reader = await command.ExecuteReaderAsync())
+        await using (var reader = await command.ExecuteReaderAsync(TestContext.Current.CancellationToken))
         {
-            while (await reader.ReadAsync())
+            while (await reader.ReadAsync(TestContext.Current.CancellationToken))
             {
                 constraints.Add(reader.GetString(0));
             }
@@ -101,7 +101,7 @@ public sealed class PostgreSqlPersistenceTests(ApiFactory factory)
               AND constraint_name = 'fk_registros_acesso_autorizacoes_eventos'
               AND constraint_type = 'FOREIGN KEY';
             """;
-        Assert.Equal(1L, (long)(await command.ExecuteScalarAsync())!);
+        Assert.Equal(1L, (long)(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken))!);
     }
 
     [Fact]
@@ -120,10 +120,10 @@ public sealed class PostgreSqlPersistenceTests(ApiFactory factory)
 
         await using (var adminConnection = new NpgsqlConnection(adminBuilder.ConnectionString))
         {
-            await adminConnection.OpenAsync();
+            await adminConnection.OpenAsync(TestContext.Current.CancellationToken);
             await using var createCommand = adminConnection.CreateCommand();
             createCommand.CommandText = $"CREATE DATABASE \"{databaseName}\"";
-            await createCommand.ExecuteNonQueryAsync();
+            await createCommand.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
         }
 
         try
@@ -139,7 +139,7 @@ public sealed class PostgreSqlPersistenceTests(ApiFactory factory)
             await using var dbContext = new ControleAcessoVeiculosDbContext(options);
             var migrator = dbContext.GetService<IMigrator>();
 
-            await migrator.MigrateAsync();
+            await migrator.MigrateAsync(cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(await IsAuditActorNullableAsync(dbContext));
 
             await dbContext.Database.ExecuteSqlRawAsync("""
@@ -147,31 +147,30 @@ public sealed class PostgreSqlPersistenceTests(ApiFactory factory)
                     (tipo_acao, entidade, registro_id, usuario_id, detalhes)
                 VALUES
                     ('Inclusao', 'Usuario', 1, NULL, 'Temporary system audit migration test.');
-                """);
+                """, cancellationToken: TestContext.Current.CancellationToken);
 
             var unsafeDowngrade = await Assert.ThrowsAnyAsync<Exception>(() =>
-                migrator.MigrateAsync("20260829165235_AddGeneralAccessHistoryIndex"));
+                migrator.MigrateAsync("20260829165235_AddGeneralAccessHistoryIndex", TestContext.Current.CancellationToken));
             Assert.Contains(
                 "Cannot require an audit actor while system audit records exist.",
                 unsafeDowngrade.ToString(),
                 StringComparison.Ordinal);
 
-            await dbContext.Database.ExecuteSqlRawAsync(
-                "DELETE FROM dbo.auditorias WHERE usuario_id IS NULL");
-            await migrator.MigrateAsync("20260829165235_AddGeneralAccessHistoryIndex");
+            await dbContext.Database.ExecuteSqlRawAsync("DELETE FROM dbo.auditorias WHERE usuario_id IS NULL", cancellationToken: TestContext.Current.CancellationToken);
+            await migrator.MigrateAsync("20260829165235_AddGeneralAccessHistoryIndex", TestContext.Current.CancellationToken);
             Assert.False(await IsAuditActorNullableAsync(dbContext));
 
-            await migrator.MigrateAsync();
+            await migrator.MigrateAsync(cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(await IsAuditActorNullableAsync(dbContext));
         }
         finally
         {
             NpgsqlConnection.ClearAllPools();
             await using var adminConnection = new NpgsqlConnection(adminBuilder.ConnectionString);
-            await adminConnection.OpenAsync();
+            await adminConnection.OpenAsync(TestContext.Current.CancellationToken);
             await using var dropCommand = adminConnection.CreateCommand();
             dropCommand.CommandText = $"DROP DATABASE IF EXISTS \"{databaseName}\" WITH (FORCE)";
-            await dropCommand.ExecuteNonQueryAsync();
+            await dropCommand.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -187,14 +186,14 @@ public sealed class PostgreSqlPersistenceTests(ApiFactory factory)
             "Pessoa de Teste A",
             "TESTE",
             documentNumber));
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         dbContext.Pessoas.Add(new Pessoa(
             "Pessoa de Teste B",
             "TESTE",
             documentNumber));
 
-        await Assert.ThrowsAsync<DbUpdateException>(() => dbContext.SaveChangesAsync());
+        await Assert.ThrowsAsync<DbUpdateException>(() => dbContext.SaveChangesAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -213,7 +212,7 @@ public sealed class PostgreSqlPersistenceTests(ApiFactory factory)
 
         dbContext.Pessoas.Add(pessoa);
         dbContext.Veiculos.Add(veiculo);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var relacao = new PessoaVeiculo(
             pessoa.Id,
@@ -221,11 +220,11 @@ public sealed class PostgreSqlPersistenceTests(ApiFactory factory)
             "Condutor",
             DateOnly.FromDateTime(DateTime.UtcNow));
         dbContext.PessoasVeiculos.Add(relacao);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
         dbContext.ChangeTracker.Clear();
 
         var persisted = await dbContext.PessoasVeiculos.SingleAsync(item =>
-            item.PessoaId == pessoa.Id && item.VeiculoId == veiculo.Id);
+            item.PessoaId == pessoa.Id && item.VeiculoId == veiculo.Id, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal("Condutor", persisted.TipoRelacao);
         Assert.True(persisted.Ativo);

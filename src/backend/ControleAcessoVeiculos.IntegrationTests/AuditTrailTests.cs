@@ -44,9 +44,8 @@ public sealed class AuditTrailTests(ApiFactory factory)
             dadosNovos: """{"active":true}""",
             detalhes: "system test event"));
 
-        var response = await client.GetAsync(
-            $"/audits?entity={entity}&systemOnly=true&page=1&pageSize=10");
-        var json = await response.Content.ReadAsStringAsync();
+        var response = await client.GetAsync($"/audits?entity={entity}&systemOnly=true&page=1&pageSize=10", TestContext.Current.CancellationToken);
+        var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var document = JsonDocument.Parse(json);
 
         response.EnsureSuccessStatusCode();
@@ -82,9 +81,8 @@ public sealed class AuditTrailTests(ApiFactory factory)
                 administrator.Id));
         }
 
-        var response = await client.GetAsync(
-            $"/audits?entity={entity}&actorUserId={administrator.Id}&systemOnly=false&page=1&pageSize=2");
-        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var response = await client.GetAsync($"/audits?entity={entity}&actorUserId={administrator.Id}&systemOnly=false&page=1&pageSize=2", TestContext.Current.CancellationToken);
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
 
         response.EnsureSuccessStatusCode();
         Assert.Equal(3, document.RootElement.GetProperty("totalCount").GetInt32());
@@ -106,7 +104,7 @@ public sealed class AuditTrailTests(ApiFactory factory)
         using var client = factory.CreateClient();
         await AuthenticateClientAsync(client, user.Email);
 
-        var response = await client.GetAsync("/audits");
+        var response = await client.GetAsync("/audits", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -118,9 +116,8 @@ public sealed class AuditTrailTests(ApiFactory factory)
         using var client = factory.CreateClient();
         await AuthenticateClientAsync(client, administrator.Email);
 
-        var response = await client.GetAsync(
-            "/audits?fromUtc=2026-01-01T00:00:00Z&toUtc=2026-04-02T00:00:01Z");
-        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var response = await client.GetAsync("/audits?fromUtc=2026-01-01T00:00:00Z&toUtc=2026-04-02T00:00:01Z", TestContext.Current.CancellationToken);
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.True(document.RootElement.GetProperty("errors").TryGetProperty("period", out _));

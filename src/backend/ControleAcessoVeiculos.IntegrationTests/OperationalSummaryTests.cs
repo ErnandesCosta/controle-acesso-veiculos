@@ -25,8 +25,7 @@ public sealed class OperationalSummaryTests(ApiFactory factory)
     {
         using var client = await CreateAuthenticatedClientAsync(profileName);
 
-        var response = await client.GetAsync(
-            "/operations/daily-summary?date=2099-01-15");
+        var response = await client.GetAsync("/operations/daily-summary?date=2099-01-15", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -37,13 +36,13 @@ public sealed class OperationalSummaryTests(ApiFactory factory)
         using var anonymousClient = factory.CreateClient();
         Assert.Equal(
             HttpStatusCode.Unauthorized,
-            (await anonymousClient.GetAsync("/operations/daily-summary")).StatusCode);
+            (await anonymousClient.GetAsync("/operations/daily-summary", TestContext.Current.CancellationToken)).StatusCode);
 
         using var unrelatedClient = await CreateAuthenticatedClientAsync(
             $"PerfilSemResumo{Guid.NewGuid():N}");
         Assert.Equal(
             HttpStatusCode.Forbidden,
-            (await unrelatedClient.GetAsync("/operations/daily-summary")).StatusCode);
+            (await unrelatedClient.GetAsync("/operations/daily-summary", TestContext.Current.CancellationToken)).StatusCode);
     }
 
     [Fact]
@@ -67,10 +66,9 @@ public sealed class OperationalSummaryTests(ApiFactory factory)
 
         using var client = factory.CreateClient();
         await AuthenticateClientAsync(client, email, Password);
-        var response = await client.GetAsync(
-            $"/operations/daily-summary?date={localDate:yyyy-MM-dd}");
-        var body = await response.Content.ReadAsStringAsync();
-        var summary = await response.Content.ReadFromJsonAsync<DailySummaryResponse>();
+        var response = await client.GetAsync($"/operations/daily-summary?date={localDate:yyyy-MM-dd}", TestContext.Current.CancellationToken);
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var summary = await response.Content.ReadFromJsonAsync<DailySummaryResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(summary);
@@ -91,8 +89,7 @@ public sealed class OperationalSummaryTests(ApiFactory factory)
     {
         using var client = await CreateAuthenticatedClientAsync(ProfileNames.Doorman);
 
-        var response = await client.GetAsync(
-            "/operations/daily-summary?date=not-a-date");
+        var response = await client.GetAsync("/operations/daily-summary?date=not-a-date", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }

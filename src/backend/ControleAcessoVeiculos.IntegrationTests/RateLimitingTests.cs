@@ -32,7 +32,7 @@ public sealed class RateLimitingTests(ApiFactory factory)
         }
 
         var rejected = await SendInvalidLoginAsync(client);
-        var body = JsonDocument.Parse(await rejected.Content.ReadAsStringAsync());
+        var body = JsonDocument.Parse(await rejected.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
 
         Assert.Equal(HttpStatusCode.TooManyRequests, rejected.StatusCode);
         Assert.StartsWith(
@@ -47,7 +47,7 @@ public sealed class RateLimitingTests(ApiFactory factory)
             body.RootElement.GetProperty("traceId").GetString()));
         Assert.DoesNotContain(
             "missing-rate-limit-user",
-            await rejected.Content.ReadAsStringAsync(),
+            await rejected.Content.ReadAsStringAsync(TestContext.Current.CancellationToken),
             StringComparison.OrdinalIgnoreCase);
     }
 
@@ -59,9 +59,9 @@ public sealed class RateLimitingTests(ApiFactory factory)
             loginPermitLimit: 100);
         using var client = limitedFactory.CreateClient();
 
-        var first = await client.GetAsync("/access-records/open");
-        var rejected = await client.GetAsync("/access-records/open");
-        var health = await client.GetAsync("/health/live");
+        var first = await client.GetAsync("/access-records/open", TestContext.Current.CancellationToken);
+        var rejected = await client.GetAsync("/access-records/open", TestContext.Current.CancellationToken);
+        var health = await client.GetAsync("/health/live", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, first.StatusCode);
         Assert.Equal(HttpStatusCode.TooManyRequests, rejected.StatusCode);
@@ -79,9 +79,9 @@ public sealed class RateLimitingTests(ApiFactory factory)
         using var firstClient = CreateAuthenticatedClient(limitedFactory, firstToken);
         using var secondClient = CreateAuthenticatedClient(limitedFactory, secondToken);
 
-        var firstResponse = await firstClient.GetAsync("/access-records/open");
-        var firstRejected = await firstClient.GetAsync("/access-records/open");
-        var secondResponse = await secondClient.GetAsync("/access-records/open");
+        var firstResponse = await firstClient.GetAsync("/access-records/open", TestContext.Current.CancellationToken);
+        var firstRejected = await firstClient.GetAsync("/access-records/open", TestContext.Current.CancellationToken);
+        var secondResponse = await secondClient.GetAsync("/access-records/open", TestContext.Current.CancellationToken);
 
         firstResponse.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.TooManyRequests, firstRejected.StatusCode);
