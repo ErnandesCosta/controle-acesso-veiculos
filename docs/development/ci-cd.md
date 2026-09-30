@@ -3,7 +3,7 @@
 ## Estado
 
 Esta página documenta a fundação de integração contínua iniciada na Issue #25 e
-ampliada pelas Issues #90, #104, #218, #227, #243 e #318. Os workflows validam
+ampliada pelas Issues #90, #104, #218, #227, #243, #318 e #344. Os workflows validam
 código e imagens em Pull Requests e na `main`, mas os packages principais do
 GitHub Container Registry recebem novas imagens somente por uma tag revisada no
 formato `vMAJOR.MINOR.PATCH`. Frontend e backend são verificados para
@@ -20,13 +20,14 @@ portas da API ou do PostgreSQL.
 
 ## Workflows
 
-| Workflow               | Gatilho                                                                   | Verificações                                                                                                                                                                                                     |
-| ---------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CI - Backend           | Alterações do backend, do runner e de suas regras de formato              | restore, `dotnet format`, build Release com warnings como erros, suíte xUnit v3 na Microsoft Testing Platform, resultados TRX e cobertura Cobertura                                                              |
-| CI - Frontend          | Alterações do frontend                                                    | `npm ci`, ESLint e build Vite                                                                                                                                                                                    |
-| CI - Containers        | Código, Dockerfiles, Compose, contexto Docker ou tag `vMAJOR.MINOR.PATCH` | build isolado, Trivy e SBOM de frontend e backend em `linux/amd64` e `linux/arm64`; smoke test integrado e baseline DAST passiva com OWASP ZAP; publicação, atestação e tag semântica somente em tags de release |
-| CI - Database recovery | Scripts de backup ou configuração local do PostgreSQL                     | dump lógico, manifesto SHA-256, restauração completa em banco isolado, rejeição de adulteração e limpeza dos recursos temporários                                                                                |
-| Dependency Review      | Toda Pull Request                                                         | bloqueio de novas dependências com vulnerabilidade alta ou crítica                                                                                                                                               |
+| Workflow                | Gatilho                                                                   | Verificações                                                                                                                                                                                                     |
+| ----------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CI - Backend            | Alterações do backend, do runner e de suas regras de formato              | restore, `dotnet format`, build Release com warnings como erros, suíte xUnit v3 na Microsoft Testing Platform, resultados TRX e cobertura Cobertura                                                              |
+| CI - Frontend           | Alterações do frontend                                                    | `npm ci`, ESLint e build Vite                                                                                                                                                                                    |
+| CI - Containers         | Código, Dockerfiles, Compose, contexto Docker ou tag `vMAJOR.MINOR.PATCH` | build isolado, Trivy e SBOM de frontend e backend em `linux/amd64` e `linux/arm64`; smoke test integrado e baseline DAST passiva com OWASP ZAP; publicação, atestação e tag semântica somente em tags de release |
+| CI - Database recovery  | Scripts de backup ou configuração local do PostgreSQL                     | dump lógico, manifesto SHA-256, restauração completa em banco isolado, rejeição de adulteração e limpeza dos recursos temporários                                                                                |
+| Dependency Review       | Toda Pull Request                                                         | bloqueio de novas dependências com vulnerabilidade alta ou crítica                                                                                                                                               |
+| Closed PR cache cleanup | Fechamento de Pull Request                                                | exclusão somente dos caches associados à referência efêmera `refs/pull/<número>/merge`                                                                                                                           |
 
 Todas as actions de terceiros estão fixadas por SHA de commit e acompanhadas do
 número da release auditada. Os jobs de validação usam apenas `contents: read`. O
@@ -43,6 +44,20 @@ do SDK .NET 10. Os projetos xUnit v3 produzem executáveis de teste e registram 
 extensões oficiais de relatório TRX e cobertura da Microsoft. A CI mantém esses
 artefatos por 14 dias. Cobertura é evidência de apoio; não substitui revisão de
 cenários, risco e qualidade dos testes.
+
+### Ciclo de vida do cache
+
+Os builds de container reutilizam escopos separados por imagem e arquitetura. O
+GitHub materializa esses dados em entradas de cache associadas à referência da
+execução. Quando uma Pull Request é encerrada, sua referência de merge deixa de
+ser útil aos próximos builds e o workflow `Maintenance - Closed PR cache cleanup`
+remove somente esse conjunto.
+
+O workflow usa `pull_request_target` para receber `actions: write` inclusive em
+contribuições originadas de forks. Ele não faz checkout, não executa código da
+Pull Request e deriva a referência exclusivamente do número inteiro fornecido
+pelo evento do GitHub. Caches da `main`, de tags e de branches ativas não são
+removidos.
 
 ## Dependabot
 
@@ -116,6 +131,16 @@ Em Pull Requests e branches de trabalho, cada imagem é construída separadament
 para `linux/amd64` e `linux/arm64`, sem `push`, e carregada apenas no runner. O
 QEMU é habilitado somente para a variante ARM64. Caches e tags locais são
 isolados por imagem e arquitetura para impedir reutilização cruzada indevida.
+Antes de reutilizar esses caches, o BuildKit consulta as tags das imagens-base;
+assim, atualizações de segurança publicadas nas bases oficiais podem invalidar a
+camada antiga sem descartar o cache das camadas próprias da aplicação. A mesma
+regra é aplicada aos builds candidatos a release.
+
+Quando uma correção Ubuntu já está publicada, mas a tag oficial do runtime .NET
+ainda não foi reconstruída, o Dockerfile do backend atualiza somente os pacotes
+OpenSSL presentes na imagem final e remove os metadados do APT. Esse mecanismo
+não substitui a atualização da imagem-base: o `pull` permanece obrigatório e o
+Trivy continua bloqueando vulnerabilidades altas corrigíveis.
 
 O Trivy aplica duas barreiras complementares a cada variante:
 

@@ -1,0 +1,32 @@
+name: Maintenance - Closed PR cache cleanup
+
+on:
+  pull_request_target:
+    types:
+      - closed
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: closed-pr-cache-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Delete closed PR cache
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Delete caches scoped to the closed PR
+        env:
+          CACHE_REF: refs/pull/${{ github.event.pull_request.number }}/merge
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh cache delete
+          --all
+          --succeed-on-no-caches
+          --ref "${CACHE_REF}"
