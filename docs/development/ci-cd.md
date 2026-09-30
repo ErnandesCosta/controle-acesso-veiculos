@@ -112,6 +112,16 @@ Em Pull Requests e branches de trabalho, cada imagem é construída separadament
 para `linux/amd64` e `linux/arm64`, sem `push`, e carregada apenas no runner. O
 QEMU é habilitado somente para a variante ARM64. Caches e tags locais são
 isolados por imagem e arquitetura para impedir reutilização cruzada indevida.
+Antes de reutilizar esses caches, o BuildKit consulta as tags das imagens-base;
+assim, atualizações de segurança publicadas nas bases oficiais podem invalidar a
+camada antiga sem descartar o cache das camadas próprias da aplicação. A mesma
+regra é aplicada aos builds candidatos a release.
+
+Quando uma correção Ubuntu já está publicada, mas a tag oficial do runtime .NET
+ainda não foi reconstruída, o Dockerfile do backend atualiza somente os pacotes
+OpenSSL presentes na imagem final e remove os metadados do APT. Esse mecanismo
+não substitui a atualização da imagem-base: o `pull` permanece obrigatório e o
+Trivy continua bloqueando vulnerabilidades altas corrigíveis.
 
 O Trivy aplica duas barreiras complementares a cada variante:
 
