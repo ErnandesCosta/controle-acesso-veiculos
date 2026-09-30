@@ -32,7 +32,7 @@ public sealed class AuthenticatedPasswordChangeTests(ApiFactory factory)
         {
             currentPassword,
             newPassword
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.NoContent, change.StatusCode);
         Assert.Contains(
@@ -40,7 +40,7 @@ public sealed class AuthenticatedPasswordChangeTests(ApiFactory factory)
             value => value.StartsWith("cav_refresh=", StringComparison.Ordinal) &&
                 value.Contains("expires=", StringComparison.OrdinalIgnoreCase));
 
-        var oldTokenResponse = await client.GetAsync("/access-records/open");
+        var oldTokenResponse = await client.GetAsync("/access-records/open", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Unauthorized, oldTokenResponse.StatusCode);
 
         client.DefaultRequestHeaders.Authorization = null;
@@ -48,28 +48,28 @@ public sealed class AuthenticatedPasswordChangeTests(ApiFactory factory)
         {
             email,
             password = currentPassword
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Unauthorized, oldLogin.StatusCode);
 
         var newLogin = await client.PostAsJsonAsync("/auth/login", new
         {
             email,
             password = newPassword
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
         newLogin.EnsureSuccessStatusCode();
 
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider
             .GetRequiredService<ControleAcessoVeiculosDbContext>();
         var user = await dbContext.Usuarios.AsNoTracking()
-            .SingleAsync(item => item.Id == userId);
+            .SingleAsync(item => item.Id == userId, cancellationToken: TestContext.Current.CancellationToken);
         var previousSessions = await dbContext.SessoesAutenticacao.AsNoTracking()
             .Where(item => item.UsuarioId == userId && item.MotivoRevogacao != null)
-            .ToListAsync();
+            .ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
         var audit = await dbContext.Auditorias.AsNoTracking().SingleAsync(item =>
             item.RegistroId == userId &&
             item.TipoAcao == TipoAcaoAuditoria.Alteracao &&
-            item.Detalhes == "User changed their authentication password.");
+            item.Detalhes == "User changed their authentication password.", cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(2, user.VersaoCredencial);
         Assert.Contains(previousSessions, session =>
@@ -98,10 +98,10 @@ public sealed class AuthenticatedPasswordChangeTests(ApiFactory factory)
         {
             currentPassword = "Wrong-test-password-123!",
             newPassword = "New-test-password-456!"
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        var protectedResponse = await client.GetAsync("/access-records/open");
+        var protectedResponse = await client.GetAsync("/access-records/open", TestContext.Current.CancellationToken);
         protectedResponse.EnsureSuccessStatusCode();
     }
 
@@ -131,7 +131,7 @@ public sealed class AuthenticatedPasswordChangeTests(ApiFactory factory)
         {
             currentPassword = "Current-test-password-123!",
             newPassword = "New-test-password-456!"
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -154,7 +154,7 @@ public sealed class AuthenticatedPasswordChangeTests(ApiFactory factory)
             {
                 currentPassword,
                 newPassword = "New-test-password-456!"
-            });
+            }, cancellationToken: TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         }
@@ -163,16 +163,16 @@ public sealed class AuthenticatedPasswordChangeTests(ApiFactory factory)
             await RemoveRejectingPasswordChangeAuditTriggerAsync();
         }
 
-        var protectedResponse = await client.GetAsync("/access-records/open");
+        var protectedResponse = await client.GetAsync("/access-records/open", TestContext.Current.CancellationToken);
         protectedResponse.EnsureSuccessStatusCode();
 
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider
             .GetRequiredService<ControleAcessoVeiculosDbContext>();
         var user = await dbContext.Usuarios.AsNoTracking()
-            .SingleAsync(item => item.Id == userId);
+            .SingleAsync(item => item.Id == userId, cancellationToken: TestContext.Current.CancellationToken);
         var session = await dbContext.SessoesAutenticacao.AsNoTracking()
-            .SingleAsync(item => item.UsuarioId == userId);
+            .SingleAsync(item => item.UsuarioId == userId, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(1, user.VersaoCredencial);
         Assert.Null(session.RevogadaEm);

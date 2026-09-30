@@ -35,8 +35,8 @@ public sealed class TemporaryCredentialTests(ApiFactory factory)
             name = $"Temporary Operator {suffix}",
             email,
             profileName = ProfileNames.Doorman
-        });
-        var created = await creation.Content.ReadFromJsonAsync<CreateUserResponse>();
+        }, cancellationToken: TestContext.Current.CancellationToken);
+        var created = await creation.Content.ReadFromJsonAsync<CreateUserResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, creation.StatusCode);
         Assert.Equal("no-store", creation.Headers.CacheControl?.ToString());
@@ -51,7 +51,7 @@ public sealed class TemporaryCredentialTests(ApiFactory factory)
             var passwordHasher = scope.ServiceProvider
                 .GetRequiredService<IPasswordHashService>();
             var user = await dbContext.Usuarios.AsNoTracking()
-                .SingleAsync(item => item.Email == email);
+                .SingleAsync(item => item.Email == email, cancellationToken: TestContext.Current.CancellationToken);
 
             Assert.True(user.TrocaSenhaObrigatoria);
             Assert.Equal(
@@ -71,15 +71,13 @@ public sealed class TemporaryCredentialTests(ApiFactory factory)
         Assert.True(temporaryLogin.User.RequiresPasswordChange);
 
         using var reusedCredentialClient = factory.CreateClient();
-        var reusedCredentialLogin = await reusedCredentialClient.PostAsJsonAsync(
-            "/auth/login",
-            new { email, password = created.TemporaryCredential });
+        var reusedCredentialLogin = await reusedCredentialClient.PostAsJsonAsync("/auth/login", new { email, password = created.TemporaryCredential }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Unauthorized, reusedCredentialLogin.StatusCode);
 
         temporaryClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", temporaryLogin.AccessToken);
-        var restrictedOperation = await temporaryClient.GetAsync("/access-records/open");
-        var restrictedBody = await restrictedOperation.Content.ReadAsStringAsync();
+        var restrictedOperation = await temporaryClient.GetAsync("/access-records/open", TestContext.Current.CancellationToken);
+        var restrictedBody = await restrictedOperation.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Forbidden, restrictedOperation.StatusCode);
         Assert.Contains("Troca de senha obrigatória", restrictedBody);
 
@@ -87,10 +85,10 @@ public sealed class TemporaryCredentialTests(ApiFactory factory)
         {
             currentPassword = created.TemporaryCredential,
             newPassword = PermanentPassword
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NoContent, passwordChange.StatusCode);
 
-        var staleTokenOperation = await temporaryClient.GetAsync("/access-records/open");
+        var staleTokenOperation = await temporaryClient.GetAsync("/access-records/open", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Unauthorized, staleTokenOperation.StatusCode);
 
         using var loginClient = factory.CreateClient();
@@ -98,7 +96,7 @@ public sealed class TemporaryCredentialTests(ApiFactory factory)
         {
             email,
             password = created.TemporaryCredential
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Unauthorized, oldCredentialLogin.StatusCode);
 
         var permanentLogin = await LoginAsync(loginClient, email, PermanentPassword);
@@ -124,12 +122,12 @@ public sealed class TemporaryCredentialTests(ApiFactory factory)
             {
                 email = user.Email,
                 password = PermanentPassword
-            }),
+            }, TestContext.Current.CancellationToken),
             secondClient.PostAsJsonAsync("/auth/login", new
             {
                 email = user.Email,
                 password = PermanentPassword
-            }));
+            }, TestContext.Current.CancellationToken));
 
         Assert.Single(attempts, response => response.StatusCode == HttpStatusCode.OK);
         Assert.Single(
@@ -140,9 +138,9 @@ public sealed class TemporaryCredentialTests(ApiFactory factory)
         var dbContext = scope.ServiceProvider
             .GetRequiredService<ControleAcessoVeiculosDbContext>();
         var persistedUser = await dbContext.Usuarios.AsNoTracking()
-            .SingleAsync(item => item.Id == user.Id);
+            .SingleAsync(item => item.Id == user.Id, cancellationToken: TestContext.Current.CancellationToken);
         var sessionCount = await dbContext.SessoesAutenticacao.AsNoTracking()
-            .CountAsync(item => item.UsuarioId == user.Id);
+            .CountAsync(item => item.UsuarioId == user.Id, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(persistedUser.CredencialTemporariaUtilizadaEm);
         Assert.Equal(1, sessionCount);
@@ -176,19 +174,19 @@ public sealed class TemporaryCredentialTests(ApiFactory factory)
         var credentials = new List<string>();
         foreach (var response in resetResponses)
         {
-            var body = await response.Content.ReadFromJsonAsync<TemporaryCredentialResponse>();
+            var body = await response.Content.ReadFromJsonAsync<TemporaryCredentialResponse>(cancellationToken: TestContext.Current.CancellationToken);
             Assert.NotNull(body);
             credentials.Add(body.TemporaryCredential);
         }
 
-        var staleOperation = await targetClient.GetAsync("/access-records/open");
+        var staleOperation = await targetClient.GetAsync("/access-records/open", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Unauthorized, staleOperation.StatusCode);
 
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ControleAcessoVeiculosDbContext>();
         var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHashService>();
         var user = await dbContext.Usuarios.AsNoTracking()
-            .SingleAsync(item => item.Id == target.Id);
+            .SingleAsync(item => item.Id == target.Id, cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(user.TrocaSenhaObrigatoria);
         Assert.Equal(3, user.VersaoCredencial);
         Assert.Equal(1, credentials.Count(credential =>
@@ -196,7 +194,7 @@ public sealed class TemporaryCredentialTests(ApiFactory factory)
             PasswordHashVerificationResult.Failed));
 
         var session = await dbContext.SessoesAutenticacao.AsNoTracking()
-            .SingleAsync(item => item.UsuarioId == target.Id);
+            .SingleAsync(item => item.UsuarioId == target.Id, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(
             MotivoRevogacaoSessao.RedefinicaoAdministrativa,
             session.MotivoRevogacao);
@@ -206,7 +204,7 @@ public sealed class TemporaryCredentialTests(ApiFactory factory)
                 item.Entidade == nameof(Usuario) &&
                 item.RegistroId == target.Id &&
                 item.TipoAcao == TipoAcaoAuditoria.Alteracao)
-            .ToListAsync();
+            .ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(2, audits.Count);
         Assert.All(audits, audit => Assert.Equal(administrator.Id, audit.UsuarioId));
         var auditText = string.Join(' ', audits.SelectMany(audit => new[]
@@ -227,9 +225,7 @@ public sealed class TemporaryCredentialTests(ApiFactory factory)
         using var doormanClient = factory.CreateClient();
         await AuthenticateClientAsync(doormanClient, doorman.Email, PermanentPassword);
 
-        var forbidden = await doormanClient.PostAsJsonAsync(
-            $"/users/{administrator.Id}/temporary-credential",
-            new { reason = CredentialResetReasons.Forgotten });
+        var forbidden = await doormanClient.PostAsJsonAsync($"/users/{administrator.Id}/temporary-credential", new { reason = CredentialResetReasons.Forgotten }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
 
         using var administratorClient = factory.CreateClient();
@@ -237,9 +233,7 @@ public sealed class TemporaryCredentialTests(ApiFactory factory)
             administratorClient,
             administrator.Email,
             PermanentPassword);
-        var selfReset = await administratorClient.PostAsJsonAsync(
-            $"/users/{administrator.Id}/temporary-credential",
-            new { reason = CredentialResetReasons.Forgotten });
+        var selfReset = await administratorClient.PostAsJsonAsync($"/users/{administrator.Id}/temporary-credential", new { reason = CredentialResetReasons.Forgotten }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Conflict, selfReset.StatusCode);
     }
 
@@ -261,14 +255,14 @@ public sealed class TemporaryCredentialTests(ApiFactory factory)
             email,
             password = PermanentPassword,
             profileName = ProfileNames.Doorman
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider
             .GetRequiredService<ControleAcessoVeiculosDbContext>();
-        Assert.False(await dbContext.Usuarios.AnyAsync(item => item.Email == email));
-        Assert.False(await dbContext.Pessoas.AnyAsync(item => item.Email == email));
+        Assert.False(await dbContext.Usuarios.AnyAsync(item => item.Email == email, cancellationToken: TestContext.Current.CancellationToken));
+        Assert.False(await dbContext.Pessoas.AnyAsync(item => item.Email == email, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -284,8 +278,8 @@ public sealed class TemporaryCredentialTests(ApiFactory factory)
         {
             email = user.Email,
             password = PermanentPassword
-        });
-        var body = await response.Content.ReadAsStringAsync();
+        }, cancellationToken: TestContext.Current.CancellationToken);
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.Contains("Credenciais inválidas", body);
@@ -311,9 +305,7 @@ public sealed class TemporaryCredentialTests(ApiFactory factory)
         await InstallRejectingResetAuditTriggerAsync();
         try
         {
-            var response = await administratorClient.PostAsJsonAsync(
-                $"/users/{target.Id}/temporary-credential",
-                new { reason = CredentialResetReasons.Forgotten });
+            var response = await administratorClient.PostAsJsonAsync($"/users/{target.Id}/temporary-credential", new { reason = CredentialResetReasons.Forgotten }, cancellationToken: TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         }
@@ -327,9 +319,9 @@ public sealed class TemporaryCredentialTests(ApiFactory factory)
             var dbContext = scope.ServiceProvider
                 .GetRequiredService<ControleAcessoVeiculosDbContext>();
             var user = await dbContext.Usuarios.AsNoTracking()
-                .SingleAsync(item => item.Id == target.Id);
+                .SingleAsync(item => item.Id == target.Id, cancellationToken: TestContext.Current.CancellationToken);
             var session = await dbContext.SessoesAutenticacao.AsNoTracking()
-                .SingleAsync(item => item.UsuarioId == target.Id);
+                .SingleAsync(item => item.UsuarioId == target.Id, cancellationToken: TestContext.Current.CancellationToken);
             Assert.False(user.TrocaSenhaObrigatoria);
             Assert.Equal(1, user.VersaoCredencial);
             Assert.Null(session.RevogadaEm);
@@ -337,7 +329,7 @@ public sealed class TemporaryCredentialTests(ApiFactory factory)
 
         targetClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", targetLogin.AccessToken);
-        var existingSessionOperation = await targetClient.GetAsync("/access-records/open");
+        var existingSessionOperation = await targetClient.GetAsync("/access-records/open", TestContext.Current.CancellationToken);
         existingSessionOperation.EnsureSuccessStatusCode();
     }
 
