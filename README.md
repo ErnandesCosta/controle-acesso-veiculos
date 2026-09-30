@@ -13,7 +13,7 @@ IFPE — Campus Belo Jardim.
 
 [Wiki](https://github.com/ifpebj-ti/controle-acesso-veiculos/wiki) ·
 [Documentação](#documentação) ·
-[Release atual](https://github.com/ifpebj-ti/controle-acesso-veiculos/releases/tag/v0.2.0) ·
+[Release atual](https://github.com/ifpebj-ti/controle-acesso-veiculos/releases/tag/v0.3.0) ·
 [Issues](https://github.com/ifpebj-ti/controle-acesso-veiculos/issues)
 
 </div>
@@ -139,23 +139,28 @@ docker compose down
 
 ## Imagens versionadas
 
-A release técnica publicada é `v0.2.0`. Os comandos pedidos para consumo humano
+A release técnica publicada é `v0.3.0`. Os comandos pedidos para consumo humano
 e para o Compose de implantação são:
 
 ```bash
-docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-backend:0.2.0
-docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-frontend:0.2.0
+docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-backend:0.3.0
+docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-frontend:0.3.0
 ```
 
 As duas tags foram verificadas como manifestos para `linux/amd64` e
-`linux/arm64`. Elas representam a release de 20 de setembro de 2026, não o estado
+`linux/arm64`. Elas representam a release de 29 de setembro de 2026, não o estado
 mais recente da branch `main`.
+
+| Componente | Digest verificado da release `0.3.0`                                      |
+| ---------- | ------------------------------------------------------------------------- |
+| Backend    | `sha256:5c620d3c6609144c8cc0f53c1505dd3c2414d206aa29d69f96b6ab64b24d31b0` |
+| Frontend   | `sha256:cd9ed896b47327a6ca71f191284e71988411ffc608b3d1e634d1a9df01b8ddc1` |
 
 ### Qual referência usar
 
 | Referência       | Uso                                 | Exemplo            |
 | ---------------- | ----------------------------------- | ------------------ |
-| versão semântica | implantação de uma release revisada | `:0.2.0`           |
+| versão semântica | implantação de uma release revisada | `:0.3.0`           |
 | commit           | rastreabilidade técnica da CI       | `:sha-<commit>`    |
 | digest           | fixação criptográfica exata         | `@sha256:<digest>` |
 
@@ -202,12 +207,10 @@ partir da primeira release publicada:
 - `MINOR`: funcionalidade compatível adicionada;
 - `PATCH`: correção compatível.
 
-`v0.2.0` e as imagens `0.2.0` são imutáveis por política. Mudanças posteriores
+`v0.3.0` e as imagens `0.3.0` são imutáveis por política. Mudanças posteriores
 ficam em [`Unreleased`](CHANGELOG.md#unreleased) até um Pull Request próprio de
-release revisar o changelog, escolher a versão e criar a tag Git. Como a `main`
-já recebeu funcionalidades compatíveis após `v0.2.0`, o próximo candidato tende
-a ser `v0.3.0`; o número só se torna oficial quando essa release for revisada e
-publicada.
+release revisar o changelog, escolher a versão e criar a tag Git. Releases
+anteriores, incluindo `v0.2.0`, permanecem disponíveis como histórico imutável.
 
 Não confunda versões diferentes:
 
@@ -305,9 +308,9 @@ Containers:
 ```bash
 docker compose -f infrastructure/docker/docker-compose.yml config --quiet
 docker buildx imagetools inspect \
-  ghcr.io/ifpebj-ti/controle-acesso-veiculos-backend:0.2.0
+  ghcr.io/ifpebj-ti/controle-acesso-veiculos-backend:0.3.0
 docker buildx imagetools inspect \
-  ghcr.io/ifpebj-ti/controle-acesso-veiculos-frontend:0.2.0
+  ghcr.io/ifpebj-ti/controle-acesso-veiculos-frontend:0.3.0
 ```
 
 ## Estrutura do repositório

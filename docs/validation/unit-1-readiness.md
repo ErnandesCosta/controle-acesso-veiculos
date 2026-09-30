@@ -3,9 +3,9 @@
 ## Objetivo
 
 Este documento relaciona o marco acadêmico da Unidade 1 às evidências
-versionadas do projeto. A fotografia foi verificada em **29 de setembro de 2026**
-sobre a `main` após o merge do [PR #304](https://github.com/ifpebj-ti/controle-acesso-veiculos/pull/304)
-e deve ser conferida novamente antes da apresentação.
+versionadas do projeto. A fotografia foi atualizada em **29 de setembro de 2026**
+após a publicação da release técnica `v0.3.0` e deve ser conferida novamente
+antes da apresentação.
 
 As classificações usadas são:
 
@@ -56,13 +56,13 @@ O projeto possui o arquivo
 que não contém diretivas `build`. Ele exige `DEPLOYMENT_VERSION` e consome a
 mesma versão do frontend e do backend no GHCR.
 
-A release técnica [`v0.2.0`](https://github.com/ifpebj-ti/controle-acesso-veiculos/releases/tag/v0.2.0)
+A release técnica [`v0.3.0`](https://github.com/ifpebj-ti/controle-acesso-veiculos/releases/tag/v0.3.0)
 está registrada no [`CHANGELOG.md`](../../CHANGELOG.md). As imagens podem ser
 obtidas pelos nomes semânticos solicitados:
 
 ```bash
-docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-backend:0.2.0
-docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-frontend:0.2.0
+docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-backend:0.3.0
+docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-frontend:0.3.0
 ```
 
 A release registra também os digests imutáveis correspondentes. Assim, a tag
@@ -78,7 +78,7 @@ executado.
 | Migrations EF Core         | 16 migrations versionadas                          |
 | Alertas Dependabot abertos | 0                                                  |
 | Alertas CodeQL abertos     | 0                                                  |
-| Release técnica            | `v0.2.0`                                           |
+| Release técnica            | `v0.3.0`                                           |
 
 Os números são evidências datadas, não metas fixas. A fonte vigente para
 cada execução é o [GitHub Actions](https://github.com/ifpebj-ti/controle-acesso-veiculos/actions).
@@ -100,6 +100,6 @@ contingência e homologação final dos fluxos no dispositivo de destino.
 2. abrir o modelo STRIDE no Threat Dragon e explicar uma ameaça, seu controle e
    o risco residual;
 3. mostrar os workflows aprovados e o estado atual do Dependabot;
-4. abrir a release `v0.2.0`, o changelog e as imagens `:0.2.0`;
+4. abrir a release `v0.3.0`, o changelog e as imagens `:0.3.0`;
 5. mostrar que o Compose de produção usa `image`, não `build`;
 6. encerrar diferenciando MVP técnico, homologação e produção.
