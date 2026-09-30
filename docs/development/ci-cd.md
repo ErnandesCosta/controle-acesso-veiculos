@@ -22,7 +22,7 @@ portas da API ou do PostgreSQL.
 
 | Workflow                | Gatilho                                                                   | Verificações                                                                                                                                                                                                     |
 | ----------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CI - Backend            | Alterações do backend e de suas regras de formato                         | restore, `dotnet format`, build Release com warnings como erros, suíte automatizada e cobertura                                                                                                                  |
+| CI - Backend            | Alterações do backend, do runner e de suas regras de formato              | restore, `dotnet format`, build Release com warnings como erros, suíte xUnit v3 na Microsoft Testing Platform, resultados TRX e cobertura Cobertura                                                              |
 | CI - Frontend           | Alterações do frontend                                                    | `npm ci`, ESLint e build Vite                                                                                                                                                                                    |
 | CI - Containers         | Código, Dockerfiles, Compose, contexto Docker ou tag `vMAJOR.MINOR.PATCH` | build isolado, Trivy e SBOM de frontend e backend em `linux/amd64` e `linux/arm64`; smoke test integrado e baseline DAST passiva com OWASP ZAP; publicação, atestação e tag semântica somente em tags de release |
 | CI - Database recovery  | Scripts de backup ou configuração local do PostgreSQL                     | dump lógico, manifesto SHA-256, restauração completa em banco isolado, rejeição de adulteração e limpeza dos recursos temporários                                                                                |
@@ -39,7 +39,11 @@ usado para assinar a atestação; Pull Requests não recebem essas permissões.
 Todos os workflows cancelam execuções obsoletas da mesma referência e possuem
 timeout.
 
-Os resultados TRX e Cobertura do backend são mantidos por 14 dias. Cobertura é evidência de apoio; não substitui revisão de cenários, risco e qualidade dos testes.
+O `global.json` seleciona a Microsoft Testing Platform (MTP) como runner nativo
+do SDK .NET 10. Os projetos xUnit v3 produzem executáveis de teste e registram as
+extensões oficiais de relatório TRX e cobertura da Microsoft. A CI mantém esses
+artefatos por 14 dias. Cobertura é evidência de apoio; não substitui revisão de
+cenários, risco e qualidade dos testes.
 
 ### Ciclo de vida do cache
 

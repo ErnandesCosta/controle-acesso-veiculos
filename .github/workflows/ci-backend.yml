@@ -4,12 +4,14 @@ on:
   push:
     paths:
       - "src/backend/**"
+      - "global.json"
       - ".editorconfig"
       - ".gitattributes"
       - ".github/workflows/ci-backend.yml"
   pull_request:
     paths:
       - "src/backend/**"
+      - "global.json"
       - ".editorconfig"
       - ".gitattributes"
       - ".github/workflows/ci-backend.yml"
@@ -61,8 +63,9 @@ jobs:
           --configuration Release
           --no-build
           --no-restore
-          --collect:"XPlat Code Coverage"
-          --logger trx
+          --coverage
+          --coverage-output-format cobertura
+          --report-trx
           --results-directory artifacts/test-results
           --verbosity normal
 
