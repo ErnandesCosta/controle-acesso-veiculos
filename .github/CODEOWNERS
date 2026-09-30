@@ -1,0 +1,11 @@
+# Default review for repository-wide and root-level changes.
+* @ErnandesCosta @Raissa-Beatriz
+
+# Area ownership agreed by the project team.
+/src/backend/ @ErnandesCosta
+/src/frontend/ @Raissa-Beatriz
+
+# Shared engineering responsibilities.
+/infrastructure/ @ErnandesCosta @Raissa-Beatriz
+/.github/ @ErnandesCosta @Raissa-Beatriz
+/docs/ @ErnandesCosta @Raissa-Beatriz
