@@ -90,6 +90,9 @@ jobs:
             -passout "pass:${data_protection_password}"
           printf '%s' "${data_protection_password}" \
             > infrastructure/docker/secrets/data-protection-password.txt
+          chmod 0444 \
+            infrastructure/docker/secrets/data-protection.pfx \
+            infrastructure/docker/secrets/data-protection-password.txt
 
           {
             echo "POSTGRES_PASSWORD=${postgres_password}"
