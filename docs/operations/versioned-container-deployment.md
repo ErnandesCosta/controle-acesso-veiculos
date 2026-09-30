@@ -22,17 +22,17 @@ docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-backend:0.2.0
 docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-frontend:0.2.0
 ```
 
-A interface do GHCR também apresenta objetos internos com nomes derivados de
-SHA-256. Eles suportam armazenamento e atestações OCI, mas não são o nome da
-release. Para fixar conteúdo por digest, use
-`imagem@sha256:<digest>`; para implantar a release revisada, use `imagem:0.2.0`.
-Nunca mova uma versão publicada para outro digest: mudanças posteriores exigem
-uma nova release.
+O GHCR armazena as imagens da aplicação, enquanto proveniência e SBOM assinados
+permanecem no serviço GitHub Artifact Attestations. Para fixar conteúdo por
+digest, use `imagem@sha256:<digest>`; para implantar a release revisada, use
+`imagem:0.2.0`. Nunca mova uma versão publicada para outro digest: mudanças
+posteriores exigem uma nova release conforme Semantic Versioning.
 
 Os packages principais são canais de release. Pushes comuns na `main` executam
 as validações, mas não publicam uma nova versão. Em uma tag Git revisada, a CI
-publica as variantes, o manifesto por commit e as atestações antes de aplicar a
-tag `MAJOR.MINOR.PATCH` ao mesmo digest. Não são criadas tags `latest` ou `main`.
+publica as variantes e o manifesto por commit, registra as atestações no GitHub
+e então aplica a tag `MAJOR.MINOR.PATCH` ao mesmo digest. Não são criadas tags
+`latest` ou `main`, nem versões OCI auxiliares para as atestações.
 
 ## Pré-requisitos
 

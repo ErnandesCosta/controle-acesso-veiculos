@@ -376,7 +376,7 @@
             "zIndex": 9,
             "data": {
               "name": "GitHub Container Registry",
-              "description": "Armazena imagens analisadas, identificadas por commit e acompanhadas de proveniência e SBOM.",
+              "description": "Armazena somente imagens analisadas, identificadas por versão, commit e digest. Proveniência e SBOM assinados permanecem no serviço de atestações do GitHub.",
               "type": "tm.Store",
               "isTrustBoundary": false,
               "outOfScope": false,
@@ -560,10 +560,10 @@
             "zIndex": 20,
             "connector": "smooth",
             "id": "20000000-0000-4000-8000-000000000007",
-            "labels": [{ "position": 0.5, "attrs": { "label": { "text": "Imagem + SBOM" } } }],
+            "labels": [{ "position": 0.5, "attrs": { "label": { "text": "Imagem" } } }],
             "source": { "cell": "00000000-0000-4000-8000-000000000008" },
             "target": { "cell": "00000000-0000-4000-8000-000000000009" },
-            "data": { "type": "tm.Flow", "name": "Imagens, SBOM e proveniência", "description": "Publicação após build e scan independentes no commit da main.", "protocol": "HTTPS/OCI", "isEncrypted": true, "isPublicNetwork": true, "isTrustBoundary": false, "outOfScope": false, "reasonOutOfScope": "", "hasOpenThreats": false, "threats": [] }
+            "data": { "type": "tm.Flow", "name": "Imagens versionadas", "description": "Publicação após build e scan independentes em uma tag de release revisada. Proveniência e SBOM ficam no serviço de atestações do GitHub.", "protocol": "HTTPS/OCI", "isEncrypted": true, "isPublicNetwork": true, "isTrustBoundary": false, "outOfScope": false, "reasonOutOfScope": "", "hasOpenThreats": false, "threats": [] }
           },
           {
             "shape": "flow",

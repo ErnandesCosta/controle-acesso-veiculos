@@ -140,8 +140,9 @@ O pipeline primeiro valida a tag, reconstrói e analisa as quatro variantes,
 executa o smoke test e publica o manifesto imutável `sha-<commit>` com exatamente
 AMD64 e ARM64. Em seguida, associa ao digest sua proveniência e os dois SBOMs.
 Somente depois dessas atestações aplica `MAJOR.MINOR.PATCH` ao mesmo digest. Essa
-ordem faz da versão semântica a última referência legível publicada, sem remover
-os objetos OCI necessários à verificação.
+ordem faz da versão semântica a última referência legível publicada. As
+atestações ficam no serviço GitHub Artifact Attestations e não criam versões OCI
+`sha256-...` no GHCR.
 
 Por exemplo, a tag Git `v0.3.0` publicará `0.3.0` para backend e frontend. O
 workflow recusa mover uma versão existente para outro digest, não cria `latest`
@@ -174,10 +175,9 @@ Exemplo de download da imagem rastreável por commit:
 docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-backend:sha-<commit>
 ```
 
-Entradas `sha256-...` exibidas pela interface do package podem representar
-objetos auxiliares de armazenamento ou atestação OCI. Elas não são versões
-SemVer. A referência imutável por conteúdo usa `@sha256:<digest>`; a versão
-operacional revisada usa `:MAJOR.MINOR.PATCH`.
+O workflow não publica atestações como versões OCI `sha256-...` no package. A
+referência imutável por conteúdo usa `@sha256:<digest>`; a versão operacional
+revisada usa `:MAJOR.MINOR.PATCH`.
 
 Confirme as plataformas declaradas sem executar a imagem:
 
@@ -206,17 +206,19 @@ do MVP não representa homologação institucional nem autorização de deploy.
 Depois de montar e validar exatamente as plataformas `linux/amd64` e
 `linux/arm64`, o workflow resolve o digest da tag `sha-<commit>`, exige o formato
 `sha256:<64 caracteres hexadecimais>` e usa `actions/attest` fixada por SHA para
-gerar proveniência SLSA assinada. A atestação é associada ao repositório no GitHub
-e anexada ao artefato OCI no GHCR. A versão semântica facilita a operação; a
-evidência imutável continua sendo a tag por commit ou o digest.
+gerar proveniência SLSA assinada. A atestação é associada ao repositório e ao
+digest no serviço GitHub Artifact Attestations, sem ser anexada como referrer OCI
+no GHCR. A versão semântica facilita a operação; a evidência imutável continua
+sendo a tag por commit ou o digest.
 
 Antes de cada push, o Trivy também gera um SBOM SPDX 2.3 JSON da variante já
 aprovada pelo scan. O workflow rejeita arquivo vazio, documento sem pacotes,
 versão SPDX inesperada ou tamanho superior ao limite de 16 MiB aceito pela
 action. Depois de montar o manifesto, `actions/attest` vincula os documentos de
-AMD64 e ARM64 ao mesmo nome e digest imutável da proveniência. Em Pull Requests,
-os arquivos são gerados e validados apenas nos runners descartáveis; nenhuma
-atestação ou imagem é publicada.
+AMD64 e ARM64 ao mesmo nome e digest imutável da proveniência e os registra no
+serviço de atestações do GitHub. Em Pull Requests, os arquivos são gerados e
+validados apenas nos runners descartáveis; nenhuma atestação ou imagem é
+publicada.
 
 Após autenticar no GHCR, verifique uma imagem com GitHub CLI:
 
@@ -237,7 +239,7 @@ gh attestation verify \
   oci://ghcr.io/ifpebj-ti/controle-acesso-veiculos-backend:sha-<commit> \
   --repo ifpebj-ti/controle-acesso-veiculos \
   --signer-workflow ifpebj-ti/controle-acesso-veiculos/.github/workflows/ci-containers.yml \
-  --predicate-type https://spdx.dev/Document/v2.3 \
+  --predicate-type https://spdx.dev/Document \
   --format json \
   --jq '.[].verificationResult.statement.predicate' \
   > backend.spdx.json
