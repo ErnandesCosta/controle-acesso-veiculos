@@ -6,11 +6,11 @@ Este é um projeto acadêmico com releases técnicas, ainda não liberado para
 produção institucional. A equipe avalia correções de segurança para a versão
 mais recente e para a branch `main`, sem oferecer suporte comercial ou SLA.
 
-| Referência | Estado de suporte |
-| --- | --- |
-| release técnica mais recente | avaliada para correções de segurança |
-| `main` | desenvolvimento ativo; pode conter mudanças ainda não publicadas |
-| releases anteriores | sem garantia de correção retroativa |
+| Referência                   | Estado de suporte                                                |
+| ---------------------------- | ---------------------------------------------------------------- |
+| release técnica mais recente | avaliada para correções de segurança                             |
+| `main`                       | desenvolvimento ativo; pode conter mudanças ainda não publicadas |
+| releases anteriores          | sem garantia de correção retroativa                              |
 
 Uma release técnica não representa homologação, implantação ou autorização de
 uso com dados reais.
