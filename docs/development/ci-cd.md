@@ -156,8 +156,8 @@ manifesto e permitem auditoria por arquitetura; consumidores normais devem usar
 Exemplo de download dos dois componentes associados à release atual:
 
 ```bash
-docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-backend:0.2.0
-docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-frontend:0.2.0
+docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-backend:0.3.0
+docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-frontend:0.3.0
 ```
 
 Para fixar exatamente o conteúdo, use o digest com `@`, e não como se fosse uma
