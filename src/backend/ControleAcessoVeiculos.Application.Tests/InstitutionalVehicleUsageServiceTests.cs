@@ -15,9 +15,7 @@ public sealed class InstitutionalVehicleUsageServiceTests
             store,
             new FixedTimeProvider(FixedNow));
 
-        var result = await service.RegisterDepartureAsync(
-            new RegisterInstitutionalVehicleDepartureCommand(0, 0, -1, ""),
-            actorUserId: 7);
+        var result = await service.RegisterDepartureAsync(new RegisterInstitutionalVehicleDepartureCommand(0, 0, -1, ""), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(RegisterInstitutionalVehicleDepartureStatus.Invalid, result.Status);
         Assert.Contains("vehicleId", result.Errors.Keys);
@@ -35,13 +33,11 @@ public sealed class InstitutionalVehicleUsageServiceTests
             store,
             new FixedTimeProvider(FixedNow));
 
-        var result = await service.RegisterDepartureAsync(
-            new RegisterInstitutionalVehicleDepartureCommand(
+        var result = await service.RegisterDepartureAsync(new RegisterInstitutionalVehicleDepartureCommand(
                 VehicleId: 10,
                 DriverId: 11,
                 DepartureMileage: 12500,
-                Itinerary: "  Campus - Unidade rural  "),
-            actorUserId: 7);
+                Itinerary: "  Campus - Unidade rural  "), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(RegisterInstitutionalVehicleDepartureStatus.Success, result.Status);
         Assert.Equal("Campus - Unidade rural", store.LastItinerary);
@@ -57,10 +53,7 @@ public sealed class InstitutionalVehicleUsageServiceTests
             store,
             new FixedTimeProvider(FixedNow));
 
-        var result = await service.RegisterReturnAsync(
-            usageId: 0,
-            new RegisterInstitutionalVehicleReturnCommand(ReturnMileage: -1),
-            actorUserId: 7);
+        var result = await service.RegisterReturnAsync(usageId: 0, new RegisterInstitutionalVehicleReturnCommand(ReturnMileage: -1), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(RegisterInstitutionalVehicleReturnStatus.Invalid, result.Status);
         Assert.Contains("usageId", result.Errors.Keys);
@@ -78,7 +71,7 @@ public sealed class InstitutionalVehicleUsageServiceTests
 
         var result = await service.SearchHistoryAsync(new(
             Plate: " ifp-1e23 ",
-            VehicleIdentification: " frota-001 "));
+            VehicleIdentification: " frota-001 "), TestContext.Current.CancellationToken);
 
         Assert.Equal(SearchInstitutionalVehicleUsagesStatus.Success, result.Status);
         Assert.NotNull(store.LastSearchCriteria);
@@ -106,7 +99,7 @@ public sealed class InstitutionalVehicleUsageServiceTests
             From: FixedNow,
             To: FixedNow.AddDays(-1),
             Page: 0,
-            PageSize: 101));
+            PageSize: 101), TestContext.Current.CancellationToken);
 
         Assert.Equal(SearchInstitutionalVehicleUsagesStatus.Invalid, result.Status);
         Assert.Contains("vehicleId", result.Errors.Keys);
@@ -129,7 +122,7 @@ public sealed class InstitutionalVehicleUsageServiceTests
 
         var result = await service.SearchHistoryAsync(new(
             From: FixedNow.AddDays(-367),
-            To: FixedNow));
+            To: FixedNow), TestContext.Current.CancellationToken);
 
         Assert.Equal(SearchInstitutionalVehicleUsagesStatus.Invalid, result.Status);
         Assert.Contains("period", result.Errors.Keys);

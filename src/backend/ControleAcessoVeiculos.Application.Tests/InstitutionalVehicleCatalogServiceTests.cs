@@ -15,13 +15,11 @@ public sealed class InstitutionalVehicleCatalogServiceTests
             store,
             new FixedTimeProvider(FixedNow));
 
-        var result = await service.CreateAsync(
-            new CreateInstitutionalVehicleCommand(
+        var result = await service.CreateAsync(new CreateInstitutionalVehicleCommand(
                 Plate: "---",
                 Identification: null,
                 VehicleType: new string('x', 51),
-                Year: 2028),
-            actorUserId: 7);
+                Year: 2028), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(CreateInstitutionalVehicleStatus.Invalid, result.Status);
         Assert.Contains("plate", result.Errors.Keys);
@@ -38,13 +36,11 @@ public sealed class InstitutionalVehicleCatalogServiceTests
             store,
             new FixedTimeProvider(FixedNow));
 
-        var result = await service.CreateAsync(
-            new CreateInstitutionalVehicleCommand(
+        var result = await service.CreateAsync(new CreateInstitutionalVehicleCommand(
                 Plate: " abc-1d23 ",
                 Identification: " patrimônio 001 ",
                 VehicleType: " Automóvel ",
-                Brand: " Marca Fictícia "),
-            actorUserId: 7);
+                Brand: " Marca Fictícia "), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(CreateInstitutionalVehicleStatus.Success, result.Status);
         Assert.Equal(1, store.CreateCalls);
@@ -65,10 +61,7 @@ public sealed class InstitutionalVehicleCatalogServiceTests
             store,
             new FixedTimeProvider(FixedNow));
 
-        var result = await service.UpdateAsync(
-            0,
-            new UpdateInstitutionalVehicleCommand(null, null, Year: 2028),
-            actorUserId: 7);
+        var result = await service.UpdateAsync(0, new UpdateInstitutionalVehicleCommand(null, null, Year: 2028), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(UpdateInstitutionalVehicleStatus.Invalid, result.Status);
         Assert.Contains("vehicleId", result.Errors.Keys);
@@ -85,14 +78,11 @@ public sealed class InstitutionalVehicleCatalogServiceTests
             store,
             new FixedTimeProvider(FixedNow));
 
-        var result = await service.UpdateAsync(
-            10,
-            new UpdateInstitutionalVehicleCommand(
+        var result = await service.UpdateAsync(10, new UpdateInstitutionalVehicleCommand(
                 " abc-1d23 ",
                 " frota-01 ",
                 " Van ",
-                " Marca "),
-            actorUserId: 7);
+                " Marca "), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(UpdateInstitutionalVehicleStatus.Success, result.Status);
         Assert.Equal(1, store.UpdateCalls);
@@ -111,9 +101,9 @@ public sealed class InstitutionalVehicleCatalogServiceTests
             store,
             new FixedTimeProvider(FixedNow));
 
-        var invalid = await service.DeactivateAsync(0, actorUserId: 7);
-        var deactivated = await service.DeactivateAsync(10, actorUserId: 7);
-        var reactivated = await service.ReactivateAsync(10, actorUserId: 7);
+        var invalid = await service.DeactivateAsync(0, actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
+        var deactivated = await service.DeactivateAsync(10, actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
+        var reactivated = await service.ReactivateAsync(10, actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(ChangeInstitutionalVehicleStateStatus.Invalid, invalid.Status);
         Assert.Equal(ChangeInstitutionalVehicleStateStatus.Success, deactivated.Status);

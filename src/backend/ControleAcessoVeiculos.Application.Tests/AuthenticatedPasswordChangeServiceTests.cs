@@ -15,7 +15,7 @@ public sealed class AuthenticatedPasswordChangeServiceTests
         var store = new FakeStore(CreateUser());
         var service = CreateService(store);
 
-        var result = await service.ChangeAsync(1, string.Empty, "short");
+        var result = await service.ChangeAsync(1, string.Empty, "short", TestContext.Current.CancellationToken);
 
         Assert.Equal(AuthenticatedPasswordChangeStatus.Validation, result.Status);
         Assert.Contains("currentPassword", result.Errors.Keys);
@@ -31,10 +31,7 @@ public sealed class AuthenticatedPasswordChangeServiceTests
         var store = new FakeStore(user, session);
         var service = CreateService(store);
 
-        var result = await service.ChangeAsync(
-            1,
-            "Wrong-password-123!",
-            "New-test-password-456!");
+        var result = await service.ChangeAsync(1, "Wrong-password-123!", "New-test-password-456!", TestContext.Current.CancellationToken);
 
         Assert.Equal(
             AuthenticatedPasswordChangeStatus.InvalidCurrentPassword,
@@ -53,10 +50,7 @@ public sealed class AuthenticatedPasswordChangeServiceTests
         var store = new FakeStore(user, session);
         var service = CreateService(store);
 
-        var result = await service.ChangeAsync(
-            1,
-            "Current-test-password-123!",
-            "New-test-password-456!");
+        var result = await service.ChangeAsync(1, "Current-test-password-123!", "New-test-password-456!", TestContext.Current.CancellationToken);
 
         Assert.Equal(AuthenticatedPasswordChangeStatus.Success, result.Status);
         Assert.Equal("HASH::New-test-password-456!", user.SenhaHash);
@@ -76,10 +70,7 @@ public sealed class AuthenticatedPasswordChangeServiceTests
         var store = new FakeStore(user);
         var service = CreateService(store);
 
-        var result = await service.ChangeAsync(
-            1,
-            "Current-test-password-123!",
-            "Current-test-password-123!");
+        var result = await service.ChangeAsync(1, "Current-test-password-123!", "Current-test-password-123!", TestContext.Current.CancellationToken);
 
         Assert.Equal(AuthenticatedPasswordChangeStatus.Validation, result.Status);
         Assert.Equal(0, store.TransactionCalls);

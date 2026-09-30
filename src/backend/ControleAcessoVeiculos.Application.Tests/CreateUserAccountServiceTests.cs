@@ -19,8 +19,7 @@ public sealed class CreateUserAccountServiceTests
             "Pessoa de Teste",
             "pessoa@example.test",
             "short",
-            "PerfilInventado"),
-            actorUserId: 7);
+            "PerfilInventado"), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(CreateUserAccountStatus.Invalid, result.Status);
         Assert.Contains("password", result.Errors.Keys);
@@ -39,8 +38,7 @@ public sealed class CreateUserAccountServiceTests
             "Pessoa de Teste",
             "PERSON@example.test",
             password,
-            ProfileNames.Doorman),
-            actorUserId: 7);
+            ProfileNames.Doorman), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(CreateUserAccountStatus.Invalid, result.Status);
         Assert.Contains("password", result.Errors.Keys);
@@ -57,7 +55,7 @@ public sealed class CreateUserAccountServiceTests
             "Administrador Inicial",
             "admin@example.test",
             "Test-only-password-123!",
-            ProfileNames.Administrator));
+            ProfileNames.Administrator), TestContext.Current.CancellationToken);
 
         Assert.Equal(CreateUserAccountStatus.Success, result.Status);
         Assert.Null(store.CapturedAudit?.ActorUserId);
@@ -77,8 +75,7 @@ public sealed class CreateUserAccountServiceTests
             "Novo Operador",
             "operator@example.test",
             Password: null,
-            ProfileNames.Doorman),
-            actorUserId: 7);
+            ProfileNames.Doorman), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(CreateUserAccountStatus.Success, result.Status);
         Assert.Equal("Generated-temporary-credential-123!", result.TemporaryCredential);
