@@ -13,13 +13,16 @@ public static class InstitutionalDriverEndpoints
             .WithTags("Institutional drivers");
 
         group.MapGet(string.Empty, ListActiveAsync)
-            .WithName("ListActiveInstitutionalDrivers");
+            .WithName("ListActiveInstitutionalDrivers")
+            .WithSummary("Lista motoristas institucionais autorizados e ativos");
         group.MapPost(string.Empty, AuthorizeAsync)
             .RequireAuthorization(AuthorizationPolicies.ManageInstitutionalDrivers)
-            .WithName("AuthorizeInstitutionalDriver");
+            .WithName("AuthorizeInstitutionalDriver")
+            .WithSummary("Autoriza um motorista institucional");
         group.MapDelete("/{id:int}", DeactivateAsync)
             .RequireAuthorization(AuthorizationPolicies.ManageInstitutionalDrivers)
-            .WithName("DeactivateInstitutionalDriver");
+            .WithName("DeactivateInstitutionalDriver")
+            .WithSummary("Desativa uma autorização de motorista institucional");
 
         return endpoints;
     }

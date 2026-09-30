@@ -13,25 +13,32 @@ public static class VehicleAccessEndpoints
 
         group.MapPost("/entries", RegisterEntryAsync)
             .RequireAuthorization(AuthorizationPolicies.OperateAccess)
-            .WithName("RegisterVehicleEntry");
+            .WithName("RegisterVehicleEntry")
+            .WithSummary("Registra a entrada de um veículo");
         group.MapGet("/open", ListOpenAsync)
             .RequireAuthorization(AuthorizationPolicies.OperateAccess)
-            .WithName("ListOpenVehicleAccesses");
+            .WithName("ListOpenVehicleAccesses")
+            .WithSummary("Lista acessos de veículos ainda abertos");
         group.MapGet("/entry-candidates", SearchEntryCandidatesAsync)
             .RequireAuthorization(AuthorizationPolicies.OperateAccess)
-            .WithName("SearchAccessEntryCandidates");
+            .WithName("SearchAccessEntryCandidates")
+            .WithSummary("Pesquisa pessoas e veículos para preencher uma entrada");
         group.MapPost("/{accessRecordId:int}/exit", RegisterExitAsync)
             .RequireAuthorization(AuthorizationPolicies.OperateAccess)
-            .WithName("RegisterVehicleExit");
+            .WithName("RegisterVehicleExit")
+            .WithSummary("Registra a saída de um veículo");
         group.MapPost("/{accessRecordId:int}/exceptional-closure", CloseExceptionallyAsync)
             .RequireAuthorization(AuthorizationPolicies.ExceptionallyCloseAccessRecords)
-            .WithName("ExceptionallyCloseVehicleAccess");
+            .WithName("ExceptionallyCloseVehicleAccess")
+            .WithSummary("Encerra um acesso excepcionalmente sem inventar horário de saída");
         group.MapGet("/history", SearchHistoryAsync)
             .RequireAuthorization(AuthorizationPolicies.ReviewAccessRecords)
-            .WithName("SearchVehicleAccessHistory");
+            .WithName("SearchVehicleAccessHistory")
+            .WithSummary("Consulta o histórico de acessos de veículos");
         group.MapPut("/{accessRecordId:int}/correction", CorrectAsync)
             .RequireAuthorization(AuthorizationPolicies.CorrectAccessRecords)
-            .WithName("CorrectVehicleAccess");
+            .WithName("CorrectVehicleAccess")
+            .WithSummary("Corrige dados descritivos de um acesso com auditoria");
 
         return endpoints;
     }

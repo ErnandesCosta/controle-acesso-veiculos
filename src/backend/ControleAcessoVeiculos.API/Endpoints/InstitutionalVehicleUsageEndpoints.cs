@@ -13,16 +13,20 @@ public static class InstitutionalVehicleUsageEndpoints
 
         group.MapPost("/departures", RegisterDepartureAsync)
             .RequireAuthorization(AuthorizationPolicies.OperateAccess)
-            .WithName("RegisterInstitutionalVehicleDeparture");
+            .WithName("RegisterInstitutionalVehicleDeparture")
+            .WithSummary("Registra a saída de um veículo institucional");
         group.MapGet("/open", ListOpenAsync)
             .RequireAuthorization(AuthorizationPolicies.OperateAccess)
-            .WithName("ListOpenInstitutionalVehicleUsages");
+            .WithName("ListOpenInstitutionalVehicleUsages")
+            .WithSummary("Lista utilizações institucionais ainda abertas");
         group.MapPost("/{usageId:int}/returns", RegisterReturnAsync)
             .RequireAuthorization(AuthorizationPolicies.OperateAccess)
-            .WithName("RegisterInstitutionalVehicleReturn");
+            .WithName("RegisterInstitutionalVehicleReturn")
+            .WithSummary("Registra o retorno de um veículo institucional");
         group.MapGet("/history", SearchHistoryAsync)
             .RequireAuthorization(AuthorizationPolicies.ReviewTransportationRecords)
-            .WithName("SearchInstitutionalVehicleUsageHistory");
+            .WithName("SearchInstitutionalVehicleUsageHistory")
+            .WithSummary("Consulta o histórico de utilizações institucionais");
 
         return endpoints;
     }
