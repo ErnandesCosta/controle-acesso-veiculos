@@ -81,6 +81,9 @@ public sealed class TechnicalEndpointsTests(ApiFactory factory)
         response.EnsureSuccessStatusCode();
         using var document = JsonDocument.Parse(responseContent);
         var paths = document.RootElement.GetProperty("paths");
+        var securitySchemes = document.RootElement
+            .GetProperty("components")
+            .GetProperty("securitySchemes");
         var schemas = document.RootElement
             .GetProperty("components")
             .GetProperty("schemas");
@@ -103,7 +106,59 @@ public sealed class TechnicalEndpointsTests(ApiFactory factory)
         Assert.Equal(
             ["email", "id", "profileName", "requiresPasswordChange"],
             userProperties);
+        Assert.Equal(
+            "bearer",
+            securitySchemes.GetProperty("Bearer").GetProperty("scheme").GetString());
+        Assert.False(
+            paths.GetProperty("/auth/login")
+                .GetProperty("post")
+                .TryGetProperty("security", out _));
+        Assert.Equal(
+            "Bearer",
+            paths.GetProperty("/access-records/open")
+                .GetProperty("get")
+                .GetProperty("security")[0]
+                .EnumerateObject()
+                .Single()
+                .Name);
         Assert.False(paths.TryGetProperty("/weatherforecast", out _));
+    }
+
+    [Fact]
+    public async Task DevelopmentSwaggerUiReferencesNativeOpenApiDocument()
+    {
+        using var developmentFactory = factory.WithWebHostBuilder(builder =>
+            builder.UseEnvironment("Development"));
+        using var client = developmentFactory.CreateClient();
+
+        var response = await client.GetAsync(
+            "/swagger/index.html",
+            TestContext.Current.CancellationToken);
+        var responseContent = await response.Content.ReadAsStringAsync(
+            TestContext.Current.CancellationToken);
+        var initializerResponse = await client.GetAsync(
+            "/swagger/index.js",
+            TestContext.Current.CancellationToken);
+        var initializerContent = await initializerResponse.Content.ReadAsStringAsync(
+            TestContext.Current.CancellationToken);
+
+        response.EnsureSuccessStatusCode();
+        initializerResponse.EnsureSuccessStatusCode();
+        Assert.Contains("Controle de Acesso de Veículos — API", responseContent);
+        Assert.Contains("/openapi/v1.json", initializerContent);
+    }
+
+    [Theory]
+    [InlineData("/openapi/v1.json")]
+    [InlineData("/swagger/index.html")]
+    public async Task InteractiveApiDocumentationIsUnavailableOutsideDevelopment(
+        string endpoint)
+    {
+        var response = await _client.GetAsync(
+            endpoint,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     private sealed record HealthResponse(string Status, DateTime Timestamp);
