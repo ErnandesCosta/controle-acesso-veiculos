@@ -34,7 +34,7 @@ public sealed class EventAccessAssociationTests(ApiFactory factory)
             plate,
             "Automóvel",
             eventAuthorization.Id);
-        var access = await response.Content.ReadFromJsonAsync<AccessRecordResponse>();
+        var access = await response.Content.ReadFromJsonAsync<AccessRecordResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.NotNull(access);
@@ -50,7 +50,7 @@ public sealed class EventAccessAssociationTests(ApiFactory factory)
         Assert.Equal(0, quotaRule.ConsumedQuantity);
         Assert.Equal(2, quotaRule.RemainingQuantity);
 
-        (await client.PostAsync($"/access-records/{access.Id}/exit", null))
+        (await client.PostAsync($"/access-records/{access.Id}/exit", null, TestContext.Current.CancellationToken))
             .EnsureSuccessStatusCode();
         var repeated = await RegisterEntryAsync(
             client,
@@ -59,8 +59,7 @@ public sealed class EventAccessAssociationTests(ApiFactory factory)
             eventAuthorization.Id);
         Assert.Equal(HttpStatusCode.Conflict, repeated.StatusCode);
 
-        var history = await client.GetFromJsonAsync<AccessHistoryResponse>(
-            $"/access-records/history?plate={plate}");
+        var history = await client.GetFromJsonAsync<AccessHistoryResponse>($"/access-records/history?plate={plate}", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Contains(history!.Items, item =>
             item.Id == access.Id &&
             item.EventAuthorizationId == eventAuthorization.Id &&
@@ -87,13 +86,11 @@ public sealed class EventAccessAssociationTests(ApiFactory factory)
         Assert.Equal(1, rule.ConsumedQuantity);
         Assert.Equal(0, rule.RemainingQuantity);
 
-        var changedRules = await client.PutAsJsonAsync(
-            $"/event-authorizations/{eventAuthorization.Id}",
-            EventRequest(
+        var changedRules = await client.PutAsJsonAsync($"/event-authorizations/{eventAuthorization.Id}", EventRequest(
                 eventAuthorization.Name,
                 eventAuthorization.StartsAtUtc,
                 eventAuthorization.EndsAtUtc,
-                [new { vehicleType = "Van", quantity = 2, plate = (string?)null }]));
+                [new { vehicleType = "Van", quantity = 2, plate = (string?)null }]), cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Conflict, changedRules.StatusCode);
     }
 
@@ -127,7 +124,7 @@ public sealed class EventAccessAssociationTests(ApiFactory factory)
             active.Id);
         Assert.Equal(HttpStatusCode.Conflict, unauthorized.StatusCode);
 
-        (await client.DeleteAsync($"/event-authorizations/{active.Id}"))
+        (await client.DeleteAsync($"/event-authorizations/{active.Id}", TestContext.Current.CancellationToken))
             .EnsureSuccessStatusCode();
         var inactive = await RegisterEntryAsync(
             client,

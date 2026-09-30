@@ -31,11 +31,9 @@ public sealed class EventAuthorizationTests(ApiFactory factory)
         var startsAtUtc = DateTimeOffset.UtcNow.AddDays(1);
         var endsAtUtc = startsAtUtc.AddDays(2);
 
-        var createResponse = await manager.PostAsJsonAsync(
-            "/event-authorizations",
-            Request(name, responsible, plate, startsAtUtc, endsAtUtc));
+        var createResponse = await manager.PostAsJsonAsync("/event-authorizations", Request(name, responsible, plate, startsAtUtc, endsAtUtc), cancellationToken: TestContext.Current.CancellationToken);
         var created = await createResponse.Content
-            .ReadFromJsonAsync<EventAuthorizationResponse>();
+            .ReadFromJsonAsync<EventAuthorizationResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
         Assert.NotNull(created);
@@ -45,28 +43,24 @@ public sealed class EventAuthorizationTests(ApiFactory factory)
 
         using var doorman = factory.CreateClient();
         await AuthenticateClientAsync(doorman, doormanEmail, password);
-        var page = await doorman.GetFromJsonAsync<EventAuthorizationPage>(
-            $"/event-authorizations?name={Uri.EscapeDataString(name)}");
+        var page = await doorman.GetFromJsonAsync<EventAuthorizationPage>($"/event-authorizations?name={Uri.EscapeDataString(name)}", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Contains(page!.Items, item => item.Id == created.Id);
 
         var updatedName = $"Evento atualizado {suffix}";
-        var updateResponse = await manager.PutAsJsonAsync(
-            $"/event-authorizations/{created.Id}",
-            Request(updatedName, responsible, plate, startsAtUtc, endsAtUtc.AddDays(1)));
+        var updateResponse = await manager.PutAsJsonAsync($"/event-authorizations/{created.Id}", Request(updatedName, responsible, plate, startsAtUtc, endsAtUtc.AddDays(1)), cancellationToken: TestContext.Current.CancellationToken);
         var updated = await updateResponse.Content
-            .ReadFromJsonAsync<EventAuthorizationResponse>();
+            .ReadFromJsonAsync<EventAuthorizationResponse>(cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
         Assert.Equal(updatedName, updated!.Name);
         Assert.Equal(managerId, updated.UpdatedById);
 
         Assert.Equal(
             HttpStatusCode.NoContent,
-            (await manager.DeleteAsync($"/event-authorizations/{created.Id}")).StatusCode);
+            (await manager.DeleteAsync($"/event-authorizations/{created.Id}", TestContext.Current.CancellationToken)).StatusCode);
         Assert.Equal(
             HttpStatusCode.Conflict,
-            (await manager.DeleteAsync($"/event-authorizations/{created.Id}")).StatusCode);
-        var cancelled = await doorman.GetFromJsonAsync<EventAuthorizationPage>(
-            $"/event-authorizations?name={Uri.EscapeDataString(updatedName)}&active=false");
+            (await manager.DeleteAsync($"/event-authorizations/{created.Id}", TestContext.Current.CancellationToken)).StatusCode);
+        var cancelled = await doorman.GetFromJsonAsync<EventAuthorizationPage>($"/event-authorizations?name={Uri.EscapeDataString(updatedName)}&active=false", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Contains(cancelled!.Items, item => item.Id == created.Id && !item.Active);
 
         using var scope = factory.Services.CreateScope();
@@ -75,7 +69,7 @@ public sealed class EventAuthorizationTests(ApiFactory factory)
             .Where(audit => audit.Entidade == nameof(EventoAcesso) &&
                 audit.RegistroId == created.Id)
             .OrderBy(audit => audit.Id)
-            .ToListAsync();
+            .ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(3, audits.Count);
         Assert.Equal(
             new[]
@@ -112,30 +106,26 @@ public sealed class EventAuthorizationTests(ApiFactory factory)
 
         Assert.Equal(
             HttpStatusCode.OK,
-            (await client.GetAsync("/event-authorizations")).StatusCode);
+            (await client.GetAsync("/event-authorizations", TestContext.Current.CancellationToken)).StatusCode);
         Assert.Equal(
             HttpStatusCode.Forbidden,
-            (await client.PostAsJsonAsync(
-                "/event-authorizations",
-                Request(
+            (await client.PostAsJsonAsync("/event-authorizations", Request(
                     "Evento",
                     "Responsável",
                     "ABC1D23",
                     DateTimeOffset.UtcNow.AddDays(1),
-                    DateTimeOffset.UtcNow.AddDays(2)))).StatusCode);
+                    DateTimeOffset.UtcNow.AddDays(2)), cancellationToken: TestContext.Current.CancellationToken)).StatusCode);
         Assert.Equal(
             HttpStatusCode.Forbidden,
-            (await client.PutAsJsonAsync(
-                "/event-authorizations/1",
-                Request(
+            (await client.PutAsJsonAsync("/event-authorizations/1", Request(
                     "Evento",
                     "Responsável",
                     "ABC1D23",
                     DateTimeOffset.UtcNow.AddDays(1),
-                    DateTimeOffset.UtcNow.AddDays(2)))).StatusCode);
+                    DateTimeOffset.UtcNow.AddDays(2)), cancellationToken: TestContext.Current.CancellationToken)).StatusCode);
         Assert.Equal(
             HttpStatusCode.Forbidden,
-            (await client.DeleteAsync("/event-authorizations/1")).StatusCode);
+            (await client.DeleteAsync("/event-authorizations/1", TestContext.Current.CancellationToken)).StatusCode);
     }
 
     [Fact]
@@ -145,7 +135,7 @@ public sealed class EventAuthorizationTests(ApiFactory factory)
         using var anonymous = factory.CreateClient();
         Assert.Equal(
             HttpStatusCode.Unauthorized,
-            (await anonymous.GetAsync("/event-authorizations")).StatusCode);
+            (await anonymous.GetAsync("/event-authorizations", TestContext.Current.CancellationToken)).StatusCode);
 
         var (_, administratorEmail) = await CreateUserAsync(
             ProfileNames.Administrator,
@@ -154,20 +144,18 @@ public sealed class EventAuthorizationTests(ApiFactory factory)
         await AuthenticateClientAsync(administrator, administratorEmail, password);
         Assert.Equal(
             HttpStatusCode.OK,
-            (await administrator.GetAsync("/event-authorizations")).StatusCode);
+            (await administrator.GetAsync("/event-authorizations", TestContext.Current.CancellationToken)).StatusCode);
 
-        var administratorInvalid = await administrator.PostAsJsonAsync(
-            "/event-authorizations",
-            new
-            {
-                name = " ",
-                responsible = " ",
-                startsAtUtc = DateTimeOffset.UtcNow.AddDays(2),
-                endsAtUtc = DateTimeOffset.UtcNow.AddDays(1),
-                area = " ",
-                overnightAllowed = false,
-                vehicleRules = Array.Empty<object>()
-            });
+        var administratorInvalid = await administrator.PostAsJsonAsync("/event-authorizations", new
+        {
+            name = " ",
+            responsible = " ",
+            startsAtUtc = DateTimeOffset.UtcNow.AddDays(2),
+            endsAtUtc = DateTimeOffset.UtcNow.AddDays(1),
+            area = " ",
+            overnightAllowed = false,
+            vehicleRules = Array.Empty<object>()
+        }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, administratorInvalid.StatusCode);
     }
 
@@ -186,14 +174,12 @@ public sealed class EventAuthorizationTests(ApiFactory factory)
 
         try
         {
-            var response = await client.PostAsJsonAsync(
-                "/event-authorizations",
-                Request(
+            var response = await client.PostAsJsonAsync("/event-authorizations", Request(
                     name,
                     "Responsável de teste",
                     $"RB{suffix[..5]}",
                     DateTimeOffset.UtcNow.AddDays(1),
-                    DateTimeOffset.UtcNow.AddDays(2)));
+                    DateTimeOffset.UtcNow.AddDays(2)), cancellationToken: TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         }
         finally
@@ -203,7 +189,7 @@ public sealed class EventAuthorizationTests(ApiFactory factory)
 
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ControleAcessoVeiculosDbContext>();
-        Assert.False(await dbContext.EventosAcesso.AnyAsync(entity => entity.Nome == name));
+        Assert.False(await dbContext.EventosAcesso.AnyAsync(entity => entity.Nome == name, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     private static object Request(

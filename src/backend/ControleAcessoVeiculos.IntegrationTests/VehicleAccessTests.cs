@@ -37,8 +37,8 @@ public sealed class VehicleAccessTests(ApiFactory factory)
             color = "Prata"
         };
 
-        var entryResponse = await client.PostAsJsonAsync("/access-records/entries", request);
-        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>();
+        var entryResponse = await client.PostAsJsonAsync("/access-records/entries", request, cancellationToken: TestContext.Current.CancellationToken);
+        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, entryResponse.StatusCode);
         Assert.NotNull(entry);
@@ -46,19 +46,14 @@ public sealed class VehicleAccessTests(ApiFactory factory)
         Assert.Equal("Aberto", entry.Status);
         Assert.Equal(userId, entry.CreatedById);
 
-        var duplicateResponse = await client.PostAsJsonAsync(
-            "/access-records/entries",
-            request);
+        var duplicateResponse = await client.PostAsJsonAsync("/access-records/entries", request, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Conflict, duplicateResponse.StatusCode);
 
-        var openRecords = await client.GetFromJsonAsync<List<AccessRecordResponse>>(
-            "/access-records/open");
+        var openRecords = await client.GetFromJsonAsync<List<AccessRecordResponse>>("/access-records/open", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Contains(openRecords!, item => item.Id == entry.Id);
 
-        var exitResponse = await client.PostAsync(
-            $"/access-records/{entry.Id}/exit",
-            content: null);
-        var closed = await exitResponse.Content.ReadFromJsonAsync<AccessRecordResponse>();
+        var exitResponse = await client.PostAsync($"/access-records/{entry.Id}/exit", content: null, cancellationToken: TestContext.Current.CancellationToken);
+        var closed = await exitResponse.Content.ReadFromJsonAsync<AccessRecordResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, exitResponse.StatusCode);
         Assert.NotNull(closed);
@@ -66,32 +61,26 @@ public sealed class VehicleAccessTests(ApiFactory factory)
         Assert.NotNull(closed.ExitAtUtc);
         Assert.Equal(userId, closed.UpdatedById);
 
-        var secondExit = await client.PostAsync(
-            $"/access-records/{entry.Id}/exit",
-            content: null);
+        var secondExit = await client.PostAsync($"/access-records/{entry.Id}/exit", content: null, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Conflict, secondExit.StatusCode);
 
-        var missingExit = await client.PostAsync(
-            "/access-records/2147483647/exit",
-            content: null);
+        var missingExit = await client.PostAsync("/access-records/2147483647/exit", content: null, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, missingExit.StatusCode);
 
-        openRecords = await client.GetFromJsonAsync<List<AccessRecordResponse>>(
-            "/access-records/open");
+        openRecords = await client.GetFromJsonAsync<List<AccessRecordResponse>>("/access-records/open", cancellationToken: TestContext.Current.CancellationToken);
         Assert.DoesNotContain(openRecords!, item => item.Id == entry.Id);
 
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ControleAcessoVeiculosDbContext>();
-        Assert.Equal(1, await dbContext.Veiculos.CountAsync(item => item.Placa == "ABC1D23"));
-        Assert.Equal(1, await dbContext.Pessoas.CountAsync(
-            item => item.DocumentoTipo == "CPF" && item.DocumentoNumero == documentNumber));
+        Assert.Equal(1, await dbContext.Veiculos.CountAsync(item => item.Placa == "ABC1D23", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.Equal(1, await dbContext.Pessoas.CountAsync(item => item.DocumentoTipo == "CPF" && item.DocumentoNumero == documentNumber, cancellationToken: TestContext.Current.CancellationToken));
 
         var audits = await dbContext.Auditorias
             .AsNoTracking()
             .Where(item => item.Entidade == nameof(RegistroAcesso) &&
                 item.RegistroId == entry.Id)
             .OrderBy(item => item.Id)
-            .ToListAsync();
+            .ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Collection(
             audits,
@@ -138,14 +127,14 @@ public sealed class VehicleAccessTests(ApiFactory factory)
             plate = suffix[..7],
             objective = "Entrega",
             categoryName = AccessCategoryNames.Delivery
-        });
-        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>();
+        }, cancellationToken: TestContext.Current.CancellationToken);
+        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>(cancellationToken: TestContext.Current.CancellationToken);
         entryResponse.EnsureSuccessStatusCode();
         Assert.NotNull(entry);
 
         var responses = await Task.WhenAll(
-            client.PostAsync($"/access-records/{entry.Id}/exit", content: null),
-            client.PostAsync($"/access-records/{entry.Id}/exit", content: null));
+            client.PostAsync($"/access-records/{entry.Id}/exit", content: null, TestContext.Current.CancellationToken),
+            client.PostAsync($"/access-records/{entry.Id}/exit", content: null, TestContext.Current.CancellationToken));
 
         Assert.Single(responses, response => response.StatusCode == HttpStatusCode.OK);
         Assert.Single(responses, response => response.StatusCode == HttpStatusCode.Conflict);
@@ -158,7 +147,7 @@ public sealed class VehicleAccessTests(ApiFactory factory)
                 item.Entidade == nameof(RegistroAcesso) &&
                 item.RegistroId == entry.Id &&
                 item.TipoAcao == TipoAcaoAuditoria.Alteracao &&
-                item.UsuarioId == userId));
+                item.UsuarioId == userId, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -181,7 +170,7 @@ public sealed class VehicleAccessTests(ApiFactory factory)
                 plate,
                 objective = "Visita",
                 categoryName = AccessCategoryNames.Visitor
-            });
+            }, cancellationToken: TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         }
@@ -192,7 +181,7 @@ public sealed class VehicleAccessTests(ApiFactory factory)
 
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ControleAcessoVeiculosDbContext>();
-        Assert.False(await dbContext.Veiculos.AnyAsync(item => item.Placa == plate));
+        Assert.False(await dbContext.Veiculos.AnyAsync(item => item.Placa == plate, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -209,8 +198,8 @@ public sealed class VehicleAccessTests(ApiFactory factory)
             plate = suffix[..7],
             objective = "Visita",
             categoryName = AccessCategoryNames.Visitor
-        });
-        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>();
+        }, cancellationToken: TestContext.Current.CancellationToken);
+        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>(cancellationToken: TestContext.Current.CancellationToken);
         entryResponse.EnsureSuccessStatusCode();
         Assert.NotNull(entry);
 
@@ -218,9 +207,7 @@ public sealed class VehicleAccessTests(ApiFactory factory)
 
         try
         {
-            var response = await client.PostAsync(
-                $"/access-records/{entry.Id}/exit",
-                content: null);
+            var response = await client.PostAsync($"/access-records/{entry.Id}/exit", content: null, cancellationToken: TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         }
@@ -233,13 +220,13 @@ public sealed class VehicleAccessTests(ApiFactory factory)
         var dbContext = scope.ServiceProvider.GetRequiredService<ControleAcessoVeiculosDbContext>();
         var accessRecord = await dbContext.RegistrosAcesso
             .AsNoTracking()
-            .SingleAsync(item => item.Id == entry.Id);
+            .SingleAsync(item => item.Id == entry.Id, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(StatusRegistroAcesso.Aberto, accessRecord.Status);
         Assert.Null(accessRecord.DataHoraSaida);
         Assert.Equal(
             1,
             await dbContext.Auditorias.CountAsync(item =>
-                item.Entidade == nameof(RegistroAcesso) && item.RegistroId == entry.Id));
+                item.Entidade == nameof(RegistroAcesso) && item.RegistroId == entry.Id, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Theory]
@@ -269,31 +256,27 @@ public sealed class VehicleAccessTests(ApiFactory factory)
             objective = "Visita inicial",
             categoryName = AccessCategoryNames.Visitor,
             observation = "Observação inicial"
-        });
-        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>();
+        }, cancellationToken: TestContext.Current.CancellationToken);
+        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>(cancellationToken: TestContext.Current.CancellationToken);
         entryResponse.EnsureSuccessStatusCode();
         Assert.NotNull(entry);
-        var exitResponse = await creatorClient.PostAsync(
-            $"/access-records/{entry.Id}/exit",
-            null);
-        var closed = await exitResponse.Content.ReadFromJsonAsync<AccessRecordResponse>();
+        var exitResponse = await creatorClient.PostAsync($"/access-records/{entry.Id}/exit", null, TestContext.Current.CancellationToken);
+        var closed = await exitResponse.Content.ReadFromJsonAsync<AccessRecordResponse>(cancellationToken: TestContext.Current.CancellationToken);
         exitResponse.EnsureSuccessStatusCode();
         Assert.NotNull(closed);
 
         const string justification = "Categoria e objetivo conferidos pelo operador.";
         using var correctorClient = factory.CreateClient();
         await AuthenticateClientAsync(correctorClient, correctorEmail, password);
-        var correctionResponse = await correctorClient.PutAsJsonAsync(
-            $"/access-records/{entry.Id}/correction",
-            new
-            {
-                objective = "Entrega autorizada",
-                categoryName = AccessCategoryNames.Delivery,
-                observation = "Correção de teste",
-                justification
-            });
+        var correctionResponse = await correctorClient.PutAsJsonAsync($"/access-records/{entry.Id}/correction", new
+        {
+            objective = "Entrega autorizada",
+            categoryName = AccessCategoryNames.Delivery,
+            observation = "Correção de teste",
+            justification
+        }, cancellationToken: TestContext.Current.CancellationToken);
         var corrected = await correctionResponse.Content
-            .ReadFromJsonAsync<AccessRecordResponse>();
+            .ReadFromJsonAsync<AccessRecordResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, correctionResponse.StatusCode);
         Assert.NotNull(corrected);
@@ -321,7 +304,7 @@ public sealed class VehicleAccessTests(ApiFactory factory)
         var correctionAudit = await dbContext.Auditorias
             .AsNoTracking()
             .SingleAsync(item => item.Entidade == nameof(RegistroAcesso) &&
-                item.RegistroId == entry.Id && item.Detalhes == justification);
+                item.RegistroId == entry.Id && item.Detalhes == justification, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(TipoAcaoAuditoria.Alteracao, correctionAudit.TipoAcao);
         Assert.Equal(correctorUserId, correctionAudit.UsuarioId);
         Assert.Null(correctionAudit.DadosAnteriores);
@@ -359,8 +342,7 @@ public sealed class VehicleAccessTests(ApiFactory factory)
         using var anonymousClient = factory.CreateClient();
         Assert.Equal(
             HttpStatusCode.Unauthorized,
-            (await anonymousClient.PutAsJsonAsync(
-                "/access-records/1/correction", request)).StatusCode);
+            (await anonymousClient.PutAsJsonAsync("/access-records/1/correction", request, cancellationToken: TestContext.Current.CancellationToken)).StatusCode);
     }
 
     [Fact]
@@ -377,42 +359,36 @@ public sealed class VehicleAccessTests(ApiFactory factory)
             plate = suffix[..7],
             objective = "Visita técnica",
             categoryName = AccessCategoryNames.Visitor
-        });
-        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>();
+        }, cancellationToken: TestContext.Current.CancellationToken);
+        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>(cancellationToken: TestContext.Current.CancellationToken);
         entryResponse.EnsureSuccessStatusCode();
         Assert.NotNull(entry);
 
-        var unchanged = await client.PutAsJsonAsync(
-            $"/access-records/{entry.Id}/correction",
-            new
-            {
-                objective = "Visita técnica",
-                categoryName = AccessCategoryNames.Visitor,
-                observation = (string?)null,
-                justification = "Dados conferidos sem alteração efetiva."
-            });
+        var unchanged = await client.PutAsJsonAsync($"/access-records/{entry.Id}/correction", new
+        {
+            objective = "Visita técnica",
+            categoryName = AccessCategoryNames.Visitor,
+            observation = (string?)null,
+            justification = "Dados conferidos sem alteração efetiva."
+        }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Conflict, unchanged.StatusCode);
 
-        var invalid = await client.PutAsJsonAsync(
-            $"/access-records/{entry.Id}/correction",
-            new
-            {
-                objective = "",
-                categoryName = "Desconhecida",
-                observation = new string('x', 1001),
-                justification = "curta"
-            });
+        var invalid = await client.PutAsJsonAsync($"/access-records/{entry.Id}/correction", new
+        {
+            objective = "",
+            categoryName = "Desconhecida",
+            observation = new string('x', 1001),
+            justification = "curta"
+        }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
 
-        var missing = await client.PutAsJsonAsync(
-            "/access-records/2147483647/correction",
-            new
-            {
-                objective = "Entrega autorizada",
-                categoryName = AccessCategoryNames.Delivery,
-                observation = (string?)null,
-                justification = "Correção válida para registro inexistente."
-            });
+        var missing = await client.PutAsJsonAsync("/access-records/2147483647/correction", new
+        {
+            objective = "Entrega autorizada",
+            categoryName = AccessCategoryNames.Delivery,
+            observation = (string?)null,
+            justification = "Correção válida para registro inexistente."
+        }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
     }
 
@@ -431,23 +407,21 @@ public sealed class VehicleAccessTests(ApiFactory factory)
             objective = "Visita original",
             categoryName = AccessCategoryNames.Visitor,
             observation = "Observação original"
-        });
-        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>();
+        }, cancellationToken: TestContext.Current.CancellationToken);
+        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>(cancellationToken: TestContext.Current.CancellationToken);
         entryResponse.EnsureSuccessStatusCode();
         Assert.NotNull(entry);
 
         await InstallRejectingAuditTriggerAsync();
         try
         {
-            var response = await client.PutAsJsonAsync(
-                $"/access-records/{entry.Id}/correction",
-                new
-                {
-                    objective = "Entrega corrigida",
-                    categoryName = AccessCategoryNames.Delivery,
-                    observation = "Observação corrigida",
-                    justification = "Correção que deve ser revertida no teste."
-                });
+            var response = await client.PutAsJsonAsync($"/access-records/{entry.Id}/correction", new
+            {
+                objective = "Entrega corrigida",
+                categoryName = AccessCategoryNames.Delivery,
+                observation = "Observação corrigida",
+                justification = "Correção que deve ser revertida no teste."
+            }, cancellationToken: TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         }
         finally
@@ -459,15 +433,15 @@ public sealed class VehicleAccessTests(ApiFactory factory)
         var dbContext = scope.ServiceProvider.GetRequiredService<ControleAcessoVeiculosDbContext>();
         var record = await dbContext.RegistrosAcesso
             .AsNoTracking()
-            .SingleAsync(item => item.Id == entry.Id);
+            .SingleAsync(item => item.Id == entry.Id, cancellationToken: TestContext.Current.CancellationToken);
         var category = await dbContext.CategoriasAcesso
             .AsNoTracking()
-            .SingleAsync(item => item.Id == record.CategoriaAcessoId);
+            .SingleAsync(item => item.Id == record.CategoriaAcessoId, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal("Visita original", record.Objetivo);
         Assert.Equal("Observação original", record.Observacao);
         Assert.Equal(AccessCategoryNames.Visitor, category.Nome);
         Assert.Equal(1, await dbContext.Auditorias.CountAsync(item =>
-            item.Entidade == nameof(RegistroAcesso) && item.RegistroId == entry.Id));
+            item.Entidade == nameof(RegistroAcesso) && item.RegistroId == entry.Id, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -477,7 +451,7 @@ public sealed class VehicleAccessTests(ApiFactory factory)
         using var anonymousClient = factory.CreateClient();
         Assert.Equal(
             HttpStatusCode.Unauthorized,
-            (await anonymousClient.GetAsync("/access-records/history")).StatusCode);
+            (await anonymousClient.GetAsync("/access-records/history", TestContext.Current.CancellationToken)).StatusCode);
 
         var (_, transportationEmail) = await CreateUserAsync(
             ProfileNames.TransportationDepartment,
@@ -486,14 +460,14 @@ public sealed class VehicleAccessTests(ApiFactory factory)
         await AuthenticateClientAsync(transportationClient, transportationEmail, password);
         Assert.Equal(
             HttpStatusCode.OK,
-            (await transportationClient.GetAsync("/access-records/history")).StatusCode);
+            (await transportationClient.GetAsync("/access-records/history", TestContext.Current.CancellationToken)).StatusCode);
 
         var (_, doormanEmail) = await CreateUserAsync(ProfileNames.Doorman, password);
         using var doormanClient = factory.CreateClient();
         await AuthenticateClientAsync(doormanClient, doormanEmail, password);
         Assert.Equal(
             HttpStatusCode.OK,
-            (await doormanClient.GetAsync("/access-records/history")).StatusCode);
+            (await doormanClient.GetAsync("/access-records/history", TestContext.Current.CancellationToken)).StatusCode);
     }
 
     [Fact]
@@ -512,8 +486,8 @@ public sealed class VehicleAccessTests(ApiFactory factory)
             plate = "TST1A23",
             objective = "Operação não autorizada",
             categoryName = AccessCategoryNames.Visitor
-        });
-        var exit = await client.PostAsync("/access-records/1/exit", null);
+        }, cancellationToken: TestContext.Current.CancellationToken);
+        var exit = await client.PostAsync("/access-records/1/exit", null, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Forbidden, entry.StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, exit.StatusCode);
@@ -539,15 +513,15 @@ public sealed class VehicleAccessTests(ApiFactory factory)
                 plate,
                 objective = "Visita técnica",
                 categoryName = AccessCategoryNames.Visitor
-            });
-            var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>();
+            }, cancellationToken: TestContext.Current.CancellationToken);
+            var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>(cancellationToken: TestContext.Current.CancellationToken);
             entryResponse.EnsureSuccessStatusCode();
             Assert.NotNull(entry);
             accessIds.Add(entry.Id);
 
             if (index < 2)
             {
-                (await client.PostAsync($"/access-records/{entry.Id}/exit", null))
+                (await client.PostAsync($"/access-records/{entry.Id}/exit", null, TestContext.Current.CancellationToken))
                     .EnsureSuccessStatusCode();
             }
         }
@@ -556,10 +530,9 @@ public sealed class VehicleAccessTests(ApiFactory factory)
         var driverFilter = Uri.EscapeDataString($"histórico {suffix[..8]}".ToUpperInvariant());
         var from = Uri.EscapeDataString(DateTimeOffset.UtcNow.AddDays(-1).ToString("O"));
         var to = Uri.EscapeDataString(DateTimeOffset.UtcNow.AddDays(1).ToString("O"));
-        var response = await client.GetAsync(
-            $"/access-records/history?plate={formattedPlate}&driverName={driverFilter}" +
-            $"&categoryName=visitante&from={from}&to={to}&page=1&pageSize=2");
-        var result = await response.Content.ReadFromJsonAsync<AccessHistoryResponse>();
+        var response = await client.GetAsync($"/access-records/history?plate={formattedPlate}&driverName={driverFilter}" +
+            $"&categoryName=visitante&from={from}&to={to}&page=1&pageSize=2", TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<AccessHistoryResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(result);
@@ -577,17 +550,15 @@ public sealed class VehicleAccessTests(ApiFactory factory)
             Assert.Equal(AccessCategoryNames.Visitor, item.CategoryName);
         });
 
-        var closed = await client.GetFromJsonAsync<AccessHistoryResponse>(
-            $"/access-records/history?plate={formattedPlate}&status=encerrado" +
-            $"&from={from}&to={to}&page=2&pageSize=1");
+        var closed = await client.GetFromJsonAsync<AccessHistoryResponse>($"/access-records/history?plate={formattedPlate}&status=encerrado" +
+            $"&from={from}&to={to}&page=2&pageSize=1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(closed);
         Assert.Equal(2, closed.TotalCount);
         Assert.Equal(2, closed.TotalPages);
         Assert.Single(closed.Items);
         Assert.Equal("Encerrado", closed.Items[0].Status);
 
-        var invalid = await client.GetAsync(
-            $"/access-records/history?from={to}&to={from}&status=999&pageSize=101");
+        var invalid = await client.GetAsync($"/access-records/history?from={to}&to={from}&status=999&pageSize=101", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
     }
 
@@ -596,7 +567,7 @@ public sealed class VehicleAccessTests(ApiFactory factory)
     {
         using var client = factory.CreateClient();
 
-        var response = await client.GetAsync("/access-records/open");
+        var response = await client.GetAsync("/access-records/open", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -619,19 +590,17 @@ public sealed class VehicleAccessTests(ApiFactory factory)
             plate = suffix[..7],
             objective = "Visita técnica",
             categoryName = AccessCategoryNames.Visitor
-        });
-        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>();
+        }, cancellationToken: TestContext.Current.CancellationToken);
+        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>(cancellationToken: TestContext.Current.CancellationToken);
         entryResponse.EnsureSuccessStatusCode();
         Assert.NotNull(entry);
 
-        var closureResponse = await client.PostAsJsonAsync(
-            $"/access-records/{entry.Id}/exceptional-closure",
-            new
-            {
-                reason = "RegistroDeSaidaOmitido",
-                observation = "Saída confirmada posteriormente pelo responsável operacional."
-            });
-        var closed = await closureResponse.Content.ReadFromJsonAsync<AccessRecordResponse>();
+        var closureResponse = await client.PostAsJsonAsync($"/access-records/{entry.Id}/exceptional-closure", new
+        {
+            reason = "RegistroDeSaidaOmitido",
+            observation = "Saída confirmada posteriormente pelo responsável operacional."
+        }, cancellationToken: TestContext.Current.CancellationToken);
+        var closed = await closureResponse.Content.ReadFromJsonAsync<AccessRecordResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, closureResponse.StatusCode);
         Assert.NotNull(closed);
@@ -648,7 +617,7 @@ public sealed class VehicleAccessTests(ApiFactory factory)
             .AsNoTracking()
             .SingleAsync(item => item.Entidade == nameof(RegistroAcesso) &&
                 item.RegistroId == entry.Id &&
-                item.Detalhes == "Vehicle access exceptionally closed.");
+                item.Detalhes == "Vehicle access exceptionally closed.", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(userId, audit.UsuarioId);
         AssertAuditState(audit.DadosAnteriores, "Aberto");
         AssertAuditState(audit.DadosNovos, "Encerrado");
@@ -670,8 +639,7 @@ public sealed class VehicleAccessTests(ApiFactory factory)
         using var anonymousClient = factory.CreateClient();
         Assert.Equal(
             HttpStatusCode.Unauthorized,
-            (await anonymousClient.PostAsJsonAsync(
-                "/access-records/1/exceptional-closure", request)).StatusCode);
+            (await anonymousClient.PostAsJsonAsync("/access-records/1/exceptional-closure", request, cancellationToken: TestContext.Current.CancellationToken)).StatusCode);
 
         var (_, transportationEmail) = await CreateUserAsync(
             ProfileNames.TransportationDepartment,
@@ -680,22 +648,19 @@ public sealed class VehicleAccessTests(ApiFactory factory)
         await AuthenticateClientAsync(transportationClient, transportationEmail, password);
         Assert.Equal(
             HttpStatusCode.Forbidden,
-            (await transportationClient.PostAsJsonAsync(
-                "/access-records/1/exceptional-closure", request)).StatusCode);
+            (await transportationClient.PostAsJsonAsync("/access-records/1/exceptional-closure", request, cancellationToken: TestContext.Current.CancellationToken)).StatusCode);
 
         var (_, administratorEmail) = await CreateUserAsync(
             ProfileNames.Administrator,
             password);
         using var administratorClient = factory.CreateClient();
         await AuthenticateClientAsync(administratorClient, administratorEmail, password);
-        var invalid = await administratorClient.PostAsJsonAsync(
-            "/access-records/1/exceptional-closure",
-            new
-            {
-                reason = "Desconhecido",
-                observation = "curta",
-                observedExitAtUtc = DateTimeOffset.UtcNow.AddHours(1)
-            });
+        var invalid = await administratorClient.PostAsJsonAsync("/access-records/1/exceptional-closure", new
+        {
+            reason = "Desconhecido",
+            observation = "curta",
+            observedExitAtUtc = DateTimeOffset.UtcNow.AddHours(1)
+        }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
     }
 
@@ -713,8 +678,8 @@ public sealed class VehicleAccessTests(ApiFactory factory)
             plate = suffix[..7],
             objective = "Entrega",
             categoryName = AccessCategoryNames.Delivery
-        });
-        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>();
+        }, cancellationToken: TestContext.Current.CancellationToken);
+        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>(cancellationToken: TestContext.Current.CancellationToken);
         entryResponse.EnsureSuccessStatusCode();
         Assert.NotNull(entry);
         var request = new
@@ -724,8 +689,14 @@ public sealed class VehicleAccessTests(ApiFactory factory)
         };
 
         var responses = await Task.WhenAll(
-            client.PostAsJsonAsync($"/access-records/{entry.Id}/exceptional-closure", request),
-            client.PostAsJsonAsync($"/access-records/{entry.Id}/exceptional-closure", request));
+            client.PostAsJsonAsync(
+                $"/access-records/{entry.Id}/exceptional-closure",
+                request,
+                TestContext.Current.CancellationToken),
+            client.PostAsJsonAsync(
+                $"/access-records/{entry.Id}/exceptional-closure",
+                request,
+                TestContext.Current.CancellationToken));
 
         Assert.Single(responses, response => response.StatusCode == HttpStatusCode.OK);
         Assert.Single(responses, response => response.StatusCode == HttpStatusCode.Conflict);
@@ -735,7 +706,7 @@ public sealed class VehicleAccessTests(ApiFactory factory)
             item.Entidade == nameof(RegistroAcesso) &&
             item.RegistroId == entry.Id &&
             item.UsuarioId == userId &&
-            item.Detalhes == "Vehicle access exceptionally closed."));
+            item.Detalhes == "Vehicle access exceptionally closed.", cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -752,21 +723,19 @@ public sealed class VehicleAccessTests(ApiFactory factory)
             plate = suffix[..7],
             objective = "Visita técnica",
             categoryName = AccessCategoryNames.Visitor
-        });
-        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>();
+        }, cancellationToken: TestContext.Current.CancellationToken);
+        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>(cancellationToken: TestContext.Current.CancellationToken);
         entryResponse.EnsureSuccessStatusCode();
         Assert.NotNull(entry);
 
         await InstallRejectingAuditTriggerAsync();
         try
         {
-            var response = await client.PostAsJsonAsync(
-                $"/access-records/{entry.Id}/exceptional-closure",
-                new
-                {
-                    reason = "OperacaoEmContingencia",
-                    observation = "Registro regularizado após operação em contingência."
-                });
+            var response = await client.PostAsJsonAsync($"/access-records/{entry.Id}/exceptional-closure", new
+            {
+                reason = "OperacaoEmContingencia",
+                observation = "Registro regularizado após operação em contingência."
+            }, cancellationToken: TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         }
         finally
@@ -778,12 +747,12 @@ public sealed class VehicleAccessTests(ApiFactory factory)
         var dbContext = scope.ServiceProvider.GetRequiredService<ControleAcessoVeiculosDbContext>();
         var record = await dbContext.RegistrosAcesso
             .AsNoTracking()
-            .SingleAsync(item => item.Id == entry.Id);
+            .SingleAsync(item => item.Id == entry.Id, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(StatusRegistroAcesso.Aberto, record.Status);
         Assert.Null(record.TipoEncerramento);
         Assert.Null(record.DataHoraRegularizacao);
         Assert.Equal(1, await dbContext.Auditorias.CountAsync(item =>
-            item.Entidade == nameof(RegistroAcesso) && item.RegistroId == entry.Id));
+            item.Entidade == nameof(RegistroAcesso) && item.RegistroId == entry.Id, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     private static async Task AuthenticateClientAsync(

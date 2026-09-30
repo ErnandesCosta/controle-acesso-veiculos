@@ -23,7 +23,7 @@ public sealed class AccessEntryCandidateTests(ApiFactory factory)
         using var anonymous = factory.CreateClient();
         Assert.Equal(
             HttpStatusCode.Unauthorized,
-            (await anonymous.GetAsync("/access-records/entry-candidates?query=ABC"))
+            (await anonymous.GetAsync("/access-records/entry-candidates?query=ABC", TestContext.Current.CancellationToken))
                 .StatusCode);
 
         var transportationEmail = await CreateUserAsync(
@@ -32,16 +32,14 @@ public sealed class AccessEntryCandidateTests(ApiFactory factory)
         await AuthenticateClientAsync(transportation, transportationEmail);
         Assert.Equal(
             HttpStatusCode.Forbidden,
-            (await transportation.GetAsync(
-                "/access-records/entry-candidates?query=ABC")).StatusCode);
+            (await transportation.GetAsync("/access-records/entry-candidates?query=ABC", TestContext.Current.CancellationToken)).StatusCode);
 
         var doormanEmail = await CreateUserAsync(ProfileNames.Doorman);
         using var doorman = factory.CreateClient();
         await AuthenticateClientAsync(doorman, doormanEmail);
         Assert.Equal(
             HttpStatusCode.BadRequest,
-            (await doorman.GetAsync(
-                "/access-records/entry-candidates?query=AB")).StatusCode);
+            (await doorman.GetAsync("/access-records/entry-candidates?query=AB", TestContext.Current.CancellationToken)).StatusCode);
     }
 
     [Fact]
@@ -70,11 +68,10 @@ public sealed class AccessEntryCandidateTests(ApiFactory factory)
             relationshipEnd: DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1));
 
         var formattedPlate = $"{eligible.Plate[..3]}-{eligible.Plate[3..]}".ToLowerInvariant();
-        var plateResponse = await client.GetAsync(
-            $"/access-records/entry-candidates?query={formattedPlate}");
-        var rawResponse = await plateResponse.Content.ReadAsStringAsync();
+        var plateResponse = await client.GetAsync($"/access-records/entry-candidates?query={formattedPlate}", TestContext.Current.CancellationToken);
+        var rawResponse = await plateResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         var plateCandidates = await plateResponse.Content
-            .ReadFromJsonAsync<List<CandidateResponse>>();
+            .ReadFromJsonAsync<List<CandidateResponse>>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, plateResponse.StatusCode);
         var plateCandidate = Assert.Single(plateCandidates!);
@@ -84,8 +81,7 @@ public sealed class AccessEntryCandidateTests(ApiFactory factory)
         Assert.DoesNotContain(eligible.DocumentNumber, rawResponse, StringComparison.Ordinal);
         Assert.DoesNotContain(eligible.Email!, rawResponse, StringComparison.OrdinalIgnoreCase);
 
-        var nameResponse = await client.GetFromJsonAsync<List<CandidateResponse>>(
-            $"/access-records/entry-candidates?query={suffix}");
+        var nameResponse = await client.GetFromJsonAsync<List<CandidateResponse>>($"/access-records/entry-candidates?query={suffix}", cancellationToken: TestContext.Current.CancellationToken);
         var nameCandidate = Assert.Single(nameResponse!);
         Assert.Equal(eligible.VehicleId, nameCandidate.VehicleId);
 
@@ -98,8 +94,8 @@ public sealed class AccessEntryCandidateTests(ApiFactory factory)
             vehicleType = "Caminhão",
             vehicleId = eligible.VehicleId,
             personId = eligible.PersonId
-        });
-        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>();
+        }, cancellationToken: TestContext.Current.CancellationToken);
+        var entry = await entryResponse.Content.ReadFromJsonAsync<AccessRecordResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, entryResponse.StatusCode);
         Assert.NotNull(entry);
@@ -110,23 +106,20 @@ public sealed class AccessEntryCandidateTests(ApiFactory factory)
 
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ControleAcessoVeiculosDbContext>();
-        Assert.False(await dbContext.Veiculos.AnyAsync(item => item.Placa == "ZZZ9Z99"));
-        Assert.False(await dbContext.Pessoas.AnyAsync(
-            item => item.Nome == "Nome adulterado pelo cliente"));
+        Assert.False(await dbContext.Veiculos.AnyAsync(item => item.Placa == "ZZZ9Z99", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.False(await dbContext.Pessoas.AnyAsync(item => item.Nome == "Nome adulterado pelo cliente", cancellationToken: TestContext.Current.CancellationToken));
 
-        var incompatibleResponse = await client.PostAsJsonAsync(
-            "/access-records/entries",
-            new
-            {
-                driverName = eligible.DriverName,
-                plate = eligible.Plate,
-                objective = "Atendimento",
-                categoryName = AccessCategoryNames.Visitor,
-                vehicleId = eligible.VehicleId,
-                personId = institutional.PersonId
-            });
+        var incompatibleResponse = await client.PostAsJsonAsync("/access-records/entries", new
+        {
+            driverName = eligible.DriverName,
+            plate = eligible.Plate,
+            objective = "Atendimento",
+            categoryName = AccessCategoryNames.Visitor,
+            vehicleId = eligible.VehicleId,
+            personId = institutional.PersonId
+        }, cancellationToken: TestContext.Current.CancellationToken);
         var incompatibleBody = await incompatibleResponse.Content
-            .ReadFromJsonAsync<ConflictResponse>();
+            .ReadFromJsonAsync<ConflictResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Conflict, incompatibleResponse.StatusCode);
         Assert.NotNull(incompatibleBody);
@@ -152,8 +145,7 @@ public sealed class AccessEntryCandidateTests(ApiFactory factory)
                 null);
         }
 
-        var candidates = await client.GetFromJsonAsync<List<CandidateResponse>>(
-            $"/access-records/entry-candidates?query={suffix}");
+        var candidates = await client.GetFromJsonAsync<List<CandidateResponse>>($"/access-records/entry-candidates?query={suffix}", cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(candidates);
         Assert.Equal(10, candidates.Count);
@@ -182,8 +174,14 @@ public sealed class AccessEntryCandidateTests(ApiFactory factory)
         };
 
         var responses = await Task.WhenAll(
-            client.PostAsJsonAsync("/access-records/entries", request),
-            client.PostAsJsonAsync("/access-records/entries", request));
+            client.PostAsJsonAsync(
+                "/access-records/entries",
+                request,
+                TestContext.Current.CancellationToken),
+            client.PostAsJsonAsync(
+                "/access-records/entries",
+                request,
+                TestContext.Current.CancellationToken));
 
         Assert.Single(responses, item => item.StatusCode == HttpStatusCode.Created);
         Assert.Single(responses, item => item.StatusCode == HttpStatusCode.Conflict);
@@ -194,7 +192,7 @@ public sealed class AccessEntryCandidateTests(ApiFactory factory)
             1,
             await dbContext.RegistrosAcesso.CountAsync(item =>
                 item.VeiculoId == candidate.VehicleId &&
-                item.DataHoraSaida == null));
+                item.DataHoraSaida == null, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     private async Task<string> CreateUserAsync(string profileName)
