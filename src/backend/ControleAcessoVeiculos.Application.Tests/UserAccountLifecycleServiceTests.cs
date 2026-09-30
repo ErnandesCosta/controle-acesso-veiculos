@@ -16,7 +16,7 @@ public sealed class UserAccountLifecycleServiceTests
         var result = await service.SearchAsync(new SearchUserAccountsCommand(
             Search: new string('x', 255),
             Page: 0,
-            PageSize: 101));
+            PageSize: 101), TestContext.Current.CancellationToken);
 
         Assert.Equal(SearchUserAccountsStatus.Invalid, result.Status);
         Assert.Contains("search", result.Errors.Keys);
@@ -35,7 +35,7 @@ public sealed class UserAccountLifecycleServiceTests
             "  ADMIN@EXAMPLE.TEST  ",
             Active: true,
             Page: 2,
-            PageSize: 10));
+            PageSize: 10), TestContext.Current.CancellationToken);
 
         Assert.Equal(SearchUserAccountsStatus.Success, result.Status);
         Assert.NotNull(result.Result);
@@ -51,7 +51,7 @@ public sealed class UserAccountLifecycleServiceTests
         var store = new FakeStore();
         var service = CreateService(store);
 
-        var result = await service.DeactivateAsync(7, actorUserId: 7);
+        var result = await service.DeactivateAsync(7, actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(ChangeUserAccountStateStatus.SelfDeactivation, result.Status);
         Assert.Equal(0, store.StateChangeCalls);
@@ -63,8 +63,8 @@ public sealed class UserAccountLifecycleServiceTests
         var store = new FakeStore();
         var service = CreateService(store);
 
-        var deactivated = await service.DeactivateAsync(8, actorUserId: 7);
-        var reactivated = await service.ReactivateAsync(8, actorUserId: 7);
+        var deactivated = await service.DeactivateAsync(8, actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
+        var reactivated = await service.ReactivateAsync(8, actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(ChangeUserAccountStateStatus.Success, deactivated.Status);
         Assert.Equal(ChangeUserAccountStateStatus.Success, reactivated.Status);

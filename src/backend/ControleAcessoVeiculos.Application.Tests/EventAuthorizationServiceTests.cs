@@ -13,16 +13,14 @@ public sealed class EventAuthorizationServiceTests
         var store = new FakeStore();
         var service = CreateService(store);
 
-        var result = await service.CreateAsync(
-            new CreateEventAuthorizationCommand(
+        var result = await service.CreateAsync(new CreateEventAuthorizationCommand(
                 null,
                 null,
                 FixedNow.AddDays(2),
                 FixedNow.AddDays(1),
                 null,
                 false,
-                []),
-            actorUserId: 7);
+                []), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(EventAuthorizationOperationStatus.Invalid, result.Status);
         Assert.Contains("name", result.Errors.Keys);
@@ -37,12 +35,10 @@ public sealed class EventAuthorizationServiceTests
         var store = new FakeStore();
         var service = CreateService(store);
 
-        var result = await service.CreateAsync(
-            ValidCommand([
+        var result = await service.CreateAsync(ValidCommand([
                 new(" automóvel ", 1, " abc-1d23 "),
                 new(" ônibus ", 3)
-            ]),
-            actorUserId: 7);
+            ]), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(EventAuthorizationOperationStatus.Success, result.Status);
         Assert.Equal(1, store.CreateCalls);
@@ -58,14 +54,12 @@ public sealed class EventAuthorizationServiceTests
         var store = new FakeStore();
         var service = CreateService(store);
 
-        var result = await service.CreateAsync(
-            ValidCommand([
+        var result = await service.CreateAsync(ValidCommand([
                 new("Automóvel", 2, "ABC-1234"),
                 new("Van", 1, "ABC1234"),
                 new("Ônibus", 2),
                 new(" ônibus ", 3)
-            ]),
-            actorUserId: 7);
+            ]), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(EventAuthorizationOperationStatus.Invalid, result.Status);
         Assert.Contains("vehicleRules[0]", result.Errors.Keys);
@@ -80,7 +74,7 @@ public sealed class EventAuthorizationServiceTests
         var store = new FakeStore();
         var service = CreateService(store);
 
-        var result = await service.SearchAsync(new SearchEventAuthorizationsCommand());
+        var result = await service.SearchAsync(new SearchEventAuthorizationsCommand(), TestContext.Current.CancellationToken);
 
         Assert.Equal(EventAuthorizationOperationStatus.Success, result.Status);
         Assert.Equal(FixedNow.UtcDateTime, store.LastCriteria!.FromUtc);
@@ -94,8 +88,8 @@ public sealed class EventAuthorizationServiceTests
         var store = new FakeStore();
         var service = CreateService(store);
 
-        var invalid = await service.CancelAsync(0, actorUserId: 7);
-        var success = await service.CancelAsync(10, actorUserId: 7);
+        var invalid = await service.CancelAsync(0, actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
+        var success = await service.CancelAsync(10, actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(EventAuthorizationOperationStatus.Invalid, invalid.Status);
         Assert.Equal(EventAuthorizationOperationStatus.Success, success.Status);

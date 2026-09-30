@@ -16,7 +16,7 @@ public sealed class OperationalSummaryServiceTests
             new FixedTimeProvider(new DateTimeOffset(2026, 8, 30, 12, 0, 0, TimeSpan.Zero)),
             InstitutionalTimeZone);
 
-        var result = await service.GetAsync(new DateOnly(2026, 8, 30));
+        var result = await service.GetAsync(new DateOnly(2026, 8, 30), TestContext.Current.CancellationToken);
 
         Assert.Equal(new DateOnly(2026, 8, 30), result.LocalDate);
         Assert.Equal("America/Recife", result.TimeZoneId);
@@ -40,7 +40,7 @@ public sealed class OperationalSummaryServiceTests
             new FixedTimeProvider(new DateTimeOffset(2026, 8, 31, 1, 30, 0, TimeSpan.Zero)),
             InstitutionalTimeZone);
 
-        var result = await service.GetAsync();
+        var result = await service.GetAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(new DateOnly(2026, 8, 30), result.LocalDate);
     }

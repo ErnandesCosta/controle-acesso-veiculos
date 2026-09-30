@@ -18,7 +18,7 @@ public sealed class AuditTrailServiceTests
             Action: " alteracao ",
             Entity: " Usuario ",
             Page: 2,
-            PageSize: 10));
+            PageSize: 10), TestContext.Current.CancellationToken);
 
         Assert.Equal(SearchAuditTrailStatus.Success, result.Status);
         Assert.NotNull(result.Result);
@@ -39,7 +39,7 @@ public sealed class AuditTrailServiceTests
 
         var result = await service.SearchAsync(new SearchAuditTrailCommand(
             FromUtc: new DateTimeOffset(2026, 8, 29, 8, 0, 0, TimeSpan.FromHours(-3)),
-            ToUtc: new DateTimeOffset(2026, 8, 30, 8, 0, 0, TimeSpan.FromHours(-3))));
+            ToUtc: new DateTimeOffset(2026, 8, 30, 8, 0, 0, TimeSpan.FromHours(-3))), TestContext.Current.CancellationToken);
 
         Assert.Equal(SearchAuditTrailStatus.Success, result.Status);
         Assert.Equal(new DateTime(2026, 8, 29, 11, 0, 0, DateTimeKind.Utc),
@@ -63,7 +63,7 @@ public sealed class AuditTrailServiceTests
             ActorUserId: -1,
             SystemOnly: true,
             Page: 0,
-            PageSize: 101));
+            PageSize: 101), TestContext.Current.CancellationToken);
 
         Assert.Equal(SearchAuditTrailStatus.Invalid, result.Status);
         Assert.Contains("period", result.Errors.Keys);

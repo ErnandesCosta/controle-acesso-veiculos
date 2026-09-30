@@ -14,10 +14,7 @@ public sealed class AdministrativeCredentialResetServiceTests
         var store = new FakeStore(AdministrativeCredentialResetStoreStatus.Success);
         var service = CreateService(store);
 
-        var result = await service.ResetAsync(
-            userId: 10,
-            actorUserId: 20,
-            CredentialResetReasons.Forgotten);
+        var result = await service.ResetAsync(userId: 10, actorUserId: 20, CredentialResetReasons.Forgotten, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(AdministrativeCredentialResetStatus.Success, result.Status);
         Assert.Equal("Temporary-test-credential-123!", result.TemporaryCredential);
@@ -37,7 +34,7 @@ public sealed class AdministrativeCredentialResetServiceTests
         var generator = new FakeGenerator();
         var service = CreateService(store, generator);
 
-        var result = await service.ResetAsync(10, 20, reason);
+        var result = await service.ResetAsync(10, 20, reason, TestContext.Current.CancellationToken);
 
         Assert.Equal(AdministrativeCredentialResetStatus.Validation, result.Status);
         Assert.Equal(0, generator.Calls);
@@ -57,10 +54,7 @@ public sealed class AdministrativeCredentialResetServiceTests
     {
         var service = CreateService(new FakeStore(storeStatus));
 
-        var result = await service.ResetAsync(
-            10,
-            20,
-            CredentialResetReasons.SuspectedCompromise);
+        var result = await service.ResetAsync(10, 20, CredentialResetReasons.SuspectedCompromise, TestContext.Current.CancellationToken);
 
         Assert.Equal(expectedStatus, result.Status);
         Assert.Null(result.TemporaryCredential);

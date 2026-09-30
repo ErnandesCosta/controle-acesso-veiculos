@@ -14,9 +14,7 @@ public sealed class VehicleAccessServiceTests
         var store = new FakeVehicleAccessStore();
         var service = new VehicleAccessService(store, new FixedTimeProvider(FixedNow));
 
-        var result = await service.RegisterEntryAsync(
-            new RegisterVehicleEntryCommand("", "---", "", "Desconhecida"),
-            actorUserId: 7);
+        var result = await service.RegisterEntryAsync(new RegisterVehicleEntryCommand("", "---", "", "Desconhecida"), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(RegisterVehicleEntryStatus.Invalid, result.Status);
         Assert.Contains("driverName", result.Errors.Keys);
@@ -32,16 +30,14 @@ public sealed class VehicleAccessServiceTests
         var store = new FakeVehicleAccessStore();
         var service = new VehicleAccessService(store, new FixedTimeProvider(FixedNow));
 
-        var result = await service.RegisterEntryAsync(
-            new RegisterVehicleEntryCommand(
+        var result = await service.RegisterEntryAsync(new RegisterVehicleEntryCommand(
                 "  Condutor de Teste  ",
                 "abc-1d23",
                 "  Visita técnica  ",
                 "visitante",
                 " cpf ",
                 " 12345678900 ",
-                EventAuthorizationId: 12),
-            actorUserId: 7);
+                EventAuthorizationId: 12), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(RegisterVehicleEntryStatus.Success, result.Status);
         Assert.Equal(1, store.RegisterCalls);
@@ -61,14 +57,12 @@ public sealed class VehicleAccessServiceTests
         var store = new FakeVehicleAccessStore();
         var service = new VehicleAccessService(store, new FixedTimeProvider(FixedNow));
 
-        var result = await service.RegisterEntryAsync(
-            new RegisterVehicleEntryCommand(
+        var result = await service.RegisterEntryAsync(new RegisterVehicleEntryCommand(
                 "Condutor",
                 "ABC1D23",
                 "Evento",
                 AccessCategoryNames.Event,
-                EventAuthorizationId: 0),
-            actorUserId: 7);
+                EventAuthorizationId: 0), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(RegisterVehicleEntryStatus.Invalid, result.Status);
         Assert.Contains("eventAuthorizationId", result.Errors.Keys);
@@ -81,14 +75,12 @@ public sealed class VehicleAccessServiceTests
         var store = new FakeVehicleAccessStore();
         var service = new VehicleAccessService(store, new FixedTimeProvider(FixedNow));
 
-        var result = await service.RegisterEntryAsync(
-            new RegisterVehicleEntryCommand(
+        var result = await service.RegisterEntryAsync(new RegisterVehicleEntryCommand(
                 "Condutor",
                 "ABC1D23",
                 "Visita",
                 AccessCategoryNames.Visitor,
-                VehicleId: 5),
-            actorUserId: 7);
+                VehicleId: 5), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(RegisterVehicleEntryStatus.Invalid, result.Status);
         Assert.Contains("candidate", result.Errors.Keys);
@@ -101,8 +93,7 @@ public sealed class VehicleAccessServiceTests
         var store = new FakeVehicleAccessStore();
         var service = new VehicleAccessService(store, new FixedTimeProvider(FixedNow));
 
-        var result = await service.SearchEntryCandidatesAsync(
-            new SearchAccessEntryCandidatesCommand("  abc-1  "));
+        var result = await service.SearchEntryCandidatesAsync(new SearchAccessEntryCandidatesCommand("  abc-1  "), TestContext.Current.CancellationToken);
 
         Assert.Equal(SearchAccessEntryCandidatesStatus.Success, result.Status);
         Assert.NotNull(store.LastCandidateSearchCriteria);
@@ -121,8 +112,7 @@ public sealed class VehicleAccessServiceTests
         var store = new FakeVehicleAccessStore();
         var service = new VehicleAccessService(store, new FixedTimeProvider(FixedNow));
 
-        var result = await service.SearchEntryCandidatesAsync(
-            new SearchAccessEntryCandidatesCommand(query));
+        var result = await service.SearchEntryCandidatesAsync(new SearchAccessEntryCandidatesCommand(query), TestContext.Current.CancellationToken);
 
         Assert.Equal(SearchAccessEntryCandidatesStatus.Invalid, result.Status);
         Assert.Contains("query", result.Errors.Keys);
@@ -139,7 +129,7 @@ public sealed class VehicleAccessServiceTests
             Plate: "abc-1d23",
             DriverName: "  Condutor  ",
             CategoryName: "visitante",
-            Status: "encerrado"));
+            Status: "encerrado"), TestContext.Current.CancellationToken);
 
         Assert.Equal(SearchVehicleAccessesStatus.Success, result.Status);
         Assert.NotNull(store.LastSearchCriteria);
@@ -168,7 +158,7 @@ public sealed class VehicleAccessServiceTests
             From: FixedNow,
             To: FixedNow.AddDays(-1),
             Page: 0,
-            PageSize: 101));
+            PageSize: 101), TestContext.Current.CancellationToken);
 
         Assert.Equal(SearchVehicleAccessesStatus.Invalid, result.Status);
         Assert.Null(store.LastSearchCriteria);
@@ -189,7 +179,7 @@ public sealed class VehicleAccessServiceTests
 
         var result = await service.SearchHistoryAsync(new(
             From: FixedNow.AddDays(-367),
-            To: FixedNow));
+            To: FixedNow), TestContext.Current.CancellationToken);
 
         Assert.Equal(SearchVehicleAccessesStatus.Invalid, result.Status);
         Assert.Contains("period", result.Errors.Keys);
@@ -202,14 +192,11 @@ public sealed class VehicleAccessServiceTests
         var store = new FakeVehicleAccessStore();
         var service = new VehicleAccessService(store, new FixedTimeProvider(FixedNow));
 
-        var result = await service.CorrectAsync(
-            accessRecordId: 1,
-            new CorrectVehicleAccessCommand(
+        var result = await service.CorrectAsync(accessRecordId: 1, new CorrectVehicleAccessCommand(
                 "",
                 "Desconhecida",
                 new string('x', 1001),
-                "curta"),
-            actorUserId: 7);
+                "curta"), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(CorrectVehicleAccessStatus.Invalid, result.Status);
         Assert.Equal(0, store.CorrectionCalls);
@@ -225,14 +212,11 @@ public sealed class VehicleAccessServiceTests
         var store = new FakeVehicleAccessStore();
         var service = new VehicleAccessService(store, new FixedTimeProvider(FixedNow));
 
-        var result = await service.CorrectAsync(
-            accessRecordId: 5,
-            new CorrectVehicleAccessCommand(
+        var result = await service.CorrectAsync(accessRecordId: 5, new CorrectVehicleAccessCommand(
                 "  Entrega autorizada  ",
                 " entrega ",
                 "  Conferido  ",
-                "  Correção conferida pelo vigilante.  "),
-            actorUserId: 7);
+                "  Correção conferida pelo vigilante.  "), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(CorrectVehicleAccessStatus.Success, result.Status);
         Assert.Equal(1, store.CorrectionCalls);
@@ -252,13 +236,10 @@ public sealed class VehicleAccessServiceTests
         var store = new FakeVehicleAccessStore();
         var service = new VehicleAccessService(store, new FixedTimeProvider(FixedNow));
 
-        var result = await service.CloseExceptionallyAsync(
-            5,
-            new ExceptionallyCloseVehicleAccessCommand(
+        var result = await service.CloseExceptionallyAsync(5, new ExceptionallyCloseVehicleAccessCommand(
                 "MotivoInexistente",
                 "curta",
-                FixedNow.AddMinutes(1)),
-            actorUserId: 7);
+                FixedNow.AddMinutes(1)), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(CloseVehicleAccessStatus.Invalid, result.Status);
         Assert.Equal(0, store.ExceptionalClosureCalls);
@@ -274,13 +255,10 @@ public sealed class VehicleAccessServiceTests
         var service = new VehicleAccessService(store, new FixedTimeProvider(FixedNow));
         var observedAt = FixedNow.AddMinutes(-15);
 
-        await service.CloseExceptionallyAsync(
-            5,
-            new ExceptionallyCloseVehicleAccessCommand(
+        await service.CloseExceptionallyAsync(5, new ExceptionallyCloseVehicleAccessCommand(
                 " registrodesaidaomitido ",
                 "  Saída confirmada pelo responsável operacional.  ",
-                observedAt),
-            actorUserId: 7);
+                observedAt), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(1, store.ExceptionalClosureCalls);
         Assert.Equal(5, store.LastExceptionallyClosedAccessRecordId);

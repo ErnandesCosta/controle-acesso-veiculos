@@ -15,9 +15,7 @@ public sealed class InstitutionalDriverServiceTests
             store,
             new FixedTimeProvider(FixedNow));
 
-        var result = await service.AuthorizeAsync(
-            new AuthorizeInstitutionalDriverCommand("", "CPF", null),
-            actorUserId: 7);
+        var result = await service.AuthorizeAsync(new AuthorizeInstitutionalDriverCommand("", "CPF", null), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(AuthorizeInstitutionalDriverStatus.Invalid, result.Status);
         Assert.Contains("name", result.Errors.Keys);
@@ -33,12 +31,10 @@ public sealed class InstitutionalDriverServiceTests
             store,
             new FixedTimeProvider(FixedNow));
 
-        var result = await service.AuthorizeAsync(
-            new AuthorizeInstitutionalDriverCommand(
+        var result = await service.AuthorizeAsync(new AuthorizeInstitutionalDriverCommand(
                 " Motorista de Teste ",
                 " cpf ",
-                " 12345678900 "),
-            actorUserId: 7);
+                " 12345678900 "), actorUserId: 7, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(AuthorizeInstitutionalDriverStatus.Success, result.Status);
         Assert.NotNull(store.LastDriver);
@@ -57,7 +53,7 @@ public sealed class InstitutionalDriverServiceTests
             store,
             new FixedTimeProvider(FixedNow));
 
-        var result = await service.DeactivateAsync(10, 7);
+        var result = await service.DeactivateAsync(10, 7, TestContext.Current.CancellationToken);
 
         Assert.Equal(DeactivateInstitutionalDriverStatus.Success, result.Status);
         Assert.Equal(10, store.LastDeactivatedDriverId);
