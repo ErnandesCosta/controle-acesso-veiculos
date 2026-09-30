@@ -8,6 +8,33 @@ from its first published release.
 
 ## [Unreleased]
 
+### Added
+
+- A development-only Swagger UI presents the native OpenAPI contract, marks
+  protected operations with Bearer authentication, and remains unavailable in
+  production.
+- Repository governance now includes a public security-reporting policy,
+  contribution guidance, and area-based code-owner routing.
+
+### Changed
+
+- The API authorizes the Transport Sector to perform supervised descriptive
+  access corrections under the same audited server-side rules used by the
+  other authorized profiles; matching frontend exposure remains pending.
+- The backend test suite uses xUnit v3 and propagates cancellation through
+  application, authentication, access, fleet, event, and platform scenarios.
+- Closed Pull Request caches are removed automatically, while signed SBOM and
+  provenance attestations remain in GitHub Artifact Attestations instead of
+  appearing as digest-like GHCR package versions.
+
+### Security
+
+- ASP.NET Core Data Protection keys persist across API container replacement,
+  use a shared application discriminator, and are encrypted with an external
+  X.509 certificate mounted separately from its password.
+- Backend runtime base packages and the frontend transitive `brace-expansion`
+  dependency were refreshed to patched versions.
+
 ## [0.3.0] - 2026-09-29
 
 ### Added
