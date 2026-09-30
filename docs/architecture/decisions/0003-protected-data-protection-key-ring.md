@@ -1,4 +1,4 @@
-# ADR 0002 — Key ring persistente e protegido do ASP.NET Core
+# ADR 0003 — Key ring persistente e protegido do ASP.NET Core
 
 **Status:** Aceita para o MVP técnico; integração com OCI Vault/FSS pendente  
 **Data:** 30 de setembro de 2026  

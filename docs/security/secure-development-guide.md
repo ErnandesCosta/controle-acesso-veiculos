@@ -113,7 +113,7 @@ redefinição administrativa sem inventar e-mail, SMS ou SSO. A decisão
 institucional consolidada na Issue #220 atribui o procedimento a dois
 Administradores funcionais e exige entrega direta da credencial temporária ao
 titular. A observação desse procedimento e a matriz final de perfis permanecem
-na homologação da Issue #162. A Issue #355 e a ADR 0002 definem persistência,
+na homologação da Issue #162. A Issue #355 e a ADR 0003 definem persistência,
 proteção, rotação e recuperação do key ring usado pelo framework.
 
 Referências:

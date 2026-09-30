@@ -10,6 +10,7 @@ Esta pasta contém a fonte versionada dos documentos de segurança do projeto.
 - [Amostra histórica do baseline passivo do ZAP](evidence/zap-baseline-2026-09-16/README.md)
 - [ADR 0001 — ciclo de vida seguro de sessões](../architecture/decisions/0001-secure-session-lifecycle.md)
 - [ADR 0002 — retenção de dados e backup protegido na OCI](../architecture/decisions/0002-data-retention-and-oci-backup.md)
+- [ADR 0003 — key ring persistente e protegido](../architecture/decisions/0003-protected-data-protection-key-ring.md)
 
 A Wiki apresenta cópias de leitura e contexto acadêmico, mas mudanças nestes
 documentos devem passar por Issue, branch, revisão e Pull Request.
