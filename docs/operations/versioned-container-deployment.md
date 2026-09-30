@@ -26,17 +26,17 @@ Os manifests verificados são, respectivamente,
 `sha256:5c620d3c6609144c8cc0f53c1505dd3c2414d206aa29d69f96b6ab64b24d31b0`
 e `sha256:cd9ed896b47327a6ca71f191284e71988411ffc608b3d1e634d1a9df01b8ddc1`.
 
-A interface do GHCR também apresenta objetos internos com nomes derivados de
-SHA-256. Eles suportam armazenamento e atestações OCI, mas não são o nome da
-release. Para fixar conteúdo por digest, use
-`imagem@sha256:<digest>`; para implantar a release revisada, use `imagem:0.3.0`.
-Nunca mova uma versão publicada para outro digest: mudanças posteriores exigem
-uma nova release.
+O GHCR armazena as imagens da aplicação, enquanto proveniência e SBOM assinados
+permanecem no serviço GitHub Artifact Attestations. Para fixar conteúdo por
+digest, use `imagem@sha256:<digest>`; para implantar a release revisada, use
+`imagem:0.3.0`. Nunca mova uma versão publicada para outro digest: mudanças
+posteriores exigem uma nova release conforme Semantic Versioning.
 
 Os packages principais são canais de release. Pushes comuns na `main` executam
 as validações, mas não publicam uma nova versão. Em uma tag Git revisada, a CI
-publica as variantes, o manifesto por commit e as atestações antes de aplicar a
-tag `MAJOR.MINOR.PATCH` ao mesmo digest. Não são criadas tags `latest` ou `main`.
+publica as variantes e o manifesto por commit, registra as atestações no GitHub
+e então aplica a tag `MAJOR.MINOR.PATCH` ao mesmo digest. Não são criadas tags
+`latest` ou `main`, nem versões OCI auxiliares para as atestações.
 
 ## Pré-requisitos
 

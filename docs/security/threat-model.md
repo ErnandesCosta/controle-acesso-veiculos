@@ -138,7 +138,7 @@ flowchart LR
 | B3        | API para PostgreSQL                       | Implementado localmente                                                                                                                                                                                                                       |
 | B4        | Aplicação para logs e auditoria           | Logging HTTP estruturado e correlacionado; auditoria transacional implementada na autenticação, ciclo de contas, fluxos geral, correção descritiva, institucional e catálogos, incluindo eventos; consulta da trilha restrita a Administrador |
 | B5        | Banco para backup                         | Dump e restauração isolada implementados localmente; OCI Object Storage privado, Vault, instance principal e retenção imutável decididos, mas ainda não provisionados — #311                                                                  |
-| B6        | Repositório para runner e registry        | CI valida Pull Requests sem publicação, executa smoke test integrado descartável e, na `main`, reconstrói, analisa, publica no GHCR e atesta proveniência e SBOM por digest com permissão mínima                                              |
+| B6        | Repositório para runner e registry        | CI valida Pull Requests e `main` sem publicação; uma tag de release revisada reconstrói, analisa e publica imagens no GHCR e registra proveniência e SBOM por digest no GitHub Artifact Attestations com permissão mínima                     |
 | B7        | Registry para infraestrutura OCI          | Não implementado                                                                                                                                                                                                                              |
 | B8        | API para collector OTLP                   | Exportação opt-in implementada; endpoint e infraestrutura externa pendentes                                                                                                                                                                   |
 
@@ -239,8 +239,8 @@ frontend melhora usabilidade, mas não é controle de segurança suficiente.
   SHA-256 e validado por restauração completa em banco temporário isolado; o
   checksum não substitui autenticidade nem proteção do armazenamento;
 - branch protegida, Pull Requests e CI;
-- variantes `linux/amd64` e `linux/arm64` de backend e frontend reconstruídas e analisadas antes da publicação no GHCR após integração na `main`, com bloqueio de todo achado crítico, tag por commit e arquitetura, credencial efêmera de privilégio mínimo e manifesto validado;
-- proveniência assinada associada ao digest do manifesto multi-plataforma e SBOM SPDX 2.3 gerado pelo Trivy, validado por arquitetura e atestado para o mesmo nome e digest publicado;
+- variantes `linux/amd64` e `linux/arm64` de backend e frontend reconstruídas e analisadas antes da publicação no GHCR por uma tag de release revisada, com bloqueio de todo achado crítico, tag por commit e arquitetura, credencial efêmera de privilégio mínimo e manifesto validado;
+- proveniência assinada associada ao digest do manifesto multi-plataforma e SBOM SPDX 2.3 gerado pelo Trivy, validado por arquitetura e registrado no GitHub Artifact Attestations para o mesmo nome e digest publicado, sem cópia OCI no GHCR;
 - stack de PostgreSQL, API e frontend iniciada com credenciais, portas e volume descartáveis na CI, com readiness obrigatório antes da publicação;
 - baseline DAST passiva com OWASP ZAP executada somente contra a stack descartável, com imagem fixada por digest, política explícita de alertas e relatórios preservados;
 - testes unitários e integração PostgreSQL no PR #28;
