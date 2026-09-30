@@ -50,7 +50,7 @@ O servidor possui renovação, rotação, revogação e logout, mas não mantém
 
 O procedimento de armazenamento, rotação, resposta a comprometimento, backup e
 restauração do key ring está registrado na
-[ADR 0002](../architecture/decisions/0002-protected-data-protection-key-ring.md).
+[ADR 0003](../architecture/decisions/0003-protected-data-protection-key-ring.md).
 
 ## Integração do frontend
 
