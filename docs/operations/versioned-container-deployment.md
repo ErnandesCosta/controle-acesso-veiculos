@@ -76,12 +76,27 @@ Defina no arquivo local:
 - credenciais próprias do PostgreSQL; prefira senha aleatória hexadecimal ou
   base64url, sem delimitadores de connection string;
 - uma chave JWT aleatória com pelo menos 32 bytes;
+- certificado PFX de Data Protection fornecido pelo secret manager, sua senha e o
+  nome de um volume externo compartilhado pelas réplicas;
 - endereço e porta de loopback que o proxy HTTPS acessará.
 
 O `.env.production` é ignorado pelo Git. Ele ainda é apenas uma alternativa de
 implantação simples: no ambiente definitivo, prefira um secret manager ou
 Docker Secrets, restrinja a leitura ao operador e nunca envie seu conteúdo por
 issue, Pull Request, chat ou log.
+
+Crie o volume externo antes da primeira implantação. Em um host único ele pode
+ser um volume Docker; em topologia distribuída deve apontar para armazenamento
+durável compartilhado, como um mount privado do OCI File Storage:
+
+```bash
+docker volume create controle-acesso-veiculos-data-protection
+```
+
+O caminho informado em `DATA_PROTECTION_CERTIFICATE_FILE` deve existir no host,
+ser legível somente pelo operador autorizado e conter um PFX com chave privada.
+O Compose o monta como secret somente leitura. Não coloque PFX, senha ou XML do
+key ring junto das imagens, do repositório ou dos artefatos de CI.
 
 Se os packages forem privados, autentique o Docker com uma credencial pessoal
 de escopo mínimo `read:packages`. Não armazene o token em arquivo do projeto:
@@ -141,6 +156,15 @@ docker compose \
 
 O resultado esperado é PostgreSQL, backend e frontend saudáveis. A validação
 funcional deve usar o domínio HTTPS, não a porta HTTP de loopback.
+
+Depois de substituir o backend, obtenha um token antifalsificação, substitua a
+instância e valide o mesmo par em uma operação protegida. HTTP 400 nesse ensaio
+indica `ApplicationName`, volume ou certificado divergente entre réplicas.
+
+Inclua o key ring no plano de backup, mas mantenha o PFX e sua senha no cofre de
+segredos. Restaure os dois componentes por canais separados e teste em ambiente
+isolado. Em caso de comprometimento da chave privada, substitua certificado e key
+ring de forma controlada e encerre as sessões de maneira conservadora.
 
 ## Atualização e rollback
 
