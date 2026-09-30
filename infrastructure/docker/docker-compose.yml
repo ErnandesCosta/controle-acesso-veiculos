@@ -30,6 +30,11 @@ services:
       # O Compose local usa senha, não Kerberos. Em produção, configure TLS ou GSSAPI explicitamente.
       ConnectionStrings__DefaultConnection: "Host=postgresql;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};GSS Encryption Mode=Disable"
       Authentication__Jwt__SigningKey: ${JWT_SIGNING_KEY:?Defina JWT_SIGNING_KEY no arquivo .env}
+      DataProtection__Enabled: "true"
+      DataProtection__ApplicationName: controle-acesso-veiculos
+      DataProtection__KeyRingPath: /var/lib/controle-acesso-veiculos/data-protection
+      DataProtection__CertificatePath: /run/secrets/data-protection-certificate.pfx
+      DataProtection__CertificatePasswordFile: /run/secrets/data-protection-certificate-password
       Observability__Enabled: ${OTEL_ENABLED:-false}
       Observability__ServiceName: ${OTEL_SERVICE_NAME:-controle-acesso-veiculos-api}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
@@ -40,6 +45,13 @@ services:
     read_only: true
     tmpfs:
       - /tmp
+    volumes:
+      - data-protection-keys:/var/lib/controle-acesso-veiculos/data-protection
+    secrets:
+      - source: data-protection-certificate
+        target: data-protection-certificate.pfx
+      - source: data-protection-certificate-password
+        target: data-protection-certificate-password
     cap_drop:
       - ALL
     security_opt:
@@ -74,3 +86,10 @@ networks:
 
 volumes:
   postgres-data:
+  data-protection-keys:
+
+secrets:
+  data-protection-certificate:
+    file: ${DATA_PROTECTION_CERTIFICATE_FILE:-./secrets/data-protection.pfx}
+  data-protection-certificate-password:
+    file: ${DATA_PROTECTION_CERTIFICATE_PASSWORD_FILE:-./secrets/data-protection-password.txt}

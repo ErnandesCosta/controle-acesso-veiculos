@@ -165,10 +165,36 @@ jobs:
         run: |
           postgres_password="$(openssl rand -hex 24)"
           jwt_signing_key="$(openssl rand -base64 48 | tr -d '\n')"
+          data_protection_password="$(openssl rand -base64 48 | tr -d '\n')"
           echo "::add-mask::${postgres_password}"
           echo "::add-mask::${jwt_signing_key}"
+          echo "::add-mask::${data_protection_password}"
+          mkdir -p infrastructure/docker/secrets
+          openssl req -x509 -newkey rsa:3072 -sha256 -nodes \
+            -subj '/CN=controle-acesso-veiculos-ci' \
+            -keyout "${RUNNER_TEMP}/data-protection.key" \
+            -out "${RUNNER_TEMP}/data-protection.crt" \
+            -days 1
+          openssl pkcs12 -export \
+            -inkey "${RUNNER_TEMP}/data-protection.key" \
+            -in "${RUNNER_TEMP}/data-protection.crt" \
+            -out infrastructure/docker/secrets/data-protection.pfx \
+            -passout "pass:${data_protection_password}"
+          printf '%s' "${data_protection_password}" \
+            > infrastructure/docker/secrets/data-protection-password.txt
+          chmod 0444 \
+            infrastructure/docker/secrets/data-protection.pfx \
+            infrastructure/docker/secrets/data-protection-password.txt
           echo "POSTGRES_PASSWORD=${postgres_password}" >> "${GITHUB_ENV}"
           echo "JWT_SIGNING_KEY=${jwt_signing_key}" >> "${GITHUB_ENV}"
+          echo "DATA_PROTECTION_CERTIFICATE_FILE=./secrets/data-protection.pfx" >> "${GITHUB_ENV}"
+          echo "DATA_PROTECTION_CERTIFICATE_PASSWORD_FILE=./secrets/data-protection-password.txt" >> "${GITHUB_ENV}"
+          echo "DATA_PROTECTION_KEY_RING_VOLUME=cav-smoke-data-protection-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "${GITHUB_ENV}"
+
+      - name: Create external production key-ring volume
+        run: >-
+          docker volume create
+          "cav-smoke-data-protection-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
 
       - name: Validate Compose configuration
         working-directory: infrastructure/docker
@@ -245,6 +271,47 @@ jobs:
             --retry-delay 2 \
             "http://127.0.0.1:${frontend_port}/api/health/ready" \
             | jq --exit-status '.status == "Healthy"'
+
+      - name: Verify Data Protection survives backend replacement
+        working-directory: infrastructure/docker
+        shell: bash
+        run: |
+          api_port="$(docker compose port backend 8080 | sed 's/.*://')"
+          cookie_jar="${RUNNER_TEMP}/data-protection-cookies.txt"
+          csrf_response="$(curl \
+            --fail \
+            --silent \
+            --show-error \
+            --retry 10 \
+            --retry-all-errors \
+            --retry-delay 1 \
+            --cookie-jar "${cookie_jar}" \
+            "http://127.0.0.1:${api_port}/auth/csrf")"
+          csrf_token="$(jq --raw-output '.requestToken' <<< "${csrf_response}")"
+
+          docker compose up --detach --wait --force-recreate backend
+          api_port="$(docker compose port backend 8080 | sed 's/.*://')"
+
+          status="$(curl \
+            --silent \
+            --show-error \
+            --retry 10 \
+            --retry-all-errors \
+            --retry-delay 1 \
+            --output /dev/null \
+            --write-out '%{http_code}' \
+            --cookie "${cookie_jar}" \
+            --header "X-CSRF-TOKEN: ${csrf_token}" \
+            --request POST \
+            "http://127.0.0.1:${api_port}/auth/refresh")"
+
+          if [[ "${status}" != "401" ]]; then
+            echo "Expected a valid antiforgery token followed by an unauthenticated refresh (401), received ${status}." >&2
+            exit 1
+          fi
+
+          docker compose exec -T backend sh -ec \
+            'grep -R --quiet EncryptedData /var/lib/controle-acesso-veiculos/data-protection/key-*.xml'
 
       - name: Verify frontend security headers
         working-directory: infrastructure/docker
@@ -367,7 +434,12 @@ jobs:
       - name: Remove disposable stack
         if: always()
         working-directory: infrastructure/docker
-        run: docker compose down --volumes --remove-orphans --timeout 10
+        shell: bash
+        run: |
+          docker compose down --volumes --remove-orphans --timeout 10
+          docker volume rm \
+            "cav-smoke-data-protection-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            2>/dev/null || true
 
   validate-release-tag:
     name: Validate semantic release tag

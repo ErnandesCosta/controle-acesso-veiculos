@@ -102,10 +102,13 @@ PowerShell:
 ```powershell
 Set-Location infrastructure/docker
 Copy-Item .env.example .env
+./New-DataProtectionCertificate.ps1
 ```
 
 O `.env` é ignorado pelo Git. Os valores do exemplo são fictícios e exclusivos
-para loopback; altere as senhas antes de compartilhar o ambiente.
+para loopback; altere as senhas antes de compartilhar o ambiente. O gerador
+grava o PFX e sua senha como dois arquivos em `secrets/`, diretório ignorado
+pelo Git. Não envie nenhum deles por chat, issue ou commit.
 
 ### 3. Construir e iniciar
 

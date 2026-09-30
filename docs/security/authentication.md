@@ -27,6 +27,10 @@ A fundação técnica da Issue #29 implementa login individual, provisionamento 
 - A auditoria da troca registra somente as versões anterior e nova da credencial. Senha atual, senha nova, hashes, e-mail, JWT e refresh token não são copiados.
 - A migration atribui versão `1` às contas existentes. JWTs emitidos por versões anteriores da API não possuem essa claim e são rejeitados após o deploy, exigindo novo login; essa invalidação conservadora é intencional.
 - Renovação e logout exigem o par de tokens antifalsificação emitido por `GET /auth/csrf`; ausência ou inconsistência retorna HTTP 400 antes de acessar a sessão.
+- O ASP.NET Core Data Protection usa um key ring durável compartilhado entre
+  réplicas e protegido por certificado X.509 externo ao repositório. Produção e
+  containers locais falham ao iniciar se volume, certificado ou senha não forem
+  configurados, evitando fallback silencioso para chaves efêmeras.
 - O token contém apenas identificador do usuário, e-mail, perfil e identificador único do token.
 - A política global exige autenticação. Login, health checks e OpenAPI em desenvolvimento são exceções explícitas.
 - OpenAPI não é publicado fora do ambiente `Development`.
@@ -43,6 +47,10 @@ A fundação técnica da Issue #29 implementa login individual, provisionamento 
 - Criação administrativa registra o Administrador como ator; o bootstrap registra origem `Bootstrap` com ator nulo, pois ainda não existe usuário autenticado.
 
 O servidor possui renovação, rotação, revogação e logout, mas não mantém uma lista de JWTs: o access token continua curto e a API confirma conta, perfil e versão da credencial em cada requisição. A família persistida controla a renovação, enquanto a versão invalida em conjunto os JWTs anteriores após troca de senha. Não armazenar JWT ou refresh token em `localStorage`, `sessionStorage`, logs ou mensagens de erro. A identidade retornada ajuda a montar a interface, mas o frontend não decide autorização: cada operação continua sendo validada pelas políticas da API. A auditoria de autenticação não guarda e-mail, senha, JWT, refresh token, hash, cookie, IP ou tentativas para usuário inexistente. Se a persistência obrigatória de sessão e auditoria de um login válido falhar, a API não emite credencial.
+
+O procedimento de armazenamento, rotação, resposta a comprometimento, backup e
+restauração do key ring está registrado na
+[ADR 0002](../architecture/decisions/0002-protected-data-protection-key-ring.md).
 
 ## Integração do frontend
 

@@ -89,6 +89,9 @@ Referência:
 - persistir somente hash do refresh token e rotacioná-lo de forma atômica;
 - impor inatividade e duração absoluta no servidor, sem sessão indefinida;
 - proteger toda operação autenticada por cookie contra CSRF;
+- persistir o key ring do ASP.NET Core em armazenamento durável compartilhado,
+  proteger suas chaves em repouso com certificado externo e manter o mesmo
+  `ApplicationName` entre réplicas;
 - revogar a família no logout, na desativação e na detecção de reutilização;
 - exigir a credencial atual na troca autenticada, revogar todas as sessões e
   invalidar access tokens anteriores por uma versão de credencial verificada no servidor;
@@ -110,7 +113,8 @@ redefinição administrativa sem inventar e-mail, SMS ou SSO. A decisão
 institucional consolidada na Issue #220 atribui o procedimento a dois
 Administradores funcionais e exige entrega direta da credencial temporária ao
 titular. A observação desse procedimento e a matriz final de perfis permanecem
-na homologação da Issue #162.
+na homologação da Issue #162. A Issue #355 e a ADR 0002 definem persistência,
+proteção, rotação e recuperação do key ring usado pelo framework.
 
 Referências:
 
