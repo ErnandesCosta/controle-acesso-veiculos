@@ -76,6 +76,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           load: true
           push: false
+          pull: true
           tags: controle-acesso-veiculos/${{ matrix.image }}:${{ github.sha }}-${{ matrix.architecture }}
           cache-from: type=gha,scope=${{ matrix.image }}-${{ matrix.architecture }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}-${{ matrix.architecture }}
@@ -448,6 +449,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           load: true
           push: false
+          pull: true
           tags: ${{ env.IMAGE_NAME }}:sha-${{ github.sha }}-${{ matrix.architecture }}
           cache-from: type=gha,scope=${{ matrix.image }}-${{ matrix.architecture }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}-${{ matrix.architecture }}
