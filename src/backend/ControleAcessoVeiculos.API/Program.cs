@@ -189,6 +189,7 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy(AuthorizationPolicies.CorrectAccessRecords, policy => policy.RequireRole(
         ProfileNames.Doorman,
         ProfileNames.SecurityGuard,
+        ProfileNames.TransportationDepartment,
         ProfileNames.Administrator))
     .AddPolicy(AuthorizationPolicies.ExceptionallyCloseAccessRecords,
         policy => policy.RequireRole(

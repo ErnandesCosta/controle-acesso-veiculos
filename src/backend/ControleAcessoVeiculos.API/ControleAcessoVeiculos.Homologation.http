@@ -159,10 +159,10 @@ Content-Type: application/json
 POST {{BaseUrl}}/access-records/{{GeneralAccessId}}/exit
 Authorization: Bearer {{DoormanToken}}
 
-### 15. Correção descritiva pelo Vigilante — esperado: 200
+### 15. Correção descritiva supervisionada pelo Transporte — esperado: 200
 
 PUT {{BaseUrl}}/access-records/{{GeneralAccessId}}/correction
-Authorization: Bearer {{SecurityGuardToken}}
+Authorization: Bearer {{TransportationToken}}
 Content-Type: application/json
 
 {
