@@ -29,8 +29,8 @@ public sealed class AuthenticationTests(ApiFactory factory)
         {
             email = $"  {email.ToUpperInvariant()}  ",
             password
-        });
-        var responseContent = await login.Content.ReadAsStringAsync();
+        }, cancellationToken: TestContext.Current.CancellationToken);
+        var responseContent = await login.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         var body = JsonSerializer.Deserialize<LoginResponse>(
             responseContent,
             JsonSerializerOptions.Web);
@@ -70,7 +70,7 @@ public sealed class AuthenticationTests(ApiFactory factory)
                 .GetRequiredService<ControleAcessoVeiculosDbContext>();
             var session = await dbContext.SessoesAutenticacao
                 .AsNoTracking()
-                .SingleAsync(item => item.UsuarioId == userId);
+                .SingleAsync(item => item.UsuarioId == userId, cancellationToken: TestContext.Current.CancellationToken);
             var rawRefreshToken = refreshCookie
                 .Split(';', 2)[0]
                 .Split('=', 2)[1];
@@ -103,7 +103,7 @@ public sealed class AuthenticationTests(ApiFactory factory)
 
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", body.AccessToken);
-        var protectedResponse = await client.GetAsync("/access-records/open");
+        var protectedResponse = await client.GetAsync("/access-records/open", TestContext.Current.CancellationToken);
 
         protectedResponse.EnsureSuccessStatusCode();
     }
@@ -118,8 +118,8 @@ public sealed class AuthenticationTests(ApiFactory factory)
         {
             email = $"missing-{Guid.NewGuid():N}@example.test",
             password = "Wrong-password-123!"
-        });
-        var body = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+        }, cancellationToken: TestContext.Current.CancellationToken);
+        var body = await response.Content.ReadFromJsonAsync<ErrorResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.Equal("Credenciais inválidas.", body?.Message);
@@ -137,7 +137,7 @@ public sealed class AuthenticationTests(ApiFactory factory)
         var outdatedHash = await GetPasswordHashAsync(email);
         using var client = factory.CreateClient();
 
-        var response = await client.PostAsJsonAsync("/auth/login", new { email, password });
+        var response = await client.PostAsJsonAsync("/auth/login", new { email, password }, cancellationToken: TestContext.Current.CancellationToken);
 
         response.EnsureSuccessStatusCode();
         var upgradedHash = await GetPasswordHashAsync(email);
@@ -158,7 +158,7 @@ public sealed class AuthenticationTests(ApiFactory factory)
         var currentHash = await GetPasswordHashAsync(email);
         using var client = factory.CreateClient();
 
-        var response = await client.PostAsJsonAsync("/auth/login", new { email, password });
+        var response = await client.PostAsJsonAsync("/auth/login", new { email, password }, cancellationToken: TestContext.Current.CancellationToken);
 
         response.EnsureSuccessStatusCode();
         Assert.Equal(currentHash, await GetPasswordHashAsync(email));
@@ -179,7 +179,7 @@ public sealed class AuthenticationTests(ApiFactory factory)
         await InstallRejectingAuthenticationAuditTriggerAsync();
         try
         {
-            var response = await client.PostAsJsonAsync("/auth/login", new { email, password });
+            var response = await client.PostAsJsonAsync("/auth/login", new { email, password }, cancellationToken: TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         }
@@ -192,7 +192,7 @@ public sealed class AuthenticationTests(ApiFactory factory)
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ControleAcessoVeiculosDbContext>();
         Assert.Equal(0, await dbContext.SessoesAutenticacao.CountAsync(item =>
-            item.UsuarioId == userId));
+            item.UsuarioId == userId, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -208,7 +208,7 @@ public sealed class AuthenticationTests(ApiFactory factory)
             {
                 email,
                 password = "Wrong-password-123!"
-            });
+            }, cancellationToken: TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Unauthorized, invalidResponse.StatusCode);
         }
 
@@ -216,7 +216,7 @@ public sealed class AuthenticationTests(ApiFactory factory)
         {
             email,
             password
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, blockedResponse.StatusCode);
 
@@ -240,7 +240,7 @@ public sealed class AuthenticationTests(ApiFactory factory)
         {
             email,
             password = "Wrong-password-123!"
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Unauthorized, failedAttempt.StatusCode);
 
         await InstallRejectingAuthenticationAuditTriggerAsync();
@@ -250,7 +250,7 @@ public sealed class AuthenticationTests(ApiFactory factory)
             {
                 email,
                 password
-            });
+            }, cancellationToken: TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         }
@@ -261,14 +261,14 @@ public sealed class AuthenticationTests(ApiFactory factory)
 
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ControleAcessoVeiculosDbContext>();
-        var user = await dbContext.Usuarios.AsNoTracking().SingleAsync(item => item.Email == email);
+        var user = await dbContext.Usuarios.AsNoTracking().SingleAsync(item => item.Email == email, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(1, user.TentativasFalhas);
         Assert.Equal(0, await dbContext.Auditorias.CountAsync(item =>
             item.Entidade == nameof(Usuario) &&
             item.RegistroId == user.Id &&
-            item.TipoAcao == TipoAcaoAuditoria.Login));
+            item.TipoAcao == TipoAcaoAuditoria.Login, cancellationToken: TestContext.Current.CancellationToken));
         Assert.Equal(0, await dbContext.SessoesAutenticacao.CountAsync(item =>
-            item.UsuarioId == user.Id));
+            item.UsuarioId == user.Id, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -278,7 +278,7 @@ public sealed class AuthenticationTests(ApiFactory factory)
         var email = await CreateUserAsync(ProfileNames.Administrator, password, active: false);
         using var client = factory.CreateClient();
 
-        var response = await client.PostAsJsonAsync("/auth/login", new { email, password });
+        var response = await client.PostAsJsonAsync("/auth/login", new { email, password }, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -289,13 +289,13 @@ public sealed class AuthenticationTests(ApiFactory factory)
         const string password = "Test-only-password-123!";
         var email = await CreateUserAsync(ProfileNames.TransportationDepartment, password);
         using var client = factory.CreateClient();
-        var login = await client.PostAsJsonAsync("/auth/login", new { email, password });
-        var body = await login.Content.ReadFromJsonAsync<LoginResponse>();
+        var login = await client.PostAsJsonAsync("/auth/login", new { email, password }, cancellationToken: TestContext.Current.CancellationToken);
+        var body = await login.Content.ReadFromJsonAsync<LoginResponse>(cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(body);
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", body.AccessToken);
 
-        var response = await client.GetAsync("/access-records/open");
+        var response = await client.GetAsync("/access-records/open", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -315,8 +315,8 @@ public sealed class AuthenticationTests(ApiFactory factory)
             name = $"Pessoa Criada {suffix}",
             email = newUserEmail,
             profileName = ProfileNames.Doorman
-        });
-        var created = await response.Content.ReadFromJsonAsync<CreateUserResponse>();
+        }, cancellationToken: TestContext.Current.CancellationToken);
+        var created = await response.Content.ReadFromJsonAsync<CreateUserResponse>(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.NotNull(created);
@@ -329,7 +329,7 @@ public sealed class AuthenticationTests(ApiFactory factory)
         {
             email = newUserEmail,
             password = created.TemporaryCredential
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
         login.EnsureSuccessStatusCode();
 
         using var scope = factory.Services.CreateScope();
@@ -337,7 +337,7 @@ public sealed class AuthenticationTests(ApiFactory factory)
         var audit = await dbContext.Auditorias.AsNoTracking().SingleAsync(item =>
             item.Entidade == nameof(Usuario) &&
             item.RegistroId == created.Id &&
-            item.TipoAcao == TipoAcaoAuditoria.Inclusao);
+            item.TipoAcao == TipoAcaoAuditoria.Inclusao, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(await GetUserIdAsync(adminEmail), audit.UsuarioId);
         var auditContent = string.Join(' ', audit.DadosAnteriores, audit.DadosNovos, audit.Detalhes);
         Assert.DoesNotContain(newUserEmail, auditContent, StringComparison.OrdinalIgnoreCase);
@@ -366,7 +366,7 @@ public sealed class AuthenticationTests(ApiFactory factory)
                 name = $"Pessoa Rollback {suffix}",
                 email = newUserEmail,
                 profileName = ProfileNames.Doorman
-            });
+            }, cancellationToken: TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         }
@@ -377,8 +377,8 @@ public sealed class AuthenticationTests(ApiFactory factory)
 
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ControleAcessoVeiculosDbContext>();
-        Assert.False(await dbContext.Usuarios.AnyAsync(item => item.Email == newUserEmail));
-        Assert.False(await dbContext.Pessoas.AnyAsync(item => item.Email == newUserEmail));
+        Assert.False(await dbContext.Usuarios.AnyAsync(item => item.Email == newUserEmail, cancellationToken: TestContext.Current.CancellationToken));
+        Assert.False(await dbContext.Pessoas.AnyAsync(item => item.Email == newUserEmail, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -395,7 +395,7 @@ public sealed class AuthenticationTests(ApiFactory factory)
             email = $"forbidden-{Guid.NewGuid():N}@example.test",
             password,
             profileName = ProfileNames.Doorman
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }

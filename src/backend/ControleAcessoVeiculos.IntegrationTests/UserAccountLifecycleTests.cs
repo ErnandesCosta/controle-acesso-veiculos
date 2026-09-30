@@ -25,9 +25,8 @@ public sealed class UserAccountLifecycleTests(ApiFactory factory)
         using var client = factory.CreateClient();
         await AuthenticateClientAsync(client, administrator.Email);
 
-        var response = await client.GetAsync(
-            $"/users?search={Uri.EscapeDataString(target.Email.ToUpperInvariant())}&active=true&page=1&pageSize=10");
-        var json = await response.Content.ReadAsStringAsync();
+        var response = await client.GetAsync($"/users?search={Uri.EscapeDataString(target.Email.ToUpperInvariant())}&active=true&page=1&pageSize=10", TestContext.Current.CancellationToken);
+        var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         var result = JsonSerializer.Deserialize<PagedUsersResponse>(json, JsonOptions);
 
         response.EnsureSuccessStatusCode();
@@ -50,7 +49,7 @@ public sealed class UserAccountLifecycleTests(ApiFactory factory)
         using var client = factory.CreateClient();
         await AuthenticateClientAsync(client, user.Email);
 
-        var response = await client.GetAsync("/users");
+        var response = await client.GetAsync("/users", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -65,10 +64,10 @@ public sealed class UserAccountLifecycleTests(ApiFactory factory)
         await AuthenticateClientAsync(administratorClient, administrator.Email);
         await AuthenticateClientAsync(targetClient, target.Email);
 
-        var deactivation = await administratorClient.DeleteAsync($"/users/{target.Id}");
+        var deactivation = await administratorClient.DeleteAsync($"/users/{target.Id}", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NoContent, deactivation.StatusCode);
 
-        var requestWithExistingToken = await targetClient.GetAsync("/access-records/open");
+        var requestWithExistingToken = await targetClient.GetAsync("/access-records/open", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Unauthorized, requestWithExistingToken.StatusCode);
 
         using (var deactivationScope = factory.Services.CreateScope())
@@ -77,7 +76,7 @@ public sealed class UserAccountLifecycleTests(ApiFactory factory)
                 .GetRequiredService<ControleAcessoVeiculosDbContext>();
             var session = await deactivationContext.SessoesAutenticacao
                 .AsNoTracking()
-                .SingleAsync(item => item.UsuarioId == target.Id);
+                .SingleAsync(item => item.UsuarioId == target.Id, cancellationToken: TestContext.Current.CancellationToken);
             Assert.NotNull(session.RevogadaEm);
             Assert.Equal(
                 MotivoRevogacaoSessao.ContaDesativada,
@@ -89,19 +88,17 @@ public sealed class UserAccountLifecycleTests(ApiFactory factory)
         {
             email = target.Email,
             password = Password
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Unauthorized, inactiveLogin.StatusCode);
 
-        var reactivation = await administratorClient.PostAsync(
-            $"/users/{target.Id}/reactivation",
-            content: null);
+        var reactivation = await administratorClient.PostAsync($"/users/{target.Id}/reactivation", content: null, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NoContent, reactivation.StatusCode);
 
         var restoredLogin = await loginClient.PostAsJsonAsync("/auth/login", new
         {
             email = target.Email,
             password = Password
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
         restoredLogin.EnsureSuccessStatusCode();
 
         using var scope = factory.Services.CreateScope();
@@ -113,7 +110,7 @@ public sealed class UserAccountLifecycleTests(ApiFactory factory)
                 item.RegistroId == target.Id &&
                 item.TipoAcao == TipoAcaoAuditoria.Alteracao)
             .OrderBy(item => item.Id)
-            .ToListAsync();
+            .ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(2, audits.Count);
         Assert.All(audits, audit => Assert.Equal(administrator.Id, audit.UsuarioId));
@@ -138,7 +135,7 @@ public sealed class UserAccountLifecycleTests(ApiFactory factory)
         using var client = factory.CreateClient();
         await AuthenticateClientAsync(client, administrator.Email);
 
-        var response = await client.DeleteAsync($"/users/{administrator.Id}");
+        var response = await client.DeleteAsync($"/users/{administrator.Id}", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         Assert.True(await IsUserActiveAsync(administrator.Id));
@@ -158,8 +155,12 @@ public sealed class UserAccountLifecycleTests(ApiFactory factory)
         try
         {
             var responses = await Task.WhenAll(
-                firstClient.DeleteAsync($"/users/{second.Id}"),
-                secondClient.DeleteAsync($"/users/{first.Id}"));
+                firstClient.DeleteAsync(
+                    $"/users/{second.Id}",
+                    TestContext.Current.CancellationToken),
+                secondClient.DeleteAsync(
+                    $"/users/{first.Id}",
+                    TestContext.Current.CancellationToken));
 
             Assert.Equal(1, responses.Count(response =>
                 response.StatusCode == HttpStatusCode.NoContent));
@@ -185,7 +186,7 @@ public sealed class UserAccountLifecycleTests(ApiFactory factory)
         await InstallRejectingAccountAuditTriggerAsync();
         try
         {
-            var response = await client.DeleteAsync($"/users/{target.Id}");
+            var response = await client.DeleteAsync($"/users/{target.Id}", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         }
         finally
@@ -199,7 +200,7 @@ public sealed class UserAccountLifecycleTests(ApiFactory factory)
         Assert.Equal(0, await dbContext.Auditorias.CountAsync(item =>
             item.Entidade == nameof(Usuario) &&
             item.RegistroId == target.Id &&
-            item.TipoAcao == TipoAcaoAuditoria.Alteracao));
+            item.TipoAcao == TipoAcaoAuditoria.Alteracao, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     private async Task<TestUser> CreateUserAsync(string profileName)

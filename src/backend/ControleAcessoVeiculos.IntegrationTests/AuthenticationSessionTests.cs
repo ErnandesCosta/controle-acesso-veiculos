@@ -22,11 +22,11 @@ public sealed class AuthenticationSessionTests(ApiFactory factory)
         using var client = factory.CreateClient();
         var requestedAtUtc = DateTime.UtcNow;
 
-        var login = await client.PostAsJsonAsync("/auth/login", new { email, password });
+        var login = await client.PostAsJsonAsync("/auth/login", new { email, password }, cancellationToken: TestContext.Current.CancellationToken);
 
         login.EnsureSuccessStatusCode();
         var completedAtUtc = DateTime.UtcNow;
-        var body = await login.Content.ReadFromJsonAsync<LoginResponse>();
+        var body = await login.Content.ReadFromJsonAsync<LoginResponse>(cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(body);
         Assert.False(string.IsNullOrWhiteSpace(body.AccessToken));
 
@@ -63,10 +63,10 @@ public sealed class AuthenticationSessionTests(ApiFactory factory)
         var email = await CreateUserAsync(password);
         using var client = factory.CreateClient();
 
-        var login = await client.PostAsJsonAsync("/auth/login", new { email, password });
+        var login = await client.PostAsJsonAsync("/auth/login", new { email, password }, cancellationToken: TestContext.Current.CancellationToken);
         login.EnsureSuccessStatusCode();
 
-        var response = await client.PostAsync("/auth/refresh", content: null);
+        var response = await client.PostAsync("/auth/refresh", content: null, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -82,13 +82,13 @@ public sealed class AuthenticationSessionTests(ApiFactory factory)
             HandleCookies = false
         });
 
-        var csrfResponse = await client.GetAsync("/auth/csrf");
+        var csrfResponse = await client.GetAsync("/auth/csrf", TestContext.Current.CancellationToken);
         csrfResponse.EnsureSuccessStatusCode();
-        var csrf = await csrfResponse.Content.ReadFromJsonAsync<CsrfResponse>();
+        var csrf = await csrfResponse.Content.ReadFromJsonAsync<CsrfResponse>(cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(csrf);
         var csrfCookie = GetCookie(csrfResponse, "cav_csrf");
 
-        var login = await client.PostAsJsonAsync("/auth/login", new { email, password });
+        var login = await client.PostAsJsonAsync("/auth/login", new { email, password }, cancellationToken: TestContext.Current.CancellationToken);
         login.EnsureSuccessStatusCode();
         var firstRefreshToken = GetCookie(login, "cav_refresh");
         var absoluteDeadline = ReadUtcHeader(
@@ -104,7 +104,7 @@ public sealed class AuthenticationSessionTests(ApiFactory factory)
             firstRefreshToken);
         firstRefresh.EnsureSuccessStatusCode();
         var refreshCompletedAtUtc = DateTime.UtcNow;
-        var refreshedLogin = await firstRefresh.Content.ReadFromJsonAsync<LoginResponse>();
+        var refreshedLogin = await firstRefresh.Content.ReadFromJsonAsync<LoginResponse>(cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(refreshedLogin);
         Assert.False(string.IsNullOrWhiteSpace(refreshedLogin.AccessToken));
         Assert.Equal(
@@ -145,14 +145,14 @@ public sealed class AuthenticationSessionTests(ApiFactory factory)
             .AsNoTracking()
             .Where(item => item.UsuarioId == userId)
             .OrderBy(item => item.CriadaEm)
-            .ToListAsync();
+            .ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(2, sessions.Count);
         Assert.All(sessions, session => Assert.NotNull(session.RevogadaEm));
         Assert.Contains(sessions, session =>
             session.MotivoRevogacao == MotivoRevogacaoSessao.ReutilizacaoDetectada);
         Assert.Contains(
-            await dbContext.Auditorias.AsNoTracking().ToListAsync(),
+            await dbContext.Auditorias.AsNoTracking().ToListAsync(cancellationToken: TestContext.Current.CancellationToken),
             audit => audit.RegistroId == userId &&
                 audit.DadosNovos!.Contains(
                     AuthenticationAuditOutcome.TokenReuseDetected.ToString(),
@@ -167,17 +167,17 @@ public sealed class AuthenticationSessionTests(ApiFactory factory)
         var userId = await GetUserIdAsync(email);
         using var client = factory.CreateClient();
 
-        var csrfResponse = await client.GetAsync("/auth/csrf");
+        var csrfResponse = await client.GetAsync("/auth/csrf", TestContext.Current.CancellationToken);
         csrfResponse.EnsureSuccessStatusCode();
-        var csrf = await csrfResponse.Content.ReadFromJsonAsync<CsrfResponse>();
+        var csrf = await csrfResponse.Content.ReadFromJsonAsync<CsrfResponse>(cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(csrf);
 
-        var login = await client.PostAsJsonAsync("/auth/login", new { email, password });
+        var login = await client.PostAsJsonAsync("/auth/login", new { email, password }, cancellationToken: TestContext.Current.CancellationToken);
         login.EnsureSuccessStatusCode();
         using var logoutRequest = new HttpRequestMessage(HttpMethod.Post, "/auth/logout");
         logoutRequest.Headers.Add("X-CSRF-TOKEN", csrf.RequestToken);
 
-        var logout = await client.SendAsync(logoutRequest);
+        var logout = await client.SendAsync(logoutRequest, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.NoContent, logout.StatusCode);
         var deletedCookie = Assert.Single(
@@ -190,12 +190,12 @@ public sealed class AuthenticationSessionTests(ApiFactory factory)
             .GetRequiredService<ControleAcessoVeiculosDbContext>();
         var session = await dbContext.SessoesAutenticacao
             .AsNoTracking()
-            .SingleAsync(item => item.UsuarioId == userId);
+            .SingleAsync(item => item.UsuarioId == userId, cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(session.RevogadaEm);
         Assert.Equal(MotivoRevogacaoSessao.Logout, session.MotivoRevogacao);
 
         var audit = await dbContext.Auditorias.AsNoTracking().SingleAsync(item =>
-            item.RegistroId == userId && item.TipoAcao == TipoAcaoAuditoria.Logout);
+            item.RegistroId == userId && item.TipoAcao == TipoAcaoAuditoria.Logout, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Contains(
             AuthenticationAuditOutcome.LogoutSucceeded.ToString(),
             audit.DadosNovos,
@@ -210,11 +210,11 @@ public sealed class AuthenticationSessionTests(ApiFactory factory)
         var userId = await GetUserIdAsync(email);
         using var client = factory.CreateClient();
 
-        var csrfResponse = await client.GetAsync("/auth/csrf");
+        var csrfResponse = await client.GetAsync("/auth/csrf", TestContext.Current.CancellationToken);
         csrfResponse.EnsureSuccessStatusCode();
-        var csrf = await csrfResponse.Content.ReadFromJsonAsync<CsrfResponse>();
+        var csrf = await csrfResponse.Content.ReadFromJsonAsync<CsrfResponse>(cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(csrf);
-        var login = await client.PostAsJsonAsync("/auth/login", new { email, password });
+        var login = await client.PostAsJsonAsync("/auth/login", new { email, password }, cancellationToken: TestContext.Current.CancellationToken);
         login.EnsureSuccessStatusCode();
 
         using (var scope = factory.Services.CreateScope())
@@ -224,16 +224,16 @@ public sealed class AuthenticationSessionTests(ApiFactory factory)
             var profileId = await dbContext.Usuarios
                 .Where(item => item.Id == userId)
                 .Select(item => item.PerfilId)
-                .SingleAsync();
+                .SingleAsync(cancellationToken: TestContext.Current.CancellationToken);
             await dbContext.Perfis
                 .Where(item => item.Id == profileId)
                 .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(item => item.Ativo, false));
+                    .SetProperty(item => item.Ativo, false), cancellationToken: TestContext.Current.CancellationToken);
         }
 
         using var refreshRequest = new HttpRequestMessage(HttpMethod.Post, "/auth/refresh");
         refreshRequest.Headers.Add("X-CSRF-TOKEN", csrf.RequestToken);
-        var refresh = await client.SendAsync(refreshRequest);
+        var refresh = await client.SendAsync(refreshRequest, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, refresh.StatusCode);
 
@@ -242,7 +242,7 @@ public sealed class AuthenticationSessionTests(ApiFactory factory)
             .GetRequiredService<ControleAcessoVeiculosDbContext>();
         var session = await verificationContext.SessoesAutenticacao
             .AsNoTracking()
-            .SingleAsync(item => item.UsuarioId == userId);
+            .SingleAsync(item => item.UsuarioId == userId, cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(session.RevogadaEm);
         Assert.Equal(
             MotivoRevogacaoSessao.ContaDesativada,
@@ -260,12 +260,12 @@ public sealed class AuthenticationSessionTests(ApiFactory factory)
             HandleCookies = false
         });
 
-        var csrfResponse = await client.GetAsync("/auth/csrf");
+        var csrfResponse = await client.GetAsync("/auth/csrf", TestContext.Current.CancellationToken);
         csrfResponse.EnsureSuccessStatusCode();
-        var csrf = await csrfResponse.Content.ReadFromJsonAsync<CsrfResponse>();
+        var csrf = await csrfResponse.Content.ReadFromJsonAsync<CsrfResponse>(cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(csrf);
         var csrfCookie = GetCookie(csrfResponse, "cav_csrf");
-        var login = await client.PostAsJsonAsync("/auth/login", new { email, password });
+        var login = await client.PostAsJsonAsync("/auth/login", new { email, password }, cancellationToken: TestContext.Current.CancellationToken);
         login.EnsureSuccessStatusCode();
         var refreshToken = GetCookie(login, "cav_refresh");
 
@@ -291,7 +291,7 @@ public sealed class AuthenticationSessionTests(ApiFactory factory)
         var dbContext = scope.ServiceProvider
             .GetRequiredService<ControleAcessoVeiculosDbContext>();
         var activeSuccessors = await dbContext.SessoesAutenticacao.CountAsync(item =>
-            item.UsuarioId == userId && item.RevogadaEm == null);
+            item.UsuarioId == userId && item.RevogadaEm == null, cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(activeSuccessors <= 1);
     }
 
