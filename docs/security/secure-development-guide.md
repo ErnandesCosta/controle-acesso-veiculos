@@ -212,16 +212,18 @@ pessoais desnecessários. A leitura não gera outro evento neste recorte para ev
 recursão e ruído; essa decisão, a retenção e a matriz final ainda dependem de
 validação institucional.
 
-Na Issue #80, `SetorTransporte` recebe leitura do histórico geral por sua função
-de supervisão e conferência, sem receber operação ou correção. O registro digital
-deve substituir a planilha como fonte principal somente após homologação. Papel
-fica restrito à contingência, com reconciliação posterior, evitando dois controles
-permanentes e divergentes. O horário de fechamento não é codificado como bloqueio
-fixo, pois existem exceções autorizadas e residentes.
+Na Issue #80, `SetorTransporte` recebeu leitura do histórico geral por sua função
+de supervisão e conferência. A Issue #274 amplia somente a correção descritiva
+supervisionada, com justificativa e auditoria transacional, sem conceder entrada,
+saída ou encerramento excepcional. O registro digital deve substituir a planilha
+como fonte principal somente após homologação. Papel fica restrito à contingência,
+com reconciliação posterior, evitando dois controles permanentes e divergentes. O
+horário de fechamento não é codificado como bloqueio fixo, pois existem exceções
+autorizadas e residentes.
 
 Na Issue #271, o encerramento posterior de uma saída não registrada usa política
-dedicada para Porteiro, Vigilante e Administrador; o Setor de Transporte continua
-somente leitura. Motivo categorizado, observação e ator são obrigatórios. Um
+dedicada para Porteiro, Vigilante e Administrador; o Setor de Transporte não recebe
+essa permissão operacional. Motivo categorizado, observação e ator são obrigatórios. Um
 horário observado só é persistido quando informado a partir de fonte confiável;
 caso contrário, permanece nulo e não é apresentado como estimativa. O momento da
 regularização é registrado separadamente. Registro e auditoria falham ou são

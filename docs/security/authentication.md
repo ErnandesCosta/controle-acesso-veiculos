@@ -148,22 +148,23 @@ Administradores autenticados podem criar outras contas pelo endpoint `POST /user
 
 ## Políticas preliminares
 
-| Política | Perfis preliminares |
-|---|---|
-| `access:operate` | Porteiro, Vigilante e Administrador |
-| `access-records:review` | Porteiro, Vigilante, Setor de Transporte e Administrador |
-| `access-records:correct` | Porteiro, Vigilante e Administrador |
-| `access-records:exceptionally-close` | Porteiro, Vigilante e Administrador |
-| `transportation:review` | Setor de Transporte e Administrador |
-| `operations:summary:read` | Porteiro, Vigilante, Setor de Transporte e Administrador |
-| `event-authorizations:read` | Porteiro, Vigilante, Setor de Transporte e Administrador |
-| `event-authorizations:manage` | Administrador |
-| `users:manage` | Administrador |
+| Política                             | Perfis preliminares                                      |
+| ------------------------------------ | -------------------------------------------------------- |
+| `access:operate`                     | Porteiro, Vigilante e Administrador                      |
+| `access-records:review`              | Porteiro, Vigilante, Setor de Transporte e Administrador |
+| `access-records:correct`             | Porteiro, Vigilante, Setor de Transporte e Administrador |
+| `access-records:exceptionally-close` | Porteiro, Vigilante e Administrador                      |
+| `transportation:review`              | Setor de Transporte e Administrador                      |
+| `operations:summary:read`            | Porteiro, Vigilante, Setor de Transporte e Administrador |
+| `event-authorizations:read`          | Porteiro, Vigilante, Setor de Transporte e Administrador |
+| `event-authorizations:manage`        | Administrador                                            |
+| `users:manage`                       | Administrador                                            |
 
 Esses nomes estão centralizados e não pertencem ao Domain. A matriz do MVP foi
 registrada na Issue #75 e continua revisável durante a homologação. O Setor de
-Transporte possui leitura do histórico geral por sua responsabilidade de
-supervisão e conferência, sem herdar a política de operação ou correção. Porteiro
+Transporte possui leitura do histórico geral e correção descritiva supervisionada,
+sem herdar a política de operação ou encerramento excepcional. A correção exige
+justificativa, preserva os fatos imutáveis e produz auditoria transacional. Porteiro
 e Vigilante possuem as mesmas permissões operacionais porque o Vigilante apenas
 substitui o Porteiro quando necessário. A decisão institucional registrada em
 setembro de 2026 reservou criação, alteração e cancelamento de autorizações de

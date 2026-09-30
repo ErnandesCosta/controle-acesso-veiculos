@@ -245,7 +245,9 @@ public sealed class VehicleAccessTests(ApiFactory factory)
     [Theory]
     [InlineData(ProfileNames.Doorman)]
     [InlineData(ProfileNames.SecurityGuard)]
-    public async Task GateOperatorCanCorrectClosedAccessWithoutRewritingHistory(
+    [InlineData(ProfileNames.TransportationDepartment)]
+    [InlineData(ProfileNames.Administrator)]
+    public async Task AuthorizedProfileCanCorrectClosedAccessWithoutRewritingHistory(
         string correctorProfile)
     {
         const string password = "Test-only-password-123!";
@@ -345,9 +347,8 @@ public sealed class VehicleAccessTests(ApiFactory factory)
     }
 
     [Fact]
-    public async Task AccessCorrectionEnforcesDedicatedPermission()
+    public async Task AccessCorrectionRequiresAuthentication()
     {
-        const string password = "Test-only-password-123!";
         var request = new
         {
             objective = "Objetivo corrigido",
@@ -359,16 +360,6 @@ public sealed class VehicleAccessTests(ApiFactory factory)
         Assert.Equal(
             HttpStatusCode.Unauthorized,
             (await anonymousClient.PutAsJsonAsync(
-                "/access-records/1/correction", request)).StatusCode);
-
-        var (_, email) = await CreateUserAsync(
-            ProfileNames.TransportationDepartment,
-            password);
-        using var client = factory.CreateClient();
-        await AuthenticateClientAsync(client, email, password);
-        Assert.Equal(
-            HttpStatusCode.Forbidden,
-            (await client.PutAsJsonAsync(
                 "/access-records/1/correction", request)).StatusCode);
     }
 
