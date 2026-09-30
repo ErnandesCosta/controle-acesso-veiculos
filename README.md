@@ -250,7 +250,17 @@ dotnet run --project src/backend/ControleAcessoVeiculos.API --launch-profile htt
 ```
 
 A API de desenvolvimento usa <http://localhost:5118>. O documento OpenAPI fica
-disponível apenas no ambiente `Development`.
+disponível em <http://localhost:5118/openapi/v1.json> e a interface interativa
+Swagger UI em <http://localhost:5118/swagger>, ambos somente no ambiente
+`Development`. A interface ajuda a consultar contratos e executar verificações
+manuais com dados fictícios; ela não substitui testes automatizados, homologação
+nem os controles de autorização aplicados pela API.
+
+Para testar um endpoint protegido, execute `POST /auth/login` com uma conta
+fictícia local, copie apenas o campo `accessToken`, selecione **Authorize** e
+informe o token. Não registre nem compartilhe tokens, senhas ou cookies. Os
+fluxos de renovação e logout também exigem cookie protegido e token CSRF e devem
+ser validados pelo frontend ou pelos testes de integração próprios.
 
 ### Frontend
 
