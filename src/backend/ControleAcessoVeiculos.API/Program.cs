@@ -2,6 +2,7 @@ using ControleAcessoVeiculos.API.Health;
 using ControleAcessoVeiculos.API.Endpoints;
 using ControleAcessoVeiculos.API.Middleware;
 using ControleAcessoVeiculos.API.Observability;
+using ControleAcessoVeiculos.API.OpenApi;
 using ControleAcessoVeiculos.API.Security;
 using ControleAcessoVeiculos.Application.AccessRecords;
 using ControleAcessoVeiculos.Application.Accounts;
@@ -36,7 +37,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+    options.AddOperationTransformer<BearerSecurityRequirementTransformer>();
+});
 builder.Services.AddConfiguredDataProtection(builder.Configuration, builder.Environment);
 builder.Services.AddApiObservability(builder.Configuration);
 builder.Services.AddProblemDetails(options =>
@@ -287,6 +292,16 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi().AllowAnonymous();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint(
+            "/openapi/v1.json",
+            "Controle de Acesso de Veículos API v1");
+        options.DocumentTitle = "Controle de Acesso de Veículos — API";
+        options.DisplayRequestDuration();
+        options.EnableDeepLinking();
+        options.EnableFilter();
+    });
 }
 
 app.UseMiddleware<RequestSafetyMiddleware>();
