@@ -2,6 +2,14 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
 EXPOSE 8080
 
+# Apply published Ubuntu security fixes even when the upstream .NET tag has not
+# yet been rebuilt. Keep the upgrade narrow and remove package metadata.
+RUN apt-get update \
+    && apt-get install --only-upgrade --no-install-recommends -y \
+        libssl3t64 \
+        openssl \
+    && rm -rf /var/lib/apt/lists/*
+
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
