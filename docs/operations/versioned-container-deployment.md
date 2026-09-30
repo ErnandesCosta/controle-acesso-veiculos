@@ -14,18 +14,22 @@ segredos, firewall, backup protegido, monitoramento e autorização instituciona
 
 ## Release disponível
 
-A release técnica atual é `v0.2.0`. As duas imagens foram verificadas como
+A release técnica atual é `v0.3.0`. As duas imagens foram verificadas como
 manifestos para `linux/amd64` e `linux/arm64`:
 
 ```bash
-docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-backend:0.2.0
-docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-frontend:0.2.0
+docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-backend:0.3.0
+docker pull ghcr.io/ifpebj-ti/controle-acesso-veiculos-frontend:0.3.0
 ```
+
+Os manifests verificados são, respectivamente,
+`sha256:5c620d3c6609144c8cc0f53c1505dd3c2414d206aa29d69f96b6ab64b24d31b0`
+e `sha256:cd9ed896b47327a6ca71f191284e71988411ffc608b3d1e634d1a9df01b8ddc1`.
 
 A interface do GHCR também apresenta objetos internos com nomes derivados de
 SHA-256. Eles suportam armazenamento e atestações OCI, mas não são o nome da
 release. Para fixar conteúdo por digest, use
-`imagem@sha256:<digest>`; para implantar a release revisada, use `imagem:0.2.0`.
+`imagem@sha256:<digest>`; para implantar a release revisada, use `imagem:0.3.0`.
 Nunca mova uma versão publicada para outro digest: mudanças posteriores exigem
 uma nova release.
 
@@ -66,7 +70,7 @@ Copy-Item .env.production.example .env.production
 
 Defina no arquivo local:
 
-- `DEPLOYMENT_VERSION`: a mesma release para frontend e backend, como `0.2.0`;
+- `DEPLOYMENT_VERSION`: a mesma release para frontend e backend, como `0.3.0`;
 - `ALLOWED_HOSTS`: o domínio público esperado pela API e `localhost`, usado
   somente pela verificação de saúde interna;
 - credenciais próprias do PostgreSQL; prefira senha aleatória hexadecimal ou
