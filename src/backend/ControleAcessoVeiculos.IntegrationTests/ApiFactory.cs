@@ -26,7 +26,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     public RequestLogCaptureProvider RequestLogs { get; } = new();
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _postgres.StartAsync();
 
@@ -37,7 +37,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         await dbContext.Database.MigrateAsync();
     }
 
-    async Task IAsyncLifetime.DisposeAsync()
+    async ValueTask IAsyncDisposable.DisposeAsync()
     {
         Dispose();
         await _postgres.DisposeAsync();
