@@ -5,7 +5,7 @@ RUN npm ci
 COPY src/frontend/ .
 RUN npm run build
 
-FROM nginxinc/nginx-unprivileged:stable-alpine-slim@sha256:7bbe8940bc478e5618e6d4cfbeda406e5b4217cacc06faacd665aca5e468595e AS final
+FROM nginxinc/nginx-unprivileged:stable-alpine-slim@sha256:e28dcf0a161ddcbf228c7364b4a14f9bad4763ae8f5317c437b896afa3df4b84 AS final
 USER root
 RUN apk upgrade --no-cache
 USER nginx
