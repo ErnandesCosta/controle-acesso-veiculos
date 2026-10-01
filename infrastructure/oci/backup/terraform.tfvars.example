@@ -1,0 +1,14 @@
+region                  = "sa-saopaulo-1"
+tenancy_ocid            = "ocid1.tenancy.oc1..example"
+backup_compartment_ocid = "ocid1.compartment.oc1..example"
+backup_instance_ocid    = "ocid1.instance.oc1.sa-saopaulo-1.example"
+
+recovery_group_name      = "BackupRecoveryOperators"
+key_custodian_group_name = "BackupKeyCustodians"
+auditor_group_name       = "BackupAuditors"
+
+# Keep null until the 35-day rule is proven in homologation. Locking is irreversible.
+retention_lock_time = null
+
+# Configure an approved Notifications topic before enabling the absence alarm.
+alarm_topic_ocid = null

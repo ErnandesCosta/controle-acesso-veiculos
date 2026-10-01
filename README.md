@@ -346,7 +346,9 @@ controle-acesso-veiculos/
   rotação, revogação e CSRF;
 - imagens são analisadas com Trivy e publicadas com SBOM e proveniência;
 - ZAP executa baseline passiva contra uma stack descartável;
-- backup local com checksum é ensaio técnico, não backup protegido de produção.
+- backup local com checksum e a configuração reproduzível da OCI são ensaios
+  técnicos; o backup protegido só existirá após provisionamento e restauração
+  isolada comprovados na tenancy institucional.
 
 Leia a [central de segurança](docs/security/README.md), a
 [modelagem de ameaças](docs/security/threat-model.md) e o

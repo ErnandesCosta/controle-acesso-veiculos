@@ -10,6 +10,9 @@ from its first published release.
 
 ### Added
 
+- A reviewable OCI backup baseline provisions a private retention-protected
+  bucket, customer-managed encryption, separated IAM roles, absence monitoring,
+  and an instance-principal publisher without committing tenancy identifiers.
 - A development-only Swagger UI presents the native OpenAPI contract, marks
   protected operations with Bearer authentication, and remains unavailable in
   production.
