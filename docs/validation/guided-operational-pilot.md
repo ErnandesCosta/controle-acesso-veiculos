@@ -1,8 +1,8 @@
 # Piloto operacional acompanhado do MVP
 
-**Status:** planejado; ainda não iniciado  
+**Status:** planejado; ainda não iniciado<br>
 **Escopo:** treinamento, observação de uso, descoberta de defeitos e coleta de
-feedback no ambiente real da portaria  
+feedback no ambiente real da portaria<br>
 **Rastreabilidade:** Issues #30, #100, #162, #311, #382 e #388
 
 Este runbook orienta um período acompanhado com usuários reais. Ele não autoriza

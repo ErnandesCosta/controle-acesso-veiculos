@@ -10,6 +10,9 @@ from its first published release.
 
 ### Added
 
+- A guided operational-pilot runbook separates real users, real environments,
+  operational data and production, with staged gates, sanitized observation,
+  incident severity and explicit pause criteria.
 - A reviewable OCI backup baseline provisions a private retention-protected
   bucket, customer-managed encryption, separated IAM roles, absence monitoring,
   and an instance-principal publisher without committing tenancy identifiers.
