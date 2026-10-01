@@ -1,0 +1,55 @@
+name: CI - OCI backup infrastructure
+
+on:
+  push:
+    paths:
+      - ".github/workflows/ci-oci-backup.yml"
+      - "infrastructure/oci/backup/**"
+  pull_request:
+    paths:
+      - ".github/workflows/ci-oci-backup.yml"
+      - "infrastructure/oci/backup/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oci-backup-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Initialize providers without a backend
+        run: >-
+          docker run --rm
+          --volume "${{ github.workspace }}:/workspace"
+          --workdir /workspace/infrastructure/oci/backup
+          hashicorp/terraform@sha256:6bbb82d575aa7bd4f0a2c6e3a0838ab9590426c08a71d7a2783643f01004d356
+          init -backend=false -input=false -lockfile=readonly
+
+      - name: Check Terraform formatting
+        run: >-
+          docker run --rm
+          --volume "${{ github.workspace }}:/workspace"
+          --workdir /workspace/infrastructure/oci/backup
+          hashicorp/terraform@sha256:6bbb82d575aa7bd4f0a2c6e3a0838ab9590426c08a71d7a2783643f01004d356
+          fmt -check -diff
+
+      - name: Validate Terraform configuration
+        run: >-
+          docker run --rm
+          --volume "${{ github.workspace }}:/workspace"
+          --workdir /workspace/infrastructure/oci/backup
+          hashicorp/terraform@sha256:6bbb82d575aa7bd4f0a2c6e3a0838ab9590426c08a71d7a2783643f01004d356
+          validate
+
+      - name: Test instance-principal backup publisher
+        working-directory: infrastructure/oci/backup
+        run: bash tests/Publish-PostgreSqlBackupToOci.Tests.sh
