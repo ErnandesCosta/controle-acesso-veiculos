@@ -10,6 +10,9 @@ from its first published release.
 
 ### Added
 
+- A proposed OCI homologation topology records the single-node pilot boundary,
+  public exposure, administrative access, cost preflight and evolution gates
+  before any cloud resource is provisioned.
 - A guided operational-pilot runbook separates real users, real environments,
   operational data and production, with staged gates, sanitized observation,
   incident severity and explicit pause criteria.
