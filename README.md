@@ -356,16 +356,17 @@ Leia a [central de segurança](docs/security/README.md), a
 
 ## Documentação
 
-| Documento                                                                   | Finalidade                                          |
-| --------------------------------------------------------------------------- | --------------------------------------------------- |
-| [Wiki](https://github.com/ifpebj-ti/controle-acesso-veiculos/wiki)          | visão completa, requisitos, arc42, produto e status |
-| [Prontidão da Unidade 1](docs/validation/unit-1-readiness.md)               | requisito acadêmico ligado à evidência              |
-| [Homologação integrada](docs/validation/backend-mvp-homologation.md)        | roteiro dos quatro perfis                           |
-| [CI/CD e containers](docs/development/ci-cd.md)                             | workflows, tags, scans, SBOM e proveniência         |
-| [Implantação versionada](docs/operations/versioned-container-deployment.md) | pull, Compose, promoção e rollback                  |
-| [Continuidade](docs/operations/data-retention-and-continuity.md)            | retenção, backup, RPO/RTO e contingência            |
-| [Observabilidade](docs/operations/observability.md)                         | logs, métricas e traces                             |
-| [Convenções de commit](docs/development/commit-conventions.md)              | branches, commits e Pull Requests                   |
+| Documento                                                                     | Finalidade                                          |
+| ----------------------------------------------------------------------------- | --------------------------------------------------- |
+| [Wiki](https://github.com/ifpebj-ti/controle-acesso-veiculos/wiki)            | visão completa, requisitos, arc42, produto e status |
+| [Prontidão da Unidade 1](docs/validation/unit-1-readiness.md)                 | requisito acadêmico ligado à evidência              |
+| [Homologação integrada](docs/validation/backend-mvp-homologation.md)          | roteiro dos quatro perfis                           |
+| [Piloto operacional acompanhado](docs/validation/guided-operational-pilot.md) | fases, gates, observação e resposta a ocorrências   |
+| [CI/CD e containers](docs/development/ci-cd.md)                               | workflows, tags, scans, SBOM e proveniência         |
+| [Implantação versionada](docs/operations/versioned-container-deployment.md)   | pull, Compose, promoção e rollback                  |
+| [Continuidade](docs/operations/data-retention-and-continuity.md)              | retenção, backup, RPO/RTO e contingência            |
+| [Observabilidade](docs/operations/observability.md)                           | logs, métricas e traces                             |
+| [Convenções de commit](docs/development/commit-conventions.md)                | branches, commits e Pull Requests                   |
 
 Materiais acadêmicos complementares:
 
