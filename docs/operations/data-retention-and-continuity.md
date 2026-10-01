@@ -158,12 +158,14 @@ a pessoa deixar o projeto.
 - inspeção da origem antes da restauração, pois um dump deve ser tratado como
   conteúdo confiável somente quando sua procedência e integridade são conhecidas.
 
-O procedimento local atual usa `pg_dump` custom e `pg_restore`, não incorpora a
-senha ao arquivo, produz um manifesto SHA-256 e comprova tabelas essenciais em
-banco temporário. O manifesto detecta corrupção quando preservado, mas não prova
-origem se dump e manifesto forem substituídos juntos. O ensaio é uma base de
-teste, mas ainda não oferece armazenamento externo, criptografia, assinatura ou
-agendamento de produção.
+O procedimento local usa `pg_dump` custom e `pg_restore`, não incorpora a senha
+ao arquivo, produz um manifesto SHA-256 e comprova tabelas essenciais em banco
+temporário. O manifesto detecta corrupção quando preservado, mas não prova origem
+se dump e manifesto forem substituídos juntos. A configuração reproduzível da
+Issue #311 prepara bucket privado, chave do Vault, separação IAM, retenção,
+lifecycle, alarme de ausência e publicação por instance principal. Ela ainda não
+foi aplicada nem exercitada na tenancy institucional; portanto, o sistema ainda
+não possui armazenamento externo ou agendamento de backup de produção comprovado.
 
 ## Contingência da portaria
 
