@@ -364,6 +364,7 @@ Leia a [central de segurança](docs/security/README.md), a
 | [Piloto operacional acompanhado](docs/validation/guided-operational-pilot.md) | fases, gates, observação e resposta a ocorrências   |
 | [CI/CD e containers](docs/development/ci-cd.md)                               | workflows, tags, scans, SBOM e proveniência         |
 | [Implantação versionada](docs/operations/versioned-container-deployment.md)   | pull, Compose, promoção e rollback                  |
+| [Preflight da OCI](docs/operations/oci-homologation-preflight.md)             | conta, custo, limites e gates antes do Terraform    |
 | [Continuidade](docs/operations/data-retention-and-continuity.md)              | retenção, backup, RPO/RTO e contingência            |
 | [Observabilidade](docs/operations/observability.md)                           | logs, métricas e traces                             |
 | [Convenções de commit](docs/development/commit-conventions.md)                | branches, commits e Pull Requests                   |
