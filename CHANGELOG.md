@@ -10,6 +10,8 @@ from its first published release.
 
 ### Added
 
+- An OCI homologation preflight runbook separates safe account verification,
+  cost and capacity gates from Terraform planning and resource creation.
 - A proposed OCI homologation topology records the single-node pilot boundary,
   public exposure, administrative access, cost preflight and evolution gates
   before any cloud resource is provisioned.

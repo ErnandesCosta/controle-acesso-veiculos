@@ -161,6 +161,8 @@ manual não rastreado.
 - Issue #312 — recuperação pontual do PostgreSQL;
 - ADR 0002 — retenção de dados e backup protegido;
 - ADR 0003 — key ring persistente e protegido;
+- `docs/operations/oci-homologation-preflight.md` — verificação segura da conta,
+  capacidade, custo e responsabilidades antes do Terraform;
 - `infrastructure/docker/docker-compose.production.yml` — stack versionada;
 - `docs/operations/versioned-container-deployment.md` — implantação e rollback.
 
