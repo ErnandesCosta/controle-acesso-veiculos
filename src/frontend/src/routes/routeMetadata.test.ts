@@ -219,7 +219,7 @@ describe("profile route and navigation metadata", () => {
     ).toBe(true);
     expect(
       profileHasCapability("SetorTransporte", "correct-general-access"),
-    ).toBe(false);
+    ).toBe(true);
     expect(profileHasCapability("Administrador", "manage-administration")).toBe(
       true,
     );
