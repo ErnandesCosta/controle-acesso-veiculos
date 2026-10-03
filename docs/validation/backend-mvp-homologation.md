@@ -445,9 +445,10 @@ Ao registrar a saída, confira identificação por placa e condutor, confirmaç�
 controle e retorno de foco e exatamente uma mutação, mesmo diante de clique ou
 submissão repetidos.
 
-A correção auditada está disponível para Porteiro, Vigilante e Administrador; o
-Setor de Transporte permanece somente leitura. Somente objetivo, categoria e
-observação podem ser alterados, sempre com justificativa. Placa, condutor,
+A correção auditada está disponível para os quatro perfis. Para o Setor de
+Transporte, ela permanece limitada à correção descritiva supervisionada e não
+concede entrada, saída ou encerramento excepcional. Somente objetivo, categoria
+e observação podem ser alterados, sempre com justificativa. Placa, condutor,
 horários, situação e autoria original permanecem imutáveis.
 
 O encerramento excepcional de uma saída esquecida também é restrito a Porteiro,
@@ -460,12 +461,12 @@ fluxo homologado.
 
 ### Cenário 3 — fronteira do Setor de Transporte
 
-| Campo    | Valor                                                                            |
-| -------- | -------------------------------------------------------------------------------- |
-| Perfil   | SetorTransporte                                                                  |
-| Ação     | consultar histórico e resumo; tentar registrar entrada geral                     |
-| Esperado | consultas 200; tentativa de operação geral 403                                   |
-| Pergunta | supervisão sem alteração do fluxo geral corresponde à responsabilidade do setor? |
+| Campo    | Valor                                                                                              |
+| -------- | -------------------------------------------------------------------------------------------------- |
+| Perfil   | SetorTransporte                                                                                    |
+| Ação     | consultar histórico e resumo; corrigir descrição; tentar registrar entrada geral                   |
+| Esperado | consultas e correção descritiva 200; tentativa de operação geral 403                               |
+| Pergunta | supervisão com correção auditada, mas sem operar entrada ou saída, corresponde à responsabilidade? |
 
 Se o cliente disser que o setor também opera a portaria, registre a observação;
 não altere a permissão durante a sessão.
@@ -609,9 +610,11 @@ O roteiro completo e o registro das decisões ficam no
 ### Setor de Transporte
 
 - [ ] Consulta históricos geral e institucional.
+- [ ] Corrige somente objetivo, categoria e observação, com justificativa e
+      auditoria.
 - [ ] Mantém frota e autorizações de motoristas.
-- [ ] Mantém autorizações de eventos.
-- [ ] Não altera registros gerais da portaria.
+- [ ] Consulta autorizações de eventos sem executar sua manutenção.
+- [ ] Não registra entrada, saída ou encerramento excepcional na portaria.
 - [ ] Avalia se o resumo reduz a conferência manual.
 - [ ] Define quais decisões precisam de relatório ou exportação futura.
 
