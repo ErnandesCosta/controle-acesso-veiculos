@@ -370,7 +370,12 @@ describe("HistoryPage", () => {
     expect(screen.queryByText("8")).not.toBeInTheDocument();
   });
 
-  it.each<ProfileName>(["Porteiro", "Vigilante", "Administrador"])(
+  it.each<ProfileName>([
+    "Porteiro",
+    "Vigilante",
+    "SetorTransporte",
+    "Administrador",
+  ])(
     "allows %s to correct a record using the canonical response",
     async (profileName) => {
       const correctedRecord = {
@@ -515,16 +520,6 @@ describe("HistoryPage", () => {
       "Registro #10 corrigido com sucesso.",
     );
     await waitFor(() => expect(screen.getByRole("status")).toHaveFocus());
-  });
-
-  it("keeps Setor de Transporte in read-only mode", async () => {
-    vi.mocked(searchAccessHistory).mockResolvedValue(pageResult([record]));
-    renderPage("SetorTransporte");
-
-    await screen.findAllByText("DEM1A23");
-    expect(
-      screen.queryByRole("button", { name: /Corrigir registro/ }),
-    ).not.toBeInTheDocument();
   });
 
   it("offers correction for both open and closed records", async () => {

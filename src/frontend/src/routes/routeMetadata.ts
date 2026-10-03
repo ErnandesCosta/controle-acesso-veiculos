@@ -233,6 +233,7 @@ const profileCapabilities: Readonly<
     "operate-institutional-fleet",
   ],
   SetorTransporte: [
+    "correct-general-access",
     "manage-institutional-catalogs",
     "review-institutional-fleet",
   ],
