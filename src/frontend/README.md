@@ -2,6 +2,18 @@
 
 Frontend do sistema Controle de Acesso de Veículos do IFPE – Campus Belo Jardim.
 
+## Fundação visual
+
+O frontend possui um contrato inicial de tokens semânticos para estrutura,
+texto, ações, foco e estados. O tema claro continua visualmente equivalente ao
+atual; valores escuros estão apenas preparados e não são ativados nesta etapa.
+A matriz de contraste, as combinações permitidas e o inventário de migração
+estão em [`docs/development/frontend-design-tokens.md`](../../docs/development/frontend-design-tokens.md).
+
+Os aliases visuais anteriores permanecem temporariamente para evitar uma troca
+global insegura. Componentes serão migrados de forma incremental nas Issues
+#403–#406, e o controle Claro/Escuro/Sistema pertence à Issue #407.
+
 ## Estado atual
 
 A versão atual integra autenticação e sessão em memória ao endpoint

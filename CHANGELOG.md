@@ -10,6 +10,9 @@ from its first published release.
 
 ### Added
 
+- Semantic frontend design tokens and a documented WCAG 2.2 contrast matrix
+  for the future light, dark, and system appearance foundation.
+
 - An OCI homologation preflight runbook separates safe account verification,
   cost and capacity gates from Terraform planning and resource creation.
 - A proposed OCI homologation topology records the single-node pilot boundary,
