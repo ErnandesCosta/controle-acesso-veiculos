@@ -1,0 +1,74 @@
+:root {
+  /* Institutional and neutral palette. Components must consume semantic tokens. */
+  --palette-ifpe-green-500: #369833;
+  --palette-ifpe-green-700: #236d2a;
+  --palette-ifpe-green-800: #185820;
+  --palette-ifpe-green-soft: #b8c897;
+  --palette-ifpe-teal-700: #1a615d;
+  --palette-ifpe-teal-900: #004953;
+  --palette-cream-50: #fffae9;
+  --palette-white: #ffffff;
+
+  /* Light semantic contract. */
+  --ui-background: var(--palette-cream-50);
+  --ui-surface: var(--palette-white);
+  --ui-surface-raised: var(--palette-white);
+  --ui-surface-subtle: #f1f4e8;
+  --ui-text: var(--palette-ifpe-teal-900);
+  --ui-text-muted: var(--palette-ifpe-teal-700);
+  --ui-text-inverse: var(--palette-white);
+  --ui-border: #667f7c;
+  --ui-border-strong: var(--palette-ifpe-teal-700);
+  --ui-primary: var(--palette-ifpe-green-700);
+  --ui-primary-hover: var(--palette-ifpe-green-800);
+  --ui-primary-text: var(--palette-white);
+  --ui-focus: #005f73;
+  --ui-overlay: rgb(0 36 40 / 62%);
+  --ui-shadow: rgb(1 36 40 / 14%);
+  --ui-success-surface: #eaf6e8;
+  --ui-success-text: #175c24;
+  --ui-success-border: #408a48;
+  --ui-warning-surface: #fff4cc;
+  --ui-warning-text: #674d00;
+  --ui-warning-border: #927100;
+  --ui-danger-surface: #fdebec;
+  --ui-danger-text: #861e2a;
+  --ui-danger-border: #b84652;
+  --ui-disabled-surface: #e5e9df;
+  --ui-disabled-text: #52615e;
+  --ui-disabled-border: #74837f;
+}
+
+/*
+ * Prepared for the future theme controller. No production code sets this
+ * attribute yet, so the current light appearance remains unchanged.
+ */
+:root[data-theme="dark"] {
+  --ui-background: #0b1c1e;
+  --ui-surface: #12282b;
+  --ui-surface-raised: #193236;
+  --ui-surface-subtle: #203b3e;
+  --ui-text: #f5f7f0;
+  --ui-text-muted: #c1cfca;
+  --ui-text-inverse: #0b1c1e;
+  --ui-border: #78918c;
+  --ui-border-strong: #b8cac5;
+  --ui-primary: #7bcb72;
+  --ui-primary-hover: #93d789;
+  --ui-primary-text: #0b2712;
+  --ui-focus: #ffd166;
+  --ui-overlay: rgb(0 8 10 / 76%);
+  --ui-shadow: rgb(0 0 0 / 42%);
+  --ui-success-surface: #143720;
+  --ui-success-text: #a9e7b0;
+  --ui-success-border: #57a967;
+  --ui-warning-surface: #3a3012;
+  --ui-warning-text: #ffe39a;
+  --ui-warning-border: #c9a84f;
+  --ui-danger-surface: #401c21;
+  --ui-danger-text: #ffc3c8;
+  --ui-danger-border: #d66b75;
+  --ui-disabled-surface: #263436;
+  --ui-disabled-text: #aab5b1;
+  --ui-disabled-border: #71827e;
+}
