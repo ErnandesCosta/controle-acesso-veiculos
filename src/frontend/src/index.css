@@ -103,6 +103,24 @@ button:disabled {
   width: 18rem;
 }
 
+@media (min-width: 641px) and (max-height: 820px) {
+  .login-shell {
+    zoom: 0.72;
+  }
+}
+
+@media (min-width: 641px) and (min-height: 821px) and (max-height: 920px) {
+  .login-shell {
+    zoom: 0.84;
+  }
+}
+
+@media (min-width: 641px) and (min-height: 921px) and (max-height: 1020px) {
+  .login-shell {
+    zoom: 0.92;
+  }
+}
+
 .sidebar-primary-item {
   position: relative;
 }
@@ -147,6 +165,26 @@ button:disabled {
 }
 
 @media (max-width: 640px) {
+  .login-page {
+    padding: 2rem 1rem;
+  }
+
+  .login-shell {
+    zoom: 0.9;
+  }
+
+  .login-brand {
+    margin-bottom: 2rem;
+  }
+
+  .login-scene {
+    padding-bottom: 6rem;
+  }
+
+  .login-support {
+    margin-top: 1.25rem;
+  }
+
   .login-route-marks {
     inset: -0.75rem -0.35rem 3.65rem;
   }
@@ -159,6 +197,16 @@ button:disabled {
     bottom: 1.4rem;
     left: -1.5rem;
     width: 10rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .login-shell {
+    zoom: 0.86;
+  }
+
+  .login-card {
+    padding-inline: 1rem;
   }
 }
 

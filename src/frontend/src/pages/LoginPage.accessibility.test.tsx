@@ -7,6 +7,24 @@ import { expectNoSeriousAccessibilityViolations } from "../test/accessibility";
 import { LoginPage } from "./LoginPage";
 
 describe("LoginPage accessibility", () => {
+  it("keeps the page vertically scrollable on short viewports", async () => {
+    const { container } = render(
+      <SessionProvider>
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>
+      </SessionProvider>,
+    );
+
+    await screen.findByRole("heading", { name: /bem-vindo/i });
+
+    const main = container.querySelector("main");
+
+    expect(main).toHaveClass("login-page", "overflow-x-hidden");
+    expect(main).not.toHaveClass("overflow-hidden");
+    expect(container.querySelector(".login-shell")).toBeInTheDocument();
+  });
+
   it("describes session restoration without outdated browser-storage guidance", async () => {
     render(
       <SessionProvider>

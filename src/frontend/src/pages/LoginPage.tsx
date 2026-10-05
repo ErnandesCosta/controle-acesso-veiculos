@@ -120,11 +120,11 @@ export function LoginPage() {
     .join(" ");
 
   return (
-    <main className="relative min-h-svh overflow-hidden bg-cream px-4 py-6 text-ink sm:px-8 sm:py-8">
+    <main className="login-page relative min-h-svh overflow-x-hidden bg-cream px-4 py-6 text-ink sm:px-8 sm:py-8">
       <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-ink" />
 
-      <div className="relative z-10 mx-auto flex min-h-[calc(100svh-3rem)] w-full max-w-6xl flex-col items-center justify-center">
-        <Brand className="mx-auto mb-7 w-fit max-w-[17rem] sm:mb-10 sm:max-w-sm" />
+      <div className="login-shell relative z-10 mx-auto flex min-h-[calc(100svh-3rem)] w-full max-w-6xl flex-col items-center justify-center sm:min-h-[calc(100svh-4rem)]">
+        <Brand className="login-brand mx-auto mb-7 w-fit max-w-[17rem] sm:mb-10 sm:max-w-sm" />
 
         <div className="login-scene relative mx-auto w-full max-w-[54rem] pb-20 sm:pb-28">
           <div aria-hidden="true" className="login-route-marks">
@@ -148,7 +148,7 @@ export function LoginPage() {
             </svg>
           </div>
 
-          <section className="relative z-10 mx-auto flex min-h-[34rem] flex-col rounded-[2rem] border border-ink/75 bg-brand-soft px-6 py-10 shadow-[0_22px_65px_rgba(1,36,40,0.11)] sm:min-h-[40rem] sm:rounded-[2.5rem] sm:px-14 sm:py-14 lg:min-h-[42rem] lg:px-20 lg:pb-16 lg:pt-20">
+          <section className="login-card relative z-10 mx-auto flex min-h-[34rem] flex-col rounded-[2rem] border border-ink/75 bg-brand-soft px-6 py-10 shadow-[0_22px_65px_rgba(1,36,40,0.11)] sm:min-h-[40rem] sm:rounded-[2.5rem] sm:px-14 sm:py-14 lg:min-h-[42rem] lg:px-20 lg:pb-16 lg:pt-20">
             <header className="text-center">
               <h1 className="font-display text-4xl font-bold uppercase leading-none text-brand sm:text-6xl lg:text-[4.4rem]">
                 Bem-vindo,
@@ -252,7 +252,7 @@ export function LoginPage() {
           </div>
         </div>
 
-        <div className="mx-auto mt-3 max-w-3xl text-center text-xs leading-5 text-ink-soft">
+        <div className="login-support mx-auto mt-3 max-w-3xl text-center text-xs leading-5 text-ink-soft">
           <p>Use sua conta individual cadastrada pelo Administrador.</p>
           <p className="mt-1">
             Sua sessão é protegida e pode ser restaurada com segurança enquanto
