@@ -1,21 +1,56 @@
 import { Navigate, createBrowserRouter } from "react-router-dom";
 
 import { AppLayout } from "../components/layout/AppLayout";
-import { AdminPage } from "../pages/AdminPage";
-import { DashboardPage } from "../pages/DashboardPage";
-import { EventsPage } from "../pages/EventsPage";
-import { FleetPage } from "../pages/FleetPage";
-import { HistoryPage } from "../pages/HistoryPage";
-import { InstitutionalDriversPage } from "../pages/InstitutionalDriversPage";
-import { InstitutionalUsagesPage } from "../pages/InstitutionalUsagesPage";
 import { LoginPage } from "../pages/LoginPage";
-import { NewAccessPage } from "../pages/NewAccessPage";
 import { NotFoundPage } from "../pages/NotFoundPage";
-import { OpenAccessPage } from "../pages/OpenAccessPage";
-import { PasswordChangePage } from "../pages/PasswordChangePage";
 import { ProfileRoute } from "./ProfileRoute";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { RouteTransitionManager } from "./RouteTransitionManager";
+
+const loadAdminPage = () =>
+  import("../pages/AdminPage").then(({ AdminPage }) => ({
+    Component: AdminPage,
+  }));
+const loadDashboardPage = () =>
+  import("../pages/DashboardPage").then(({ DashboardPage }) => ({
+    Component: DashboardPage,
+  }));
+const loadEventsPage = () =>
+  import("../pages/EventsPage").then(({ EventsPage }) => ({
+    Component: EventsPage,
+  }));
+const loadFleetPage = () =>
+  import("../pages/FleetPage").then(({ FleetPage }) => ({
+    Component: FleetPage,
+  }));
+const loadHistoryPage = () =>
+  import("../pages/HistoryPage").then(({ HistoryPage }) => ({
+    Component: HistoryPage,
+  }));
+const loadInstitutionalDriversPage = () =>
+  import("../pages/InstitutionalDriversPage").then(
+    ({ InstitutionalDriversPage }) => ({
+      Component: InstitutionalDriversPage,
+    }),
+  );
+const loadInstitutionalUsagesPage = () =>
+  import("../pages/InstitutionalUsagesPage").then(
+    ({ InstitutionalUsagesPage }) => ({
+      Component: InstitutionalUsagesPage,
+    }),
+  );
+const loadNewAccessPage = () =>
+  import("../pages/NewAccessPage").then(({ NewAccessPage }) => ({
+    Component: NewAccessPage,
+  }));
+const loadOpenAccessPage = () =>
+  import("../pages/OpenAccessPage").then(({ OpenAccessPage }) => ({
+    Component: OpenAccessPage,
+  }));
+const loadPasswordChangePage = () =>
+  import("../pages/PasswordChangePage").then(({ PasswordChangePage }) => ({
+    Component: PasswordChangePage,
+  }));
 
 export const router = createBrowserRouter([
   {
@@ -38,22 +73,22 @@ export const router = createBrowserRouter([
               {
                 element: <ProfileRoute />,
                 children: [
-                  { path: "/visao-geral", element: <DashboardPage /> },
-                  { path: "/conta/senha", element: <PasswordChangePage /> },
-                  { path: "/acessos/novo", element: <NewAccessPage /> },
-                  { path: "/acessos/abertos", element: <OpenAccessPage /> },
-                  { path: "/acessos/historico", element: <HistoryPage /> },
+                  { path: "/visao-geral", lazy: loadDashboardPage },
+                  { path: "/conta/senha", lazy: loadPasswordChangePage },
+                  { path: "/acessos/novo", lazy: loadNewAccessPage },
+                  { path: "/acessos/abertos", lazy: loadOpenAccessPage },
+                  { path: "/acessos/historico", lazy: loadHistoryPage },
                   {
                     path: "/utilizacoes-institucionais",
-                    element: <InstitutionalUsagesPage />,
+                    lazy: loadInstitutionalUsagesPage,
                   },
-                  { path: "/frota", element: <FleetPage /> },
+                  { path: "/frota", lazy: loadFleetPage },
                   {
                     path: "/motoristas-institucionais",
-                    element: <InstitutionalDriversPage />,
+                    lazy: loadInstitutionalDriversPage,
                   },
-                  { path: "/eventos", element: <EventsPage /> },
-                  { path: "/administracao", element: <AdminPage /> },
+                  { path: "/eventos", lazy: loadEventsPage },
+                  { path: "/administracao", lazy: loadAdminPage },
                 ],
               },
             ],
