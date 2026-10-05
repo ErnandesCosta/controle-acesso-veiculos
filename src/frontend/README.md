@@ -267,6 +267,28 @@ permanece obrigatório na troca de operador.
 - Vitest e Testing Library;
 - axe-core para auditoria automatizada de acessibilidade.
 
+## Desempenho e carregamento de rotas
+
+A medição de produção anterior à divisão por rotas gerava um único arquivo
+JavaScript de `867,57 kB` minificado (`251,20 kB` com gzip) e acionava o aviso
+de chunk acima de `500 kB` do Vite. As páginas autenticadas eram importadas de
+forma antecipada, mesmo quando a pessoa ainda estava no login.
+
+As páginas autenticadas agora usam o carregamento assíncrono de rotas do React
+Router. Login e página não encontrada permanecem no pacote inicial para evitar
+uma espera desnecessária nos fluxos públicos. Na mesma configuração de build, o
+JavaScript inicial passou a ser composto por `264,28 kB` e `286,84 kB`
+minificados (`81,12 kB` e `91,89 kB` com gzip), uma redução total de 36,5% no
+tamanho minificado e 31,1% com gzip. O maior módulo específico de página é o da
+administração, com `44,29 kB` minificado (`11,29 kB` com gzip). Nenhum limite de
+aviso foi aumentado e o build não apresenta chunks acima de `500 kB`.
+
+Durante uma navegação cujo módulo ainda está sendo obtido, a rota atual permanece
+renderizada. Quando a nova página é confirmada, o `RouteTransitionManager`
+atualiza o título do documento e move o foco para o cabeçalho principal. Esse
+comportamento possui teste específico com uma rota assíncrona controlada e
+preserva a orientação de quem navega por teclado ou leitor de tela.
+
 ## Paleta tipográfica
 
 O frontend utiliza dois tons semânticos compartilhados para manter a linguagem

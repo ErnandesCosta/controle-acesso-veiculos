@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StrictMode, useState } from "react";
 import {
@@ -6,7 +6,9 @@ import {
   MemoryRouter,
   Outlet,
   Route,
+  RouterProvider,
   Routes,
+  createMemoryRouter,
   useNavigate,
 } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -208,6 +210,72 @@ describe("RouteTransitionManager", () => {
       expect(
         screen.getByRole("heading", { name: "Histórico de acessos" }),
       ).toHaveFocus(),
+    );
+  });
+
+  it("focuses the heading after a lazy route module finishes loading", async () => {
+    let resolveLazyRoute: (() => void) | undefined;
+    const lazyRouteReady = new Promise<void>((resolve) => {
+      resolveLazyRoute = resolve;
+    });
+    const lazyRouter = createMemoryRouter(
+      [
+        {
+          element: <RouteTransitionManager />,
+          children: [
+            {
+              element: (
+                <main>
+                  <h1>Visão geral</h1>
+                  <Link to="/acessos/historico">Abrir histórico</Link>
+                </main>
+              ),
+              path: "/visao-geral",
+            },
+            {
+              lazy: async () => {
+                await lazyRouteReady;
+
+                return {
+                  Component: () => (
+                    <main>
+                      <h1>Histórico de acessos</h1>
+                    </main>
+                  ),
+                };
+              },
+              path: "/acessos/historico",
+            },
+          ],
+        },
+      ],
+      { initialEntries: ["/visao-geral"] },
+    );
+    const user = userEvent.setup();
+
+    render(
+      <SessionContext.Provider value={sessionValue()}>
+        <RouterProvider router={lazyRouter} />
+      </SessionContext.Provider>,
+    );
+
+    await user.click(screen.getByRole("link", { name: "Abrir histórico" }));
+
+    expect(
+      screen.getByRole("heading", { name: "Visão geral" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Histórico de acessos" }),
+    ).not.toBeInTheDocument();
+
+    await act(async () => resolveLazyRoute?.());
+
+    const historyHeading = await screen.findByRole("heading", {
+      name: "Histórico de acessos",
+    });
+    await waitFor(() => expect(historyHeading).toHaveFocus());
+    expect(document.title).toBe(
+      "Histórico de acessos | Controle de Acesso de Veículos",
     );
   });
 
