@@ -134,6 +134,29 @@ button:disabled {
   width: 18rem;
 }
 
+@media (min-width: 641px) and (max-height: 920px) {
+  .login-page {
+    padding-block: clamp(1rem, 3svh, 2rem);
+  }
+
+  .login-brand {
+    margin-bottom: clamp(1.25rem, 3svh, 2.5rem);
+  }
+
+  .login-scene {
+    padding-bottom: clamp(4.5rem, 9svh, 7rem);
+  }
+
+  .login-card {
+    min-height: clamp(34rem, 68svh, 40rem);
+    padding-block: clamp(2.5rem, 7svh, 4rem);
+  }
+
+  .login-support {
+    margin-top: 0.5rem;
+  }
+}
+
 .sidebar-primary-item {
   position: relative;
 }
@@ -190,6 +213,12 @@ button:disabled {
     bottom: 1.4rem;
     left: -1.5rem;
     width: 10rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .login-card {
+    padding-inline: 1rem;
   }
 }
 
