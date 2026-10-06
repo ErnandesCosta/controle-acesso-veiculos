@@ -1,0 +1,71 @@
+name: CI - Workflow Security Audit
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/**"
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: workflow-security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit-workflows:
+    name: Audit workflow supply-chain controls
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Reject mutable action references
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if grep -RInE '^[[:space:]]*uses:[[:space:]]+[^@[:space:]]+@(main|master)([[:space:]]|$)' .github/workflows; then
+            echo "Mutable GitHub Action references are forbidden. Pin actions to a reviewed version or commit SHA." >&2
+            exit 1
+          fi
+
+      - name: Reject write-all permissions
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if grep -RInE '^[[:space:]]*permissions:[[:space:]]*write-all[[:space:]]*$' .github/workflows; then
+            echo "permissions: write-all is forbidden. Grant only the minimum required permissions." >&2
+            exit 1
+          fi
+
+      - name: Require explicit permissions in CI workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for workflow in .github/workflows/ci-*.yml; do
+            [[ -f "${workflow}" ]] || continue
+
+            if ! grep -qE '^permissions:' "${workflow}"; then
+              echo "Missing explicit permissions block: ${workflow}" >&2
+              exit 1
+            fi
+          done
+
+      - name: Validate workflow syntax with actionlint
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/repo" \
+            -w /repo \
+            rhysd/actionlint:1.7.10 \
+            -color
