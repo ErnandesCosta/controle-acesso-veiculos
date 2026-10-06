@@ -391,3 +391,9 @@ Materiais acadêmicos complementares:
 ## Licença
 
 Distribuído sob a [Apache License 2.0](LICENSE).
+
+## Release automation
+
+Semantic releases are generated from Conventional Commits. When a release is created,
+the workflow publishes the frontend container for `linux/amd64` and `linux/arm64`
+to GitHub Container Registry.
