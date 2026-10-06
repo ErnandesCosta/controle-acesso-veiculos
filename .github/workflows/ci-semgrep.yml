@@ -1,0 +1,41 @@
+name: CI - Semgrep SAST
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "infrastructure/docker/**"
+      - ".github/workflows/ci-semgrep.yml"
+  pull_request:
+    paths:
+      - "src/**"
+      - "infrastructure/docker/**"
+      - ".github/workflows/ci-semgrep.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: semgrep-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  semgrep:
+    name: SAST with Semgrep OWASP rules
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run Semgrep security analysis
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: >-
+            p/owasp-top-ten
+            p/security-audit
+          auditOn: push
