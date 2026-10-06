@@ -1,0 +1,79 @@
+name: "🔒 Relato de incidente de segurança"
+description: "Relate uma vulnerabilidade ou incidente sem incluir segredos, tokens ou dados pessoais."
+title: "[SECURITY]: "
+labels:
+  - security
+  - triage
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por ajudar a proteger o projeto.
+
+        **Não publique senhas, tokens, chaves privadas, dados pessoais ou detalhes exploráveis em produção.**
+        Para uma vulnerabilidade sensível, use o canal privado definido pela equipe.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: "Categoria do incidente"
+      options:
+        - "Exposição de credencial ou segredo"
+        - "Controle de acesso ou autenticação"
+        - "Injeção de dados ou comandos"
+        - "Dependência vulnerável"
+        - "Configuração insegura de infraestrutura"
+        - "Outro"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: "Severidade percebida"
+      options:
+        - "Crítica"
+        - "Alta"
+        - "Média"
+        - "Baixa"
+        - "Não avaliada"
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: "Resumo seguro do problema"
+      description: "Descreva o impacto sem expor dados sensíveis ou instruções exploráveis."
+      placeholder: "Exemplo: endpoint permite acesso a informações de outro usuário sem validação de autorização."
+    validations:
+      required: true
+
+  - type: textarea
+    id: affected-area
+    attributes:
+      label: "Área potencialmente afetada"
+      description: "Informe módulo, rota, componente, workflow ou arquivo relevante."
+      placeholder: "Exemplo: backend/auth, frontend/login, Dockerfile, .github/workflows/ci.yml"
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: "Evidência sanitizada"
+      description: "Inclua logs sem dados sigilosos e sem tokens reais."
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: "Confirmações"
+      options:
+        - label: "Não incluí senhas, tokens, chaves privadas ou dados pessoais neste relato."
+          required: true
+        - label: "Verifiquei se já existe um relato aberto sobre este problema."
+          required: true
