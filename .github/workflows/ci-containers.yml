@@ -185,11 +185,13 @@ jobs:
           chmod 0444 \
             infrastructure/docker/secrets/data-protection.pfx \
             infrastructure/docker/secrets/data-protection-password.txt
-          echo "POSTGRES_PASSWORD=${postgres_password}" >> "${GITHUB_ENV}"
-          echo "JWT_SIGNING_KEY=${jwt_signing_key}" >> "${GITHUB_ENV}"
-          echo "DATA_PROTECTION_CERTIFICATE_FILE=./secrets/data-protection.pfx" >> "${GITHUB_ENV}"
-          echo "DATA_PROTECTION_CERTIFICATE_PASSWORD_FILE=./secrets/data-protection-password.txt" >> "${GITHUB_ENV}"
-          echo "DATA_PROTECTION_KEY_RING_VOLUME=cav-smoke-data-protection-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "${GITHUB_ENV}"
+          {
+            echo "POSTGRES_PASSWORD=${postgres_password}"
+            echo "JWT_SIGNING_KEY=${jwt_signing_key}"
+            echo "DATA_PROTECTION_CERTIFICATE_FILE=./secrets/data-protection.pfx"
+            echo "DATA_PROTECTION_CERTIFICATE_PASSWORD_FILE=./secrets/data-protection-password.txt"
+            echo "DATA_PROTECTION_KEY_RING_VOLUME=cav-smoke-data-protection-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          } >> "${GITHUB_ENV}"
 
       - name: Create external production key-ring volume
         run: >-
